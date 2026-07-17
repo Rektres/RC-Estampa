@@ -1,0 +1,291 @@
+{
+  "categorias": [
+    { "nombre": "Poleras", "slug": "poleras", "linea": "urbana" },
+    { "nombre": "Hoodies", "slug": "hoodies", "linea": "urbana" },
+    { "nombre": "Camisas", "slug": "camisas", "linea": "formal" },
+    { "nombre": "Polos", "slug": "polos", "linea": "formal" },
+    { "nombre": "Chaquetas", "slug": "chaquetas", "linea": "urbana" },
+    { "nombre": "Pantalones", "slug": "pantalones", "linea": "urbana" },
+    { "nombre": "Tazas", "slug": "tazas", "linea": "drinkware" },
+    { "nombre": "Termos", "slug": "termos", "linea": "drinkware" },
+    { "nombre": "Vasos", "slug": "vasos", "linea": "drinkware" },
+    { "nombre": "Jarras", "slug": "jarras", "linea": "drinkware" },
+    { "nombre": "Botellas", "slug": "botellas", "linea": "drinkware" }
+  ],
+  "productos": [
+    {
+      "nombre": "Polera Oversize Negra",
+      "slug": "polera-oversize-negra",
+      "descripcion": "Polera oversize de algodón premium 280g. Corte relajado con silueta contemporánea. Ideal para estampado full en pecho o espalda.",
+      "precio": 22990,
+      "activo": true, "destacado": true, "nuevo": true,
+      "linea": "urbana", "categoria": "poleras",
+      "variantes": [
+        { "talla": "XS", "color": "Negro", "color_hex": "#111111", "stock": 5, "sku": "POL-NEG-XS" },
+        { "talla": "S", "color": "Negro", "color_hex": "#111111", "stock": 8, "sku": "POL-NEG-S" },
+        { "talla": "M", "color": "Negro", "color_hex": "#111111", "stock": 10, "sku": "POL-NEG-M" },
+        { "talla": "L", "color": "Negro", "color_hex": "#111111", "stock": 7, "sku": "POL-NEG-L" },
+        { "talla": "XL", "color": "Negro", "color_hex": "#111111", "stock": 4, "sku": "POL-NEG-XL" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/8532616/pexels-photo-8532616.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/8532617/pexels-photo-8532617.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Polera Blanca Slim Fit",
+      "slug": "polera-blanca-slim",
+      "descripcion": "Polera slim fit en algodón peinado 200g. Perfecta para estampados detallados y diseños minimalistas.",
+      "precio": 18990, "precio_oferta": 14990,
+      "activo": true, "destacado": true, "nuevo": false,
+      "linea": "urbana", "categoria": "poleras",
+      "variantes": [
+        { "talla": "S", "color": "Blanco", "color_hex": "#FFFFFF", "stock": 6, "sku": "POL-BLA-S" },
+        { "talla": "M", "color": "Blanco", "color_hex": "#FFFFFF", "stock": 9, "sku": "POL-BLA-M" },
+        { "talla": "L", "color": "Blanco", "color_hex": "#FFFFFF", "stock": 5, "sku": "POL-BLA-L" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/1656684/pexels-photo-1656684.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/1183266/pexels-photo-1183266.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Hoodie Cargo Gris",
+      "slug": "hoodie-cargo-gris",
+      "descripcion": "Hoodie con bolsillos cargo laterales. Algodón fleece 320g. Diseño streetwear con capucha ajustable.",
+      "precio": 35990,
+      "activo": true, "destacado": true, "nuevo": true,
+      "linea": "urbana", "categoria": "hoodies",
+      "variantes": [
+        { "talla": "S", "color": "Gris", "color_hex": "#888888", "stock": 4, "sku": "HOO-GRI-S" },
+        { "talla": "M", "color": "Gris", "color_hex": "#888888", "stock": 7, "sku": "HOO-GRI-M" },
+        { "talla": "L", "color": "Gris", "color_hex": "#888888", "stock": 5, "sku": "HOO-GRI-L" },
+        { "talla": "XL", "color": "Gris", "color_hex": "#888888", "stock": 3, "sku": "HOO-GRI-XL" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/4210846/pexels-photo-4210846.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/6311387/pexels-photo-6311387.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Camisa Oxford Slim",
+      "slug": "camisa-oxford-slim",
+      "descripcion": "Camisa Oxford de algodón 100%. Corte slim formal. Estampado discreto en puño o cuello interior.",
+      "precio": 28990,
+      "activo": true, "destacado": true, "nuevo": false,
+      "linea": "formal", "categoria": "camisas",
+      "variantes": [
+        { "talla": "S", "color": "Blanco", "color_hex": "#FFFFFF", "stock": 5, "sku": "CAM-BLA-S" },
+        { "talla": "M", "color": "Blanco", "color_hex": "#FFFFFF", "stock": 8, "sku": "CAM-BLA-M" },
+        { "talla": "L", "color": "Blanco", "color_hex": "#FFFFFF", "stock": 6, "sku": "CAM-BLA-L" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/4384679/pexels-photo-4384679.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/3755706/pexels-photo-3755706.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Polera Polo Premium",
+      "slug": "polera-polo-premium",
+      "descripcion": "Polo de piqué 220g. Collar y mangas ribeteadas. Ideal para estampado bordado o sublimación.",
+      "precio": 24990,
+      "activo": true, "destacado": false, "nuevo": true,
+      "linea": "formal", "categoria": "polos",
+      "variantes": [
+        { "talla": "M", "color": "Azul marino", "color_hex": "#1B2A4A", "stock": 6, "sku": "POL-MAR-M" },
+        { "talla": "L", "color": "Azul marino", "color_hex": "#1B2A4A", "stock": 4, "sku": "POL-MAR-L" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/5325887/pexels-photo-5325887.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/6311476/pexels-photo-6311476.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Chaqueta Bomber",
+      "slug": "chaqueta-bomber",
+      "descripcion": "Bomber de nylon con forro suave. Bolsillos con cierre y puños de punto. Perfecta para estampado en espalda.",
+      "precio": 49990,
+      "activo": true, "destacado": false, "nuevo": false,
+      "linea": "urbana", "categoria": "chaquetas",
+      "variantes": [
+        { "talla": "S", "color": "Negro", "color_hex": "#111111", "stock": 3, "sku": "CHA-NEG-S" },
+        { "talla": "M", "color": "Negro", "color_hex": "#111111", "stock": 5, "sku": "CHA-NEG-M" },
+        { "talla": "L", "color": "Negro", "color_hex": "#111111", "stock": 2, "sku": "CHA-NEG-L" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/2220316/pexels-photo-2220316.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Jogger Urbano",
+      "slug": "jogger-urbano",
+      "descripcion": "Pantalón jogger de algodón french terry 300g. Elástico en cintura y tobillo. Bolsillos laterales profundos.",
+      "precio": 29990,
+      "activo": true, "destacado": false, "nuevo": true,
+      "linea": "urbana", "categoria": "pantalones",
+      "variantes": [
+        { "talla": "S", "color": "Negro", "color_hex": "#111111", "stock": 4, "sku": "JOG-NEG-S" },
+        { "talla": "M", "color": "Negro", "color_hex": "#111111", "stock": 6, "sku": "JOG-NEG-M" },
+        { "talla": "L", "color": "Negro", "color_hex": "#111111", "stock": 5, "sku": "JOG-NEG-L" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/1485031/pexels-photo-1485031.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/1796730/pexels-photo-1796730.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Camiseta Cropped",
+      "slug": "camiseta-cropped",
+      "descripcion": "Camiseta cropped en rib de algodón elasticado. Corte ajustado y moderno.",
+      "precio": 16990,
+      "activo": true, "destacado": false, "nuevo": false,
+      "linea": "urbana", "categoria": "poleras",
+      "variantes": [
+        { "talla": "XS", "color": "Beige", "color_hex": "#D4C5A9", "stock": 5, "sku": "CRO-BEI-XS" },
+        { "talla": "S", "color": "Beige", "color_hex": "#D4C5A9", "stock": 7, "sku": "CRO-BEI-S" },
+        { "talla": "M", "color": "Beige", "color_hex": "#D4C5A9", "stock": 4, "sku": "CRO-BEI-M" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/1021693/pexels-photo-1021693.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/2853909/pexels-photo-2853909.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    }
+  ],
+  "vajilla": [
+    {
+      "nombre": "Taza Cerámica Premium",
+      "slug": "taza-ceramica-premium",
+      "descripcion": "Taza de cerámica de alta calidad 350ml. Superficie lisa ideal para sublimación full. Apta para microondas y lavavajillas.",
+      "material": "Cerámica", "capacidad_ml": 350,
+      "precio": 12990,
+      "activo": true, "destacado": true, "nuevo": false,
+      "categoria": "tazas",
+      "variantes": [
+        { "color": "Blanco", "color_hex": "#FFFFFF", "stock": 15, "sku": "TAZ-BLA" },
+        { "color": "Negro", "color_hex": "#111111", "stock": 10, "sku": "TAZ-NEG" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/1793035/pexels-photo-1793035.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/2396220/pexels-photo-2396220.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Termo Acero 500ml",
+      "slug": "termo-acero-500ml",
+      "descripcion": "Termo de acero inoxidable de doble pared 500ml. Mantiene temperatura 12h. Sublimación envolvente 360°.",
+      "material": "Acero inoxidable", "capacidad_ml": 500,
+      "precio": 24990, "precio_oferta": 19990,
+      "activo": true, "destacado": true, "nuevo": true,
+      "categoria": "termos",
+      "variantes": [
+        { "color": "Negro", "color_hex": "#111111", "stock": 8, "sku": "TER-NEG-500" },
+        { "color": "Plata", "color_hex": "#C0C0C0", "stock": 6, "sku": "TER-PLA-500" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/4009402/pexels-photo-4009402.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/4226905/pexels-photo-4226905.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Vaso Templado 400ml",
+      "slug": "vaso-templado-400ml",
+      "descripcion": "Vaso de vidrio templado 400ml. Transparente con franja de diseño en la zona central. Resistente a cambios de temperatura.",
+      "material": "Vidrio", "capacidad_ml": 400,
+      "precio": 9990,
+      "activo": true, "destacado": true, "nuevo": false,
+      "categoria": "vasos",
+      "variantes": [
+        { "color": "Transparente", "color_hex": "#E8F4F8", "stock": 20, "sku": "VAS-TRA-400" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/1552630/pexels-photo-1552630.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Taza Mágica Color",
+      "slug": "taza-magica-color",
+      "descripcion": "Taza mágica que revela el diseño al agregar bebida caliente. 350ml cerámica. Efecto sorpresa garantizado.",
+      "material": "Cerámica", "capacidad_ml": 350,
+      "precio": 15990,
+      "activo": true, "destacado": true, "nuevo": true,
+      "categoria": "tazas",
+      "variantes": [
+        { "color": "Negro", "color_hex": "#111111", "stock": 12, "sku": "TAZ-MAG-NEG" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/3028586/pexels-photo-3028586.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/1820711/pexels-photo-1820711.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Jarra Cerámica 600ml",
+      "slug": "jarra-ceramica-600ml",
+      "descripcion": "Jarra de cerámica 600ml con asa ergonómica. Ideal para imprimir diseños panorámicos o logotipos corporativos.",
+      "material": "Cerámica", "capacidad_ml": 600,
+      "precio": 16990,
+      "activo": true, "destacado": false, "nuevo": false,
+      "categoria": "jarras",
+      "variantes": [
+        { "color": "Blanco", "color_hex": "#FFFFFF", "stock": 9, "sku": "JAR-BLA-600" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/1251175/pexels-photo-1251175.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    },
+    {
+      "nombre": "Botella Deportiva",
+      "slug": "botella-deportiva",
+      "descripcion": "Botella deportiva de aluminio 750ml con tapa con pico. Diseño ergonómico para deportes. Sin BPA.",
+      "material": "Aluminio", "capacidad_ml": 750,
+      "precio": 19990,
+      "activo": true, "destacado": false, "nuevo": true,
+      "categoria": "botellas",
+      "variantes": [
+        { "color": "Negro", "color_hex": "#111111", "stock": 7, "sku": "BOT-NEG-750" },
+        { "color": "Plata", "color_hex": "#C0C0C0", "stock": 5, "sku": "BOT-PLA-750" }
+      ],
+      "imagenes": [
+        { "imagen": "https://images.pexels.com/photos/3735218/pexels-photo-3735218.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": true, "es_frente": true, "orden": 0 },
+        { "imagen": "https://images.pexels.com/photos/1000084/pexels-photo-1000084.jpeg?auto=compress&cs=tinysrgb&w=600", "es_principal": false, "es_reverso": true, "orden": 1 }
+      ]
+    }
+  ],
+  "fotos": [
+    { "imagen": "https://images.pexels.com/photos/1261731/pexels-photo-1261731.jpeg?auto=compress&cs=tinysrgb&w=600", "tipo": "ropa", "texto_review": "La calidad del estampado superó todas mis expectativas. La polera llegó perfecta.", "nombre_cliente": "Valentina R.", "producto_ropa_slug": "polera-oversize-negra" },
+    { "imagen": "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=600", "tipo": "ropa", "texto_review": "El diseño que les envié quedó idéntico. Muy profesionales.", "nombre_cliente": "Matías G.", "producto_ropa_slug": "hoodie-cargo-gris" },
+    { "imagen": "https://images.pexels.com/photos/1793035/pexels-photo-1793035.jpeg?auto=compress&cs=tinysrgb&w=600", "tipo": "vajilla", "texto_review": "La taza con nuestra foto favorita es el mejor regalo que pude hacer.", "nombre_cliente": "Camila F.", "producto_vajilla_slug": "taza-ceramica-premium" },
+    { "imagen": "https://images.pexels.com/photos/2220316/pexels-photo-2220316.jpeg?auto=compress&cs=tinysrgb&w=600", "tipo": "ropa", "nombre_cliente": "Diego M." },
+    { "imagen": "https://images.pexels.com/photos/4009402/pexels-photo-4009402.jpeg?auto=compress&cs=tinysrgb&w=600", "tipo": "vajilla", "texto_review": "El termo quedó increíble con el logo de mi empresa. Ya pedí 20 más.", "nombre_cliente": "Empresa TechFlow", "producto_vajilla_slug": "termo-acero-500ml" },
+    { "imagen": "https://images.pexels.com/photos/4210846/pexels-photo-4210846.jpeg?auto=compress&cs=tinysrgb&w=600", "tipo": "ropa", "texto_review": "Perfecto para el invierno. El hoodie tiene un tacto increíble.", "nombre_cliente": "Fernanda C.", "producto_ropa_slug": "hoodie-cargo-gris" },
+    { "imagen": "https://images.pexels.com/photos/1552630/pexels-photo-1552630.jpeg?auto=compress&cs=tinysrgb&w=600", "tipo": "vajilla", "nombre_cliente": "Andrés P." },
+    { "imagen": "https://images.pexels.com/photos/1021693/pexels-photo-1021693.jpeg?auto=compress&cs=tinysrgb&w=600", "tipo": "ropa", "texto_review": "Encargué poleras para todo mi equipo de trabajo. Excelente servicio.", "nombre_cliente": "Paula S.", "producto_ropa_slug": "camiseta-cropped" },
+    { "imagen": "https://images.pexels.com/photos/3028586/pexels-photo-3028586.jpeg?auto=compress&cs=tinysrgb&w=600", "tipo": "vajilla", "texto_review": "La taza mágica fue el regalo del año en mi familia.", "nombre_cliente": "Roberto L.", "producto_vajilla_slug": "taza-magica-color" }
+  ],
+  "colores_editor": [
+    { "nombre": "Blanco", "hex": "#FFFFFF" },
+    { "nombre": "Negro", "hex": "#111111" },
+    { "nombre": "Gris", "hex": "#888888" },
+    { "nombre": "Azul marino", "hex": "#1B2A4A" },
+    { "nombre": "Rojo oscuro", "hex": "#8B1A1A" },
+    { "nombre": "Verde oliva", "hex": "#4A5C3A" },
+    { "nombre": "Beige", "hex": "#D4C5A9" },
+    { "nombre": "Celeste", "hex": "#7AB8D4" }
+  ],
+  "precios_editor": {
+    "polera": 15000,
+    "gorra": 12000,
+    "pantalon": 18000,
+    "taza": 10000,
+    "termo": 20000,
+    "vaso": 8000
+  },
+  "tallas": ["XS", "S", "M", "L", "XL", "XXL"],
+  "regiones": [
+    "Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama", "Coquimbo",
+    "Valparaíso", "Metropolitana de Santiago", "O'Higgins", "Maule", "Ñuble",
+    "Biobío", "La Araucanía", "Los Ríos", "Los Lagos", "Aysén", "Magallanes"
+  ]
+}

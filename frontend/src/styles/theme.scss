@@ -1,0 +1,223 @@
+// ===========================================================================
+// RC Estampa — Tema Bootstrap 5 (dark + dorado)
+// ===========================================================================
+
+// 1. Overrides de variables ANTES de importar Bootstrap
+$primary: #c9a84c;
+$border-radius: 4px;
+$border-radius-sm: 4px;
+$border-radius-lg: 6px;
+
+$font-family-sans-serif: 'Montserrat', system-ui, sans-serif;
+$headings-font-family: 'Italiana', serif;
+$headings-line-height: 1.2;
+
+$enable-shadows: false;
+$enable-negative-margins: true;
+
+// 2. Bootstrap completo
+@import 'bootstrap/scss/bootstrap';
+
+// ===========================================================================
+// 3. Paleta de marca (tokens que Bootstrap no trae)
+// ===========================================================================
+:root {
+  --rc-surface: #1a1a1a;
+  --rc-card: #242424;
+  --rc-elevated: #2e2e2e;
+  --rc-border: #383838;
+  --rc-text: #f0ede8;
+  --rc-muted: #9a9a9a;
+  --rc-ghost: #4a4a4a;
+  --rc-primary: #c9a84c;
+  --rc-primary-dark: #a8873a;
+  --rc-urban: #4a90d9;
+  --rc-formal: #c9a84c;
+  --rc-drinkware: #5cae8a;
+}
+
+// Ajustar el tema oscuro de Bootstrap a nuestra paleta (afecta Modal, Offcanvas,
+// Form, Accordion, Dropdown de react-bootstrap).
+[data-bs-theme='dark'] {
+  --bs-body-bg: var(--rc-surface);
+  --bs-body-color: var(--rc-text);
+  --bs-border-color: var(--rc-border);
+  --bs-secondary-color: var(--rc-muted);
+  --bs-tertiary-color: var(--rc-muted);
+  --bs-emphasis-color: var(--rc-text);
+  --bs-tertiary-bg: var(--rc-elevated);
+  --bs-secondary-bg: var(--rc-card);
+
+  --bs-card-bg: var(--rc-card);
+  --bs-modal-bg: var(--rc-card);
+  --bs-offcanvas-bg: var(--rc-card);
+  --bs-dropdown-bg: var(--rc-elevated);
+  --bs-dropdown-link-hover-bg: var(--rc-card);
+  --bs-accordion-bg: transparent;
+  --bs-accordion-active-bg: var(--rc-elevated);
+
+  --bs-form-control-bg: var(--rc-elevated);
+  --bs-form-control-color: var(--rc-text);
+}
+
+body {
+  background-color: var(--rc-surface);
+  color: var(--rc-text);
+  font-family: $font-family-sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3 {
+  font-family: 'Italiana', serif;
+}
+h4, h5, h6 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+// ===========================================================================
+// 4. Utilidades de marca (color de fondo / texto / borde + variantes de opacidad)
+// ===========================================================================
+$rc-colors: (
+  'surface': var(--rc-surface),
+  'card': var(--rc-card),
+  'elevated': var(--rc-elevated),
+  'border': var(--rc-border),
+  'text': var(--rc-text),
+  'muted': var(--rc-muted),
+  'ghost': var(--rc-ghost),
+  'primary': var(--rc-primary),
+  'primary-dark': var(--rc-primary-dark),
+  'urban': var(--rc-urban),
+  'formal': var(--rc-formal),
+  'drinkware': var(--rc-drinkware),
+);
+
+@each $name, $val in $rc-colors {
+  .bg-#{$name} { background-color: #{$val} !important; }
+  .text-#{$name} { color: #{$val} !important; }
+  .border-#{$name} { border-color: #{$val} !important; }
+}
+
+// Variantes de opacidad (equivalen a bg-primary/20, border-primary/30, etc. de Tailwind)
+$rc-solid: (
+  'primary': #c9a84c,
+  'urban': #4a90d9,
+  'formal': #c9a84c,
+  'drinkware': #5cae8a,
+);
+
+@each $name, $hex in $rc-solid {
+  .bg-#{$name}-8 { background-color: rgba($hex, 0.08) !important; }
+  .bg-#{$name}-10 { background-color: rgba($hex, 0.1) !important; }
+  .bg-#{$name}-20 { background-color: rgba($hex, 0.2) !important; }
+  .bg-#{$name}-30 { background-color: rgba($hex, 0.3) !important; }
+  .border-#{$name}-20 { border-color: rgba($hex, 0.2) !important; }
+  .border-#{$name}-30 { border-color: rgba($hex, 0.3) !important; }
+  .border-#{$name}-40 { border-color: rgba($hex, 0.4) !important; }
+}
+
+// Tipografía
+.font-italiana { font-family: 'Italiana', serif; }
+.font-montserrat { font-family: 'Montserrat', sans-serif; }
+
+// ===========================================================================
+// 5. Componentes reutilizables (equivalentes a los @layer de Tailwind)
+// ===========================================================================
+.btn-primary {
+  --bs-btn-bg: var(--rc-primary);
+  --bs-btn-border-color: var(--rc-primary);
+  --bs-btn-color: #000;
+  --bs-btn-hover-bg: var(--rc-primary-dark);
+  --bs-btn-hover-border-color: var(--rc-primary-dark);
+  --bs-btn-hover-color: #000;
+  --bs-btn-active-bg: var(--rc-primary-dark);
+  --bs-btn-active-border-color: var(--rc-primary-dark);
+  --bs-btn-disabled-bg: var(--rc-primary);
+  --bs-btn-disabled-border-color: var(--rc-primary);
+  --bs-btn-disabled-color: #000;
+  font-weight: 600;
+}
+
+// .btn-secondary se usa en el markup existente como "outline dorado" (no el gris de Bootstrap)
+.btn-outline-primary,
+.btn-secondary {
+  --bs-btn-bg: transparent;
+  --bs-btn-color: var(--rc-primary);
+  --bs-btn-border-color: var(--rc-primary);
+  --bs-btn-hover-bg: var(--rc-primary);
+  --bs-btn-hover-border-color: var(--rc-primary);
+  --bs-btn-hover-color: #000;
+  --bs-btn-active-bg: var(--rc-primary);
+  --bs-btn-active-border-color: var(--rc-primary);
+  --bs-btn-active-color: #000;
+  font-weight: 600;
+}
+
+// Clase heredada usada en el markup existente
+.line-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.125rem 0.5rem;
+  border-radius: 50rem;
+}
+
+// Scroll-reveal (IntersectionObserver en utils.useIntersectionObserver)
+.fade-in {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+// ===========================================================================
+// 6. CSS crudo migrado desde index.css
+// ===========================================================================
+* { box-sizing: border-box; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--rc-surface); }
+::-webkit-scrollbar-thumb { background: var(--rc-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--rc-ghost); }
+
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  background: var(--rc-border);
+  height: 4px;
+  border-radius: 2px;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--rc-primary);
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  margin-top: -6px;
+}
+input[type='range']:focus { outline: none; }
+
+dialog {
+  background: var(--rc-card);
+  border: 1px solid var(--rc-border);
+  border-radius: 8px;
+  padding: 0;
+  color: var(--rc-text);
+  max-width: 90vw;
+  max-height: 90vh;
+}
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+}
