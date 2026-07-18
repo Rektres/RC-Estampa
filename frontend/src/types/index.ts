@@ -120,6 +120,41 @@ export interface User {
   rol: 'admin' | 'cliente';
 }
 
+// --- Inputs del panel de administración ---
+
+export interface VarianteInput {
+  talla?: string;
+  color: string;
+  color_hex: string;
+  stock: number;
+  sku: string;
+}
+
+export interface ImagenInput {
+  imagen: string;
+  es_principal: boolean;
+  es_frente: boolean;
+  es_reverso: boolean;
+  orden: number;
+}
+
+export interface ProductoInput {
+  nombre: string;
+  slug?: string;
+  descripcion: string;
+  precio: number;
+  precio_oferta?: number | null;
+  activo: boolean;
+  destacado: boolean;
+  nuevo: boolean;
+  linea?: 'urbana' | 'formal';
+  material?: string;
+  capacidad_ml?: number | null;
+  categoria: number;
+  variantes: VarianteInput[];
+  imagenes: ImagenInput[];
+}
+
 export interface DireccionEnvio {
   id?: number;
   nombre_destinatario: string;

@@ -10,9 +10,10 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { itemCount, toggleCart } = useCartStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const navigate = useNavigate();
   const count = itemCount();
+  const isAdmin = user?.rol === 'admin';
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
@@ -26,6 +27,7 @@ export default function Navbar() {
     { to: '/drinkware', label: 'Drinkware' },
     { to: '/disenar', label: 'Diseña el tuyo' },
     { to: '/personalizado', label: 'Personalizado' },
+    ...(isAdmin ? [{ to: '/panel', label: 'Panel' }] : []),
   ];
 
   function handleSearch(e: React.FormEvent) {

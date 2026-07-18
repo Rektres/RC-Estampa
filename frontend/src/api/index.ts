@@ -1,5 +1,8 @@
 import { api } from './client';
-import type { Producto, ProductoVajilla, FotoCliente, User } from '../types';
+import type {
+  Producto, ProductoVajilla, FotoCliente, User,
+  ProductoInput, Categoria,
+} from '../types';
 
 export interface Paginated<T> {
   count: number;
@@ -101,4 +104,37 @@ export const disenosApi = {
 export const carritoApi = {
   get: () => api.get('/carrito/').then((r) => r.data),
   put: (items: unknown[]) => api.put('/carrito/', { items }).then((r) => r.data),
+};
+
+function crudPanel<T>(recurso: 'productos' | 'drinkware') {
+  return {
+    list: (params: Record<string, unknown> = {}) =>
+      api.get<Paginated<T>>(`/panel/${recurso}/`, { params: { ...PAGE_ALL, ...params } })
+        .then((r) => r.data.results),
+    get: (id: number) => api.get<T>(`/panel/${recurso}/${id}/`).then((r) => r.data),
+    create: (data: ProductoInput) => api.post<T>(`/panel/${recurso}/`, data).then((r) => r.data),
+    update: (id: number, data: ProductoInput) =>
+      api.put<T>(`/panel/${recurso}/${id}/`, data).then((r) => r.data),
+    setActivo: (id: number, activo: boolean) =>
+      api.patch<T>(`/panel/${recurso}/${id}/`, { activo }).then((r) => r.data),
+    remove: (id: number) => api.delete(`/panel/${recurso}/${id}/`),
+  };
+}
+
+export const panelApi = {
+  productos: crudPanel<Producto>('productos'),
+  drinkware: crudPanel<ProductoVajilla>('drinkware'),
+  categorias: {
+    list: () => api.get<Categoria[]>('/panel/categorias/').then((r) => r.data),
+    create: (data: Omit<Categoria, 'id'>) =>
+      api.post<Categoria>('/panel/categorias/', data).then((r) => r.data),
+    update: (id: number, data: Omit<Categoria, 'id'>) =>
+      api.put<Categoria>(`/panel/categorias/${id}/`, data).then((r) => r.data),
+    remove: (id: number) => api.delete(`/panel/categorias/${id}/`),
+  },
+  upload: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<{ url: string }>('/panel/upload/', form).then((r) => r.data);
+  },
 };

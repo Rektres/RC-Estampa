@@ -113,6 +113,13 @@ Bajo `/api/`:
 - `POST cotizaciones/` — solicitudes de pedido personalizado
 - `POST disenos/` — sube el PNG generado en el editor
 - `GET/PUT carrito/` — carrito persistido (autenticado)
+- `panel/...` — CRUD de administración (productos, drinkware, categorías, upload de imágenes); requiere usuario con rol admin
+
+## Panel de administración
+
+En `/panel` (dentro de la tienda) los usuarios con rol **admin** pueden crear, editar, deshabilitar y eliminar productos de ropa y drinkware (con variantes e imágenes — subiendo archivos o pegando URLs) y gestionar categorías. El link "Panel" aparece en el navbar al iniciar sesión como admin.
+
+Para crear un admin: `python manage.py createsuperuser` (o `docker compose exec backend python manage.py createsuperuser`) — el superusuario queda con rol admin y sirve tanto para `/panel` como para el admin de Django en `/admin`.
 
 ## Scripts útiles
 

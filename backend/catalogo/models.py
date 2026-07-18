@@ -53,7 +53,8 @@ class VarianteProducto(models.Model):
 
 class ImagenProducto(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='imagenes')
-    imagen = models.URLField(max_length=500)
+    # CharField (no URLField): acepta URLs externas y rutas /media/productos/...
+    imagen = models.CharField(max_length=500)
     es_principal = models.BooleanField(default=False)
     es_frente = models.BooleanField(default=False)
     es_reverso = models.BooleanField(default=False)
@@ -83,7 +84,7 @@ class VarianteVajilla(models.Model):
 
 class ImagenVajilla(models.Model):
     producto = models.ForeignKey(ProductoVajilla, on_delete=models.CASCADE, related_name='imagenes')
-    imagen = models.URLField(max_length=500)
+    imagen = models.CharField(max_length=500)
     es_principal = models.BooleanField(default=False)
     es_frente = models.BooleanField(default=False)
     es_reverso = models.BooleanField(default=False)
