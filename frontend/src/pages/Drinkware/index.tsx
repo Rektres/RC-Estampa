@@ -5,6 +5,7 @@ import FilterSidebar from '../../components/shared/FilterSidebar';
 import HoverSwapCard from '../../components/shared/HoverSwapCard';
 import { catalogoApi } from '../../api';
 import { useAsync } from '../../api/hooks';
+import { useSEO } from '../../hooks/useSEO';
 
 const CATEGORIAS_VAJ = ['Tazas', 'Termos', 'Vasos', 'Jarras', 'Botellas'];
 const MATERIALES = ['Cerámica', 'Acero inoxidable', 'Vidrio', 'Aluminio'];
@@ -32,6 +33,12 @@ export default function Drinkware() {
   const materiales = params.get('material')?.split(',').filter(Boolean) ?? [];
   const colores = params.get('color')?.split(',').filter(Boolean) ?? [];
   const precioMax = Number(params.get('precio_max') ?? 50000);
+
+  useSEO({
+    title: 'Drinkware & Botellas Térmicas Personalizadas',
+    description: 'Catálogo de drinkware premium en Chile: botellas térmicas en acero inoxidable 304, mugs de cerámica, vasos templados y jarras grabadas a fuego.',
+    keywords: 'termos personalizados chile, tazas estampadas santiago, botellas termicas acero, vasos grabados eventos, merchandising drinkware',
+  });
 
   const filtered = useMemo(() => {
     let list = [...(vajillaData ?? [])];

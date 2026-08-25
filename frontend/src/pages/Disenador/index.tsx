@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatPrice } from '../../utils';
 import { catalogoApi } from '../../api';
 import { useAsync } from '../../api/hooks';
+import { useSEO } from '../../hooks/useSEO';
 import { Shirt, HardHat, Scissors, Coffee, Thermometer, GlassWater } from 'lucide-react';
 
 const productos = [
@@ -17,6 +18,12 @@ export default function Disenador() {
   const navigate = useNavigate();
   const { data: editor } = useAsync(() => catalogoApi.editor(), []);
   const precios = editor?.precios ?? {};
+
+  useSEO({
+    title: 'Editor de Canvas en Vivo | Diseña Tu Prenda o Drinkware',
+    description: 'Crea tu propio diseño personalizado en poleras, polerones, gorras, termos y tazas. Visualizador 3D en tiempo real y cotización instantánea.',
+    keywords: 'diseñar poleras online, editor estampado chile, personalizar tazas online, poleras personalizadas canvas, rc estampa',
+  });
 
   return (
     <div className="container py-5" style={{ maxWidth: '56rem' }}>

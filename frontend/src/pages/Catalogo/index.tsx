@@ -5,6 +5,7 @@ import FilterSidebar from '../../components/shared/FilterSidebar';
 import HoverSwapCard from '../../components/shared/HoverSwapCard';
 import { catalogoApi } from '../../api';
 import { useAsync } from '../../api/hooks';
+import { useSEO } from '../../hooks/useSEO';
 
 const CATEGORIAS = ['Poleras', 'Hoodies', 'Camisas', 'Polos', 'Chaquetas', 'Pantalones'];
 const COLORES = [
@@ -37,6 +38,12 @@ export default function Catalogo() {
   const colores = params.get('color')?.split(',').filter(Boolean) ?? [];
   const precioMax = Number(params.get('precio_max') ?? 100000);
   const q = params.get('q') ?? '';
+
+  useSEO({
+    title: linea ? `Colección ${linea === 'urbana' ? 'Streetwear Urbana' : 'Formal'} | Ropa Estampada` : 'Catálogo de Ropa Estampada & Confección',
+    description: 'Explora nuestra colección de poleras oversize, polerones de felpa, chaquetas y camisas con estampado DTF Textil Ultra HD y serigrafía de alta durabilidad en Chile.',
+    keywords: 'poleras estampadas chile, polerones dtf, ropa streetwear santiago, chaquetas estampadas, polos corporativos, rc estampa',
+  });
 
   const filtered = useMemo(() => {
     let list = [...(productosData ?? [])];

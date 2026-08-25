@@ -1,0 +1,33 @@
+# robots.txt para RC Estampa Atelier
+User-agent: *
+Allow: /
+Allow: /catalogo
+Allow: /drinkware
+Allow: /disenar
+Allow: /personalizado
+Allow: /llms.txt
+
+# Bloqueo de rutas privadas y administrativas
+Disallow: /admin/
+Disallow: /panel/
+Disallow: /api/
+Disallow: /auth
+Disallow: /perfil
+Disallow: /checkout
+Disallow: /confirmacion
+
+# Reglas específicas para Agentes de IA / LLMs
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# Ubicación del Sitemap XML
+Sitemap: https://rcestampa.cl/sitemap.xml

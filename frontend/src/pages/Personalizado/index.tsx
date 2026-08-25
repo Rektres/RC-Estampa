@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MessageCircle, CheckCircle2, ClipboardList, Clock, Package, Sparkles } from 'lucide-react';
 import { cotizacionesApi } from '../../api';
+import { useSEO } from '../../hooks/useSEO';
 
 const schema = z.object({
   nombre: z.string().min(2, 'El nombre es requerido'),
@@ -28,6 +29,12 @@ export default function Personalizado() {
   const [submitted, setSubmitted] = useState(false);
   const [numero, setNumero] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  useSEO({
+    title: 'Cotización de Estampados Personalizados & Empresas',
+    description: 'Solicita tu cotización formal para pedidos corporativos, marcas de ropa, merchandising y producciones especiales con estampado DTF y serigrafía.',
+    keywords: 'cotizacion poleras empresas, estampado mayorista chile, merchandising corporativo santiago, cotizar dtf por mayor, rc estampa',
+  });
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),

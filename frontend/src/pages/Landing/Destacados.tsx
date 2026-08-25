@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Sparkles, X, ShieldCheck, Shirt, Thermometer } from 'lucide-react';
 import HoverSwapCard from '../../components/shared/HoverSwapCard';
+import ShareButton from '../../components/shared/ShareButton';
 import { catalogoApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { formatPrice } from '../../utils';
@@ -155,12 +156,19 @@ export default function Destacados() {
                 <ShieldCheck size={16} className="text-primary" />
                 <span className="text-muted" style={{ fontSize: '0.75rem' }}>Garantía 100% RC Estampa</span>
               </div>
-              <button
-                onClick={() => setSpecProduct(null)}
-                className="btn btn-primary btn-sm px-4 py-2"
-              >
-                Entendido
-              </button>
+              <div className="d-flex align-items-center gap-2">
+                <ShareButton
+                  title={specProduct.nombre}
+                  text={`Mira esta prenda de RC Estampa: ${specProduct.nombre}`}
+                  url={`${window.location.origin}${specProduct.linea === 'drinkware' ? '/drinkware' : '/catalogo'}/${specProduct.slug}`}
+                />
+                <button
+                  onClick={() => setSpecProduct(null)}
+                  className="btn btn-primary btn-sm px-4 py-2"
+                >
+                  Entendido
+                </button>
+              </div>
             </div>
           </div>
         </div>

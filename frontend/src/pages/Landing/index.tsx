@@ -7,9 +7,17 @@ import ManifiestoEscenico from './ManifiestoEscenico';
 import PlatformPaths from './PlatformPaths';
 import GarantiaModulo from './GarantiaModulo';
 import SocialProof from './SocialProof';
+import FAQEscenico from './FAQEscenico';
 import LuxuryBoxCotizacion from './LuxuryBoxCotizacion';
+import { useSEO } from '../../hooks/useSEO';
 
 export default function Landing() {
+  useSEO({
+    title: 'Atelier de Estampado Textil & Drinkware',
+    description: 'Personalización y estampado de alta definición en poleras oversize, polerones, tazas y botellas térmicas. DTF Textil Ultra HD y serigrafía en Chile.',
+    keywords: 'estampado textil santiago, dtf textil chile, poleras personalizadas, serigrafia santiago, drinkware personalizado, botellas termicas grabadas, rc estampa',
+  });
+
   return (
     <div className="bg-surface">
       {/* 1. Hero con Eyebrow + Titular Monumental + Doble CTA + Preview con Live Dot */}
@@ -39,7 +47,10 @@ export default function Landing() {
       {/* 9. Testimonios y Social Proof con Mosaico */}
       <SocialProof />
 
-      {/* 10. Formulario / Cotizador Luxury Box */}
+      {/* 10. Preguntas Frecuentes con Schema.org FAQPage */}
+      <FAQEscenico />
+
+      {/* 11. Formulario / Cotizador Luxury Box */}
       <LuxuryBoxCotizacion />
     </div>
   );

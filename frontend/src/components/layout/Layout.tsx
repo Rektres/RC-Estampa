@@ -3,6 +3,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
 import CartDrawer from './CartDrawer';
+import MobileStickyBar from './MobileStickyBar';
 
 export default function Layout() {
   return (
@@ -13,6 +14,7 @@ export default function Layout() {
       </main>
       <Footer />
       <WhatsAppButton />
+      <MobileStickyBar />
       <CartDrawer />
     </div>
   );
