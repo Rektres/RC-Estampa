@@ -7,6 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
     DEBUG=(bool, False),
+    USE_SQLITE=(bool, False),
 )
 # Load .env from repo root or backend/ if present
 environ.Env.read_env(BASE_DIR / '.env')
@@ -65,8 +66,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Postgres when POSTGRES_DB is provided (Docker); SQLite otherwise (local dev/tests)
-if env('POSTGRES_DB', default=None):
+import socket
+
+def is_postgres_available():
+    if env.bool('USE_SQLITE', default=False):
+        return False
+    host = env('POSTGRES_HOST', default='db')
+    try:
+        socket.gethostbyname(host)
+        return True
+    except Exception:
+        return False
+
+# Postgres when POSTGRES_DB is provided & resolvable (Docker); SQLite otherwise (local dev)
+if env('POSTGRES_DB', default=None) and is_postgres_available():
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
