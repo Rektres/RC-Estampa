@@ -111,13 +111,11 @@ export default function HoverSwapCard({ producto, prefixPath, onOpenSpecs }: Pro
             />
           )}
 
-          {/* Dark satin bottom overlay */}
+          {/* Dynamic satin bottom overlay */}
           <div
-            className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end p-3"
+            className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end p-3 stage-card-overlay"
             style={{
               opacity: hovered ? 1 : 0,
-              background: 'linear-gradient(to top, rgba(7,8,20,0.92) 0%, rgba(7,8,20,0.4) 45%, transparent 100%)',
-              transition: 'opacity 0.25s ease',
             }}
           >
             <div className="d-flex align-items-center justify-content-between gap-2">

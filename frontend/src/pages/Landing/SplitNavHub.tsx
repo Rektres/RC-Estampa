@@ -34,8 +34,7 @@ export default function SplitNavHub() {
           />
           {/* Overlay */}
           <div
-            className="position-absolute top-0 start-0 w-100 h-100"
-            style={{ backgroundColor: 'rgba(26,26,26,0.55)' }}
+            className="position-absolute top-0 start-0 w-100 h-100 platform-path-overlay"
           />
           {/* Content */}
           <div
@@ -49,8 +48,8 @@ export default function SplitNavHub() {
               {panel.title}
             </h2>
             <p
-              className="font-montserrat fw-medium small text-uppercase"
-              style={{ color: 'rgba(240,237,232,0.8)', letterSpacing: '0.1em' }}
+              className="font-montserrat fw-medium small text-uppercase text-muted"
+              style={{ letterSpacing: '0.1em' }}
             >
               {panel.subtitle}
             </p>

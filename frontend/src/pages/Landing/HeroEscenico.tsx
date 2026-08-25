@@ -96,11 +96,8 @@ export default function HeroEscenico() {
 
               {/* Floating Preview Card */}
               <div
-                className="stage-card p-3 shadow-2xl position-relative hover-lift"
+                className="hero-preview-card p-3 shadow-2xl position-relative hover-lift"
                 style={{
-                  background: 'linear-gradient(145deg, rgba(15, 16, 38, 0.95) 0%, rgba(22, 24, 54, 0.9) 100%)',
-                  border: '1px solid rgba(201, 168, 76, 0.35)',
-                  borderRadius: '16px',
                   zIndex: 2,
                 }}
               >
@@ -125,15 +122,12 @@ export default function HeroEscenico() {
                     className="w-100 h-100 object-fit-cover stage-card-img"
                   />
                   <div
-                    className="position-absolute bottom-0 start-0 end-0 p-3"
-                    style={{
-                      background: 'linear-gradient(to top, rgba(7, 8, 20, 0.95) 0%, transparent 100%)',
-                    }}
+                    className="position-absolute bottom-0 start-0 end-0 p-3 stage-card-overlay"
                   >
                     <div className="eyebrow-badge mb-1" style={{ fontSize: '0.6rem', padding: '0.15rem 0.5rem' }}>
                       LÍNEA URBANA PREMIUM
                     </div>
-                    <h3 className="font-italiana text-white fs-4 mb-0">Polera Oversize Escénica</h3>
+                    <h3 className="font-italiana text-text fs-4 mb-0">Polera Oversize Escénica</h3>
                   </div>
                 </div>
 

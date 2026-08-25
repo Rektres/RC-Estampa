@@ -177,8 +177,8 @@ export default function Navbar() {
       {/* Search overlay */}
       {searchOpen && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center px-3"
-          style={{ zIndex: 1060, backgroundColor: 'rgba(7,8,20,0.88)', backdropFilter: 'blur(8px)', paddingTop: '6.5rem' }}
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center px-3 modal-backdrop-escenico"
+          style={{ zIndex: 1060, paddingTop: '6.5rem' }}
         >
           <form onSubmit={handleSearch} className="w-100" style={{ maxWidth: '38rem' }}>
             <div className="d-flex align-items-center gap-3 bg-card border border-primary-30 rounded-3 px-3 py-2 shadow-lg">

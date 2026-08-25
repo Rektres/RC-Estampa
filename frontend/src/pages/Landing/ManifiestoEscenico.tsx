@@ -4,13 +4,7 @@ import { Link } from 'react-router-dom';
 export default function ManifiestoEscenico() {
   return (
     <section className="container-xxl py-5 my-4 position-relative">
-      <div
-        className="bg-card border border-border rounded-4 p-4 p-md-5 position-relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, rgba(15, 16, 38, 0.95) 0%, rgba(22, 24, 54, 0.85) 100%)',
-          border: '1px solid rgba(201, 168, 76, 0.25)',
-        }}
-      >
+      <div className="luxury-box p-4 p-md-5 position-relative overflow-hidden">
         {/* Holographic Orb (Component G in PDF) */}
         <div
           className="orb-holographic top-0 end-0 translate-middle-y"
@@ -51,7 +45,7 @@ export default function ManifiestoEscenico() {
               <span>FILOSOFÍA DEL ATELIER</span>
             </div>
 
-            <h2 className="font-italiana text-white fs-1 mb-4 lh-sm">
+            <h2 className="font-italiana text-text fs-1 mb-4 lh-sm">
               La estampería como lenguaje de identidad, arte y presencia escénica.
             </h2>
 

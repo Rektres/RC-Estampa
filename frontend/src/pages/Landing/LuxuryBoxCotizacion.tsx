@@ -32,7 +32,7 @@ export default function LuxuryBoxCotizacion() {
               <span>COTIZADOR DE ALTA GAMA</span>
             </div>
 
-            <h2 className="font-italiana fs-1 text-white mb-3 lh-sm">
+            <h2 className="font-italiana fs-1 text-text mb-3 lh-sm">
               ¿Requieres una producción personalizada para tu marca o evento?
             </h2>
 
@@ -57,7 +57,7 @@ export default function LuxuryBoxCotizacion() {
           </div>
 
           <div className="col-12 col-lg-6">
-            <div className="p-4 p-md-5 rounded-4 bg-surface border border-primary-30 shadow-xl">
+            <div className="p-4 p-md-5 rounded-4 bg-card border border-primary-30 shadow-xl">
               <h3 className="font-italiana fs-4 text-text mb-4 text-center">
                 Configurador Rápido de Cotización
               </h3>

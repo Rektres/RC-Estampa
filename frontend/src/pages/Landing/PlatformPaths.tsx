@@ -60,9 +60,8 @@ export default function PlatformPaths() {
                 style={{ zIndex: 0 }}
               />
               <div
-                className="position-absolute top-0 start-0 w-100 h-100"
+                className="position-absolute top-0 start-0 w-100 h-100 platform-path-overlay"
                 style={{
-                  background: 'linear-gradient(180deg, rgba(7, 8, 20, 0.85) 0%, rgba(7, 8, 20, 0.96) 100%)',
                   zIndex: 1,
                 }}
               />
@@ -76,12 +75,12 @@ export default function PlatformPaths() {
                   >
                     {p.kicker}
                   </span>
-                  <div className="p-2 rounded-3 bg-surface border border-border">
+                  <div className="p-2 rounded-3 bg-card border border-border">
                     {p.icon}
                   </div>
                 </div>
 
-                <h3 className="font-italiana text-white fs-3 mb-3 whitespace-pre-line lh-sm">
+                <h3 className="font-italiana text-text fs-3 mb-3 whitespace-pre-line lh-sm">
                   {p.title}
                 </h3>
 

@@ -60,7 +60,7 @@ export default function Personalizado() {
             <span className="glyph">★</span>
             <span>SOLICITUD REGISTRADA CON ÉXITO</span>
           </div>
-          <h2 className="font-italiana text-white fs-1 mb-3">¡Solicitud Recibida en Atelier!</h2>
+          <h2 className="font-italiana text-text fs-1 mb-3">¡Solicitud Recibida en Atelier!</h2>
           <p className="font-montserrat text-muted mb-2">
             Código de seguimiento: <span className="text-primary fw-bold fs-5 font-montserrat">{numero}</span>
           </p>
@@ -89,7 +89,7 @@ export default function Personalizado() {
           <span className="glyph">★</span>
           <span>ATELIER DE PEDIDOS PERSONALIZADOS</span>
         </div>
-        <h1 className="font-italiana text-white fs-1 mb-2">Solicitud de Cotización a Medida</h1>
+        <h1 className="font-italiana text-text fs-1 mb-2">Solicitud de Cotización a Medida</h1>
         <p className="font-montserrat text-muted mx-auto" style={{ maxWidth: '34rem' }}>
           Cuéntanos sobre tu proyecto. Elaboramos cotizaciones personalizadas para marcas, producciones especiales, eventos y empresas.
         </p>

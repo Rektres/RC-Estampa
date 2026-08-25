@@ -3,12 +3,7 @@ import { Award, CheckCircle2, FileCheck } from 'lucide-react';
 export default function GarantiaModulo() {
   return (
     <section className="container-xxl py-5 my-3">
-      <div
-        className="bg-card border border-border rounded-4 p-4 p-md-5 ribbon-accent-left position-relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, rgba(15, 16, 38, 0.98) 0%, rgba(22, 24, 54, 0.92) 100%)',
-        }}
-      >
+      <div className="luxury-box ribbon-accent-left position-relative overflow-hidden">
         <div className="row align-items-center g-4">
           <div className="col-12 col-lg-8">
             <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -20,7 +15,7 @@ export default function GarantiaModulo() {
               </span>
             </div>
 
-            <h3 className="font-italiana fs-2 text-white mb-3">
+            <h3 className="font-italiana fs-2 text-text mb-3">
               Garantía de Fijación Inalterable & Certificación Textil
             </h3>
 

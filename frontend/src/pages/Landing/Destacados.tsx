@@ -86,11 +86,9 @@ export default function Destacados() {
       {/* Modal de Especificaciones Técnicas (Componente F de la Guía) */}
       {specProduct && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center px-3"
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center px-3 modal-backdrop-escenico"
           style={{
             zIndex: 1070,
-            backgroundColor: 'rgba(7, 8, 20, 0.85)',
-            backdropFilter: 'blur(12px)',
           }}
           onClick={() => setSpecProduct(null)}
         >
