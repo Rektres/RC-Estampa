@@ -22,13 +22,13 @@ $enable-negative-margins: true;
 // 3. Arquitectura de Tokens Dinámicos & Paleta Escénica Luxury
 // ===========================================================================
 :root {
-  // Capa 1: Tokens de Marca
+  // Capa 1: Tokens de Marca (Base)
   --brand-primary: #c9a84c;        // Oro emblemático RC Estampa
   --brand-secondary: #dfb755;      // Dorado medio para contrastes
   --brand-accent: #e6c66e;         // Tono de luz y brillo
   --brand-accent-cyan: #22d3ee;    // Láser cian para indicadores en vivo / badges activos
 
-  // Capa 2: Tokens de Superficie (Dark Mode nativo profundo)
+  // Capa 2: Tokens de Superficie (Dark Mode por defecto)
   --surface-base: #070814;         // Fondo principal escénico
   --surface-card: #0f1026;         // Tarjetas y paneles flotantes
   --surface-alt: #161836;          // Secciones alternadas y elevadas
@@ -61,6 +61,24 @@ $enable-negative-margins: true;
 
 // Adaptación de Bootstrap al esquema escénico Dark
 [data-bs-theme='dark'] {
+  --brand-primary: #c9a84c;
+  --brand-secondary: #dfb755;
+  --brand-accent: #e6c66e;
+  --brand-accent-cyan: #22d3ee;
+
+  --surface-base: #070814;
+  --surface-card: #0f1026;
+  --surface-alt: #161836;
+
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-border-gold: rgba(201, 168, 76, 0.25);
+  --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  --card-shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.65);
+
+  --text-main: #f0ede8;
+  --text-muted: #9a9a9a;
+  --text-ghost: #5a5a68;
+
   --bs-body-bg: var(--surface-base);
   --bs-body-color: var(--text-main);
   --bs-border-color: var(--card-border);
@@ -83,6 +101,48 @@ $enable-negative-margins: true;
   --bs-form-control-border-color: var(--card-border);
 }
 
+// Adaptación de Bootstrap al esquema escénico Light (Luxury Alabaster & Warm Gold)
+[data-bs-theme='light'] {
+  --brand-primary: #b8933d;        // Oro con alto contraste para legibilidad en fondos claros
+  --brand-secondary: #c9a84c;
+  --brand-accent: #8c6e28;
+  --brand-accent-cyan: #0891b2;
+
+  --surface-base: #faf8f5;         // Alabastro cálido pergamino
+  --surface-card: #ffffff;         // Blanco marfil puro
+  --surface-alt: #f3efe6;          // Ostra beige suave
+
+  --card-border: rgba(18, 19, 36, 0.08);
+  --card-border-gold: rgba(184, 147, 61, 0.35);
+  --card-shadow: 0 10px 28px rgba(18, 19, 36, 0.06);
+  --card-shadow-hover: 0 16px 36px rgba(18, 19, 36, 0.12);
+
+  --text-main: #121324;            // Tinta obsidiana profunda
+  --text-muted: #585a6f;           // Grafito equilibrado
+  --text-ghost: #8f91a5;
+
+  --bs-body-bg: var(--surface-base);
+  --bs-body-color: var(--text-main);
+  --bs-border-color: var(--card-border);
+  --bs-secondary-color: var(--text-muted);
+  --bs-tertiary-color: var(--text-muted);
+  --bs-emphasis-color: var(--text-main);
+  --bs-tertiary-bg: var(--surface-alt);
+  --bs-secondary-bg: var(--surface-card);
+
+  --bs-card-bg: var(--surface-card);
+  --bs-modal-bg: var(--surface-card);
+  --bs-offcanvas-bg: var(--surface-card);
+  --bs-dropdown-bg: #ffffff;
+  --bs-dropdown-link-hover-bg: var(--surface-alt);
+  --bs-accordion-bg: transparent;
+  --bs-accordion-active-bg: var(--surface-alt);
+
+  --bs-form-control-bg: #ffffff;
+  --bs-form-control-color: var(--text-main);
+  --bs-form-control-border-color: var(--card-border);
+}
+
 body {
   background-color: var(--surface-base);
   color: var(--text-main);
@@ -90,6 +150,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 // ===========================================================================
@@ -143,6 +204,12 @@ p {
     background: linear-gradient(135deg, #ffffff 0%, var(--brand-primary) 50%, var(--brand-accent) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+
+    [data-bs-theme='light'] & {
+      background: linear-gradient(135deg, #121324 0%, #a8873a 50%, #c9a84c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
   }
 }
 
@@ -163,6 +230,12 @@ p {
   border-radius: 999px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+
+  [data-bs-theme='light'] & {
+    background: rgba(184, 147, 61, 0.1);
+    border-color: rgba(184, 147, 61, 0.35);
+    color: #8c6e28;
+  }
 
   .glyph {
     color: var(--brand-accent);
@@ -277,6 +350,16 @@ p {
     background: rgba(7, 8, 20, 0.92) !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   }
+
+  [data-bs-theme='light'] & {
+    background: rgba(250, 248, 245, 0.82) !important;
+    border-bottom: 1px solid rgba(18, 19, 36, 0.08) !important;
+
+    &.scrolled {
+      background: rgba(250, 248, 245, 0.96) !important;
+      box-shadow: 0 8px 24px rgba(18, 19, 36, 0.07);
+    }
+  }
 }
 
 // 5.7 Stage Card (Catálogo Técnico)
@@ -291,7 +374,7 @@ p {
   &:hover {
     transform: translateY(-4px);
     border-color: rgba(201, 168, 76, 0.45);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    box-shadow: var(--card-shadow-hover);
 
     .stage-card-img {
       transform: scale(1.04);
@@ -312,6 +395,12 @@ p {
   box-shadow: var(--card-shadow);
   position: relative;
   overflow: hidden;
+
+  [data-bs-theme='light'] & {
+    background: linear-gradient(135deg, #ffffff 0%, #f7f4ed 100%) !important;
+    border-color: rgba(184, 147, 61, 0.35) !important;
+    box-shadow: 0 12px 32px rgba(18, 19, 36, 0.06);
+  }
 }
 
 // ===========================================================================
@@ -376,6 +465,17 @@ $rc-solid: (
     box-shadow: 0 8px 24px rgba(201, 168, 76, 0.35);
     color: #070814 !important;
   }
+
+  [data-bs-theme='light'] & {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #c9a84c 0%, #b8933d 60%, #9a7627 100%) !important;
+    border-color: rgba(184, 147, 61, 0.5) !important;
+
+    &:hover {
+      background: linear-gradient(135deg, #dfb755 0%, #c9a84c 60%, #a8873a 100%) !important;
+      color: #ffffff !important;
+    }
+  }
 }
 
 // Botón Secundario Glass
@@ -433,6 +533,23 @@ $rc-solid: (
     color: #070814;
     border-color: var(--brand-primary);
     box-shadow: 0 4px 16px rgba(201, 168, 76, 0.25);
+  }
+
+  [data-bs-theme='light'] & {
+    background: #ffffff;
+    border-color: rgba(18, 19, 36, 0.12);
+    color: #585a6f;
+
+    &:hover {
+      border-color: #b8933d;
+      color: #121324;
+    }
+
+    &.active {
+      background: linear-gradient(135deg, #dfb755 0%, #b8933d 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 16px rgba(184, 147, 61, 0.25);
+    }
   }
 }
 

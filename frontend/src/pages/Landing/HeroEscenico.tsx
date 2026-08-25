@@ -120,8 +120,8 @@ export default function HeroEscenico() {
                 {/* Hero Feature Image */}
                 <div className="position-relative rounded-3 overflow-hidden mb-3" style={{ height: '340px' }}>
                   <img
-                    src="https://images.pexels.com/photos/4210846/pexels-photo-4210846.jpeg?auto=compress&cs=tinysrgb&w=800"
-                    alt="Estampado textil de alta gama"
+                    src="https://images.pexels.com/photos/8532616/pexels-photo-8532616.jpeg?auto=compress&cs=tinysrgb&w=800"
+                    alt="Polera Oversize Escénica de alta gama"
                     className="w-100 h-100 object-fit-cover stage-card-img"
                   />
                   <div

@@ -10,7 +10,7 @@ export default function PlatformPaths() {
       to: '/catalogo?linea=urbana',
       cta: 'Ver Colección Urbana',
       icon: <Flame size={22} className="text-primary" />,
-      bg: 'https://images.pexels.com/photos/1656684/pexels-photo-1656684.jpeg?auto=compress&cs=tinysrgb&w=800',
+      bg: 'https://images.pexels.com/photos/8532616/pexels-photo-8532616.jpeg?auto=compress&cs=tinysrgb&w=800',
     },
     {
       kicker: 'PROYECTOS & EMPRESAS',
@@ -28,7 +28,7 @@ export default function PlatformPaths() {
       to: '/drinkware',
       cta: 'Explorar Drinkware',
       icon: <Wine size={22} className="text-primary" />,
-      bg: 'https://images.pexels.com/photos/1793035/pexels-photo-1793035.jpeg?auto=compress&cs=tinysrgb&w=800',
+      bg: 'https://images.pexels.com/photos/4009402/pexels-photo-4009402.jpeg?auto=compress&cs=tinysrgb&w=800',
     },
   ];
 

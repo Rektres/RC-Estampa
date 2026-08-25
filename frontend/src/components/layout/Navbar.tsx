@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, User, Search, Menu, X, Sparkles } from 'lucide-react';
+import { ShoppingBag, User, Search, Menu, X, Sparkles, Sun, Moon } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -11,6 +12,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const { itemCount, toggleCart } = useCartStore();
   const { isAuthenticated, user } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
   const location = useLocation();
   const count = itemCount();
@@ -126,6 +128,18 @@ export default function Navbar() {
               >
                 <Search size={19} />
               </button>
+              <button
+                onClick={toggleTheme}
+                className="btn btn-link p-2 text-muted text-decoration-none hover-lift"
+                aria-label={`Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`}
+                title={`Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`}
+              >
+                {theme === 'dark' ? (
+                  <Sun size={19} className="text-primary" />
+                ) : (
+                  <Moon size={19} className="text-primary" />
+                )}
+              </button>
               <Link
                 to={isAuthenticated ? '/perfil' : '/auth'}
                 className="p-2 text-muted text-decoration-none d-none d-sm-flex align-items-center justify-content-center hover-lift"
@@ -196,15 +210,26 @@ export default function Navbar() {
           className="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column d-md-none"
           style={{
             zIndex: 1029,
-            backgroundColor: 'rgba(7, 8, 20, 0.96)',
+            backgroundColor: 'var(--surface-base)',
+            opacity: 0.98,
             backdropFilter: 'blur(25px)',
             WebkitBackdropFilter: 'blur(25px)',
             paddingTop: '5rem',
           }}
         >
           <div className="d-flex flex-column p-4 gap-2">
-            <div className="eyebrow-badge mb-3 align-self-start">
-              <span className="glyph">★</span> MENÚ DE NAVEGACIÓN
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <div className="eyebrow-badge">
+                <span className="glyph">★</span> MENÚ DE NAVEGACIÓN
+              </div>
+              <button
+                onClick={toggleTheme}
+                className="btn btn-sm btn-outline-primary rounded-pill d-flex align-items-center gap-2 px-3 py-1 font-montserrat"
+                style={{ fontSize: '0.75rem' }}
+              >
+                {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+                <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
+              </button>
             </div>
             {links.map((link) => (
               <NavLink
