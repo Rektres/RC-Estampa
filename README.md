@@ -64,6 +64,22 @@ docker compose exec backend python manage.py createsuperuser
 
 Detener: `docker compose down` (agrega `-v` para borrar base de datos y media).
 
+### Servidor con el puerto 80 ocupado
+
+Solo el servicio `frontend` publica un puerto; el `backend` y la `db` quedan en la red interna
+(nginx alcanza el backend con `proxy_pass http://backend:8000`). Para moverlo, en el `.env`:
+
+```
+FRONTEND_PORT=8080
+ALLOWED_HOSTS=<IP_PUBLICA>
+CSRF_TRUSTED_ORIGINS=http://<IP_PUBLICA>:8080
+CORS_ALLOWED_ORIGINS=http://<IP_PUBLICA>:8080
+```
+
+`docker compose ps` debe mostrar `0.0.0.0:8080->80/tcp`: el **80 de la derecha es fijo** (donde
+escucha nginx dentro del contenedor); solo cambia el de la izquierda. Recuerda abrir el puerto en
+el firewall del sistema (`sudo ufw allow 8080/tcp`) **y** en el del proveedor de nube.
+
 ## Desarrollo local (sin Docker)
 
 **Backend** (usa SQLite si no hay variables `POSTGRES_*` en el entorno):
@@ -96,6 +112,7 @@ Ver `.env.example`. Claves principales:
 
 | Variable | Descripción |
 |----------|-------------|
+| `FRONTEND_PORT` | Puerto público del sitio en el host (por defecto `80`) |
 | `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS` | Configuración de Django |
 | `POSTGRES_DB/USER/PASSWORD/HOST/PORT` | Conexión Postgres (si faltan, Django usa SQLite) |
 | `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS` | Orígenes del frontend |

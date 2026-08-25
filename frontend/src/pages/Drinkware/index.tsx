@@ -61,13 +61,17 @@ export default function Drinkware() {
   return (
     <div className="container py-5">
       <div className="mb-5">
-        <div className="d-flex align-items-center gap-2 font-montserrat text-muted mb-2" style={{ fontSize: '0.75rem' }}>
+        <div className="d-flex align-items-center gap-2 font-montserrat text-muted mb-3" style={{ fontSize: '0.75rem' }}>
           <a href="/" className="text-muted text-decoration-none">Inicio</a>
           <span>/</span>
           <span className="text-text">Drinkware</span>
         </div>
-        <h1 className="font-italiana text-text mb-1" style={{ fontSize: '3rem' }}>Drinkware</h1>
-        <p className="font-montserrat small text-muted mb-0">Estampado en cada sorbo</p>
+        <div className="eyebrow-badge mb-2">
+          <span className="glyph">★</span>
+          <span>DRINKWARE & VAJILLA TÉRMICA</span>
+        </div>
+        <h1 className="font-italiana text-text mb-1" style={{ fontSize: '3rem' }}>Drinkware Atelier</h1>
+        <p className="font-montserrat small text-muted mb-0">Botellas térmicas, mugs y vasos con grabado térmico de alta adherencia.</p>
       </div>
 
       <div className="d-flex" style={{ gap: '2rem' }}>

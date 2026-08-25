@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Eye, Sparkles } from 'lucide-react';
 import LineaBadge from './LineaBadge';
 import { formatPrice } from '../../utils';
 import type { Producto, ProductoVajilla, VarianteProducto } from '../../types';
@@ -9,13 +9,14 @@ import { useCartStore } from '../../store/cartStore';
 type Props = {
   producto: Producto | ProductoVajilla;
   prefixPath?: string;
+  onOpenSpecs?: (producto: Producto | ProductoVajilla) => void;
 };
 
 function isVajilla(p: Producto | ProductoVajilla): p is ProductoVajilla {
   return p.linea === 'drinkware';
 }
 
-export default function HoverSwapCard({ producto, prefixPath }: Props) {
+export default function HoverSwapCard({ producto, prefixPath, onOpenSpecs }: Props) {
   const [hovered, setHovered] = useState(false);
   const touchCount = useRef(0);
   const { openCart, addItem } = useCartStore();
@@ -72,97 +73,129 @@ export default function HoverSwapCard({ producto, prefixPath }: Props) {
     openCart();
   }
 
-  return (
-    <Link
-      to={`${path}/${producto.slug}`}
-      className="d-block bg-card border border-border rounded overflow-hidden"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onTouchEnd={handleTouch}
-    >
-      {/* Image container — aspect 3/4 */}
-      <div className="position-relative overflow-hidden bg-elevated" style={{ aspectRatio: '3/4' }}>
-        {/* Front image */}
-        {frente && (
-          <img
-            src={frente.imagen}
-            alt={producto.nombre}
-            className="position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
-            style={{ opacity: hovered && reverso ? 0 : 1, transition: 'opacity 300ms ease' }}
-          />
-        )}
-        {/* Reverse image */}
-        {reverso && (
-          <img
-            src={reverso.imagen}
-            alt={`${producto.nombre} — reverso`}
-            className="position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
-            style={{ opacity: hovered ? 1 : 0, transition: 'opacity 300ms ease' }}
-          />
-        )}
+  function handleSpecs(e: React.MouseEvent) {
+    if (onOpenSpecs) {
+      e.preventDefault();
+      e.stopPropagation();
+      onOpenSpecs(producto);
+    }
+  }
 
-        {/* Hover overlay with price + quick add */}
-        <div
-          className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end p-2"
-          style={{ opacity: hovered ? 1 : 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)', transition: 'opacity 0.25s ease' }}
-        >
-          <div className="d-flex align-items-end justify-content-between gap-2">
-            <div>
-              <p className="font-montserrat fw-bold text-text small">
-                {formatPrice(producto.precio_oferta ?? producto.precio)}
-              </p>
-              {!isVajilla(producto) && (
-                <p className="font-montserrat text-muted" style={{ fontSize: '0.75rem', marginTop: '0.125rem' }}>
-                  {[...new Set((producto as Producto).variantes.filter((v) => v.stock > 0).map((v) => v.talla))].join(' · ')}
-                </p>
+  return (
+    <div className="stage-card h-100 d-flex flex-column">
+      <Link
+        to={`${path}/${producto.slug}`}
+        className="d-flex flex-column text-decoration-none h-100"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onTouchEnd={handleTouch}
+      >
+        {/* Image container — aspect 3/4 */}
+        <div className="position-relative overflow-hidden bg-elevated" style={{ aspectRatio: '3/4' }}>
+          {/* Front image */}
+          {frente && (
+            <img
+              src={frente.imagen}
+              alt={producto.nombre}
+              className="position-absolute top-0 start-0 w-100 h-100 object-fit-cover stage-card-img"
+              style={{ opacity: hovered && reverso ? 0 : 1, transition: 'opacity 350ms ease, transform 500ms ease' }}
+            />
+          )}
+          {/* Reverse image */}
+          {reverso && (
+            <img
+              src={reverso.imagen}
+              alt={`${producto.nombre} — reverso`}
+              className="position-absolute top-0 start-0 w-100 h-100 object-fit-cover stage-card-img"
+              style={{ opacity: hovered ? 1 : 0, transition: 'opacity 350ms ease, transform 500ms ease' }}
+            />
+          )}
+
+          {/* Dark satin bottom overlay */}
+          <div
+            className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end p-3"
+            style={{
+              opacity: hovered ? 1 : 0,
+              background: 'linear-gradient(to top, rgba(7,8,20,0.92) 0%, rgba(7,8,20,0.4) 45%, transparent 100%)',
+              transition: 'opacity 0.25s ease',
+            }}
+          >
+            <div className="d-flex align-items-center justify-content-between gap-2">
+              {onOpenSpecs && (
+                <button
+                  onClick={handleSpecs}
+                  className="btn btn-secondary btn-sm py-1 px-2 d-flex align-items-center gap-1 font-montserrat"
+                  style={{ fontSize: '0.7rem' }}
+                >
+                  <Eye size={13} />
+                  <span>Especificaciones</span>
+                </button>
               )}
+              <button
+                onClick={handleQuickAdd}
+                className="btn btn-primary btn-sm p-2 d-flex align-items-center justify-content-center rounded-3 ms-auto"
+                aria-label="Agregar al carrito"
+                title="Agregar al carrito"
+              >
+                <ShoppingBag size={15} />
+              </button>
             </div>
-            <button
-              onClick={handleQuickAdd}
-              className="bg-primary text-black rounded p-2 flex-shrink-0"
-              aria-label="Agregar al carrito"
-            >
-              <ShoppingBag size={16} />
-            </button>
+          </div>
+
+          {/* Badges */}
+          <div className="position-absolute d-flex flex-column gap-1" style={{ top: '0.65rem', left: '0.65rem' }}>
+            <LineaBadge linea={producto.linea} size="xs" />
+            {producto.nuevo && (
+              <span
+                className="font-montserrat fw-bold text-uppercase bg-primary-10 text-primary border border-primary-30 rounded-pill d-inline-flex align-items-center gap-1"
+                style={{ fontSize: '9px', letterSpacing: '0.08em', padding: '0.15rem 0.45rem', backdropFilter: 'blur(6px)' }}
+              >
+                <Sparkles size={10} /> NUEVO
+              </span>
+            )}
+            {producto.precio_oferta && (
+              <span
+                className="font-montserrat fw-bold text-uppercase text-white rounded-pill"
+                style={{
+                  fontSize: '9px',
+                  letterSpacing: '0.08em',
+                  padding: '0.15rem 0.45rem',
+                  backgroundColor: 'rgba(220, 38, 38, 0.85)',
+                  backdropFilter: 'blur(6px)',
+                }}
+              >
+                OFERTA
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Badges */}
-        <div className="position-absolute d-flex flex-column gap-1" style={{ top: '0.5rem', left: '0.5rem' }}>
-          <LineaBadge linea={producto.linea} size="xs" />
-          {producto.nuevo && (
-            <span className="font-montserrat fw-bold text-uppercase bg-primary-20 text-primary border border-primary-30 rounded-pill" style={{ fontSize: '10px', letterSpacing: '0.05em', padding: '0.125rem 0.375rem' }}>
-              Nuevo
-            </span>
-          )}
-          {producto.precio_oferta && (
-            <span className="font-montserrat fw-bold text-uppercase text-danger border rounded-pill" style={{ fontSize: '10px', letterSpacing: '0.05em', padding: '0.125rem 0.375rem', backgroundColor: 'rgba(127,29,29,0.3)', borderColor: 'rgba(153,27,27,0.3)' }}>
-              Oferta
-            </span>
-          )}
-        </div>
+        {/* Info Box */}
+        <div className="p-3 d-flex flex-column justify-content-between flex-grow-1">
+          <div>
+            <p className="font-montserrat fw-semibold text-text small mb-1 text-truncate lh-sm">
+              {producto.nombre}
+            </p>
+            {!isVajilla(producto) && (
+              <span className="font-montserrat text-muted d-block text-truncate" style={{ fontSize: '0.72rem' }}>
+                Tallas: {[...new Set((producto as Producto).variantes.filter((v) => v.stock > 0).map((v) => v.talla))].join(' · ') || 'Consultar'}
+              </span>
+            )}
+          </div>
 
-        {/* Scale on hover */}
-        <div
-          className="position-absolute top-0 start-0 w-100 h-100 pe-none"
-          style={{ transform: hovered ? 'scale(1.01)' : 'scale(1)', transition: 'transform 250ms ease' }}
-        />
-      </div>
-
-      {/* Info */}
-      <div className="p-2">
-        <p className="font-montserrat fw-medium text-text small text-truncate">{producto.nombre}</p>
-        <div className="d-flex align-items-center gap-2 mt-1">
-          <span className="font-montserrat fw-bold small text-primary">
-            {formatPrice(producto.precio_oferta ?? producto.precio)}
-          </span>
-          {producto.precio_oferta && (
-            <span className="font-montserrat text-ghost text-decoration-line-through" style={{ fontSize: '0.75rem' }}>
-              {formatPrice(producto.precio)}
+          <div className="d-flex align-items-baseline gap-2 mt-2 pt-2 border-top border-border">
+            <span className="font-montserrat fw-bold text-primary" style={{ fontSize: '0.95rem' }}>
+              {formatPrice(producto.precio_oferta ?? producto.precio)}
             </span>
-          )}
+            {producto.precio_oferta && (
+              <span className="font-montserrat text-ghost text-decoration-line-through" style={{ fontSize: '0.75rem' }}>
+                {formatPrice(producto.precio)}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 }
+

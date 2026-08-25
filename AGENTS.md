@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Arquitectura general
 
@@ -52,6 +52,5 @@ Stack completo: `docker compose up --build` (requiere `.env` — copiar de `.env
 
 - `backend/Dockerfile` (python:3.12-slim, gunicorn; `entrypoint.sh` corre migrate + collectstatic + seed). `frontend/Dockerfile` (multi-stage node:20 build → nginx:alpine con `nginx.conf`: fallback SPA `try_files … /index.html` + proxy a backend).
 - `.gitattributes` fuerza **LF** en `*.sh` (evita que `entrypoint.sh` falle con CRLF en el contenedor).
-- **Solo `frontend` publica puerto** (`${FRONTEND_PORT:-80}:80`); `backend` y `db` viven en la red interna. El lado derecho del mapeo es fijo (nginx escucha en 80 dentro del contenedor); para servidores con el 80 ocupado se cambia `FRONTEND_PORT` en el `.env`, junto con `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`/`CORS_ALLOWED_ORIGINS`.
 - Volumen `media` compartido: el backend escribe los PNG de diseño y el nginx del frontend los sirve en `/media/`.
 - El pago (checkout) es un **stub** (sin pasarela real). Precios de diseños personalizados quedan "a cotizar".

@@ -73,14 +73,21 @@ export default function Catalogo() {
     <div className="container py-5">
       {/* Header */}
       <div className="mb-5">
-        <div className="d-flex align-items-center gap-2 font-montserrat text-muted mb-2" style={{ fontSize: '0.75rem' }}>
+        <div className="d-flex align-items-center gap-2 font-montserrat text-muted mb-3" style={{ fontSize: '0.75rem' }}>
           <a href="/" className="text-muted text-decoration-none">Inicio</a>
           <span>/</span>
           <span className="text-text">Catálogo</span>
         </div>
-        <h1 className="font-italiana text-text mb-2" style={{ fontSize: '3rem' }}>Catálogo</h1>
+        <div className="eyebrow-badge mb-2">
+          <span className="glyph">★</span>
+          <span>COLECCIÓN TEXTIL</span>
+        </div>
+        <h1 className="font-italiana text-text mb-2" style={{ fontSize: '3rem' }}>Catálogo de Ropa</h1>
+        <p className="font-montserrat small text-muted mb-0">
+          Prendas confeccionadas en algodón peinado y mezclas premium con terminaciones en DTF y serigrafía.
+        </p>
         {q && (
-          <p className="font-montserrat small text-muted mb-0">
+          <p className="font-montserrat small text-primary mt-2 mb-0">
             Resultados para "<span className="text-text">{q}</span>"
           </p>
         )}

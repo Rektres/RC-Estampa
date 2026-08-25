@@ -1,67 +1,83 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Twitter, Facebook, MessageCircle } from 'lucide-react';
+import { Instagram, Facebook, MessageCircle, ShieldCheck, Sparkles, Clock, MapPin } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-card border-top border-border" style={{ marginTop: '6rem' }}>
-      <div className="container" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
+    <footer className="bg-card border-top border-border position-relative" style={{ marginTop: '7rem' }}>
+      {/* Dynamic top gradient line */}
+      <div
+        className="position-absolute top-0 start-0 end-0"
+        style={{ height: '2px', background: 'linear-gradient(90deg, transparent 0%, var(--brand-primary) 50%, transparent 100%)' }}
+      />
+
+      <div className="container-xxl" style={{ paddingTop: '4.5rem', paddingBottom: '3.5rem' }}>
         <div className="row g-5">
-          {/* Brand */}
-          <div className="col-12 col-md-4">
+          {/* Columna 1: Brand & Manifesto */}
+          <div className="col-12 col-md-6 col-lg-3">
             <div className="d-flex align-items-center gap-3 mb-3">
               <img
                 src="/Logo_RCEstampa.png"
                 alt="RC Estampa"
-                className="rounded-circle object-fit-cover"
-                style={{ width: '2.5rem', height: '2.5rem' }}
+                className="rounded-circle object-fit-cover border border-primary-30"
+                style={{ width: '2.75rem', height: '2.75rem' }}
               />
-              <span className="font-italiana fs-3 text-text">RC Estampa</span>
+              <div>
+                <span className="font-italiana fs-3 text-text d-block lh-1">RC Estampa</span>
+                <span className="font-montserrat text-muted text-uppercase" style={{ fontSize: '0.6rem', letterSpacing: '0.15em' }}>
+                  Atelier & Estampados
+                </span>
+              </div>
             </div>
-            <p className="font-montserrat small text-muted lh-lg mb-4">
-              Estampado premium en ropa y drinkware. Diseños únicos que cuentan tu historia.
+            <p className="font-montserrat small text-muted lh-base mb-4">
+              Alta estampería textil y drinkware con estándares escénicos. Fusión de técnicas contemporáneas y acabados duraderos para marcas, eventos y creadores.
             </p>
             <div className="d-flex gap-3">
-              <a href="#" className="text-muted text-decoration-none" aria-label="Instagram">
-                <Instagram size={18} />
+              <a
+                href="#"
+                className="p-2 rounded-circle bg-elevated border border-border text-muted text-decoration-none hover-lift"
+                aria-label="Instagram"
+              >
+                <Instagram size={17} />
               </a>
-              <a href="#" className="text-muted text-decoration-none" aria-label="Facebook">
-                <Facebook size={18} />
-              </a>
-              <a href="#" className="text-muted text-decoration-none" aria-label="Twitter">
-                <Twitter size={18} />
+              <a
+                href="#"
+                className="p-2 rounded-circle bg-elevated border border-border text-muted text-decoration-none hover-lift"
+                aria-label="Facebook"
+              >
+                <Facebook size={17} />
               </a>
               <a
                 href="https://wa.me/56944830378"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted text-decoration-none"
+                className="p-2 rounded-circle bg-elevated border border-border text-primary text-decoration-none hover-lift"
                 aria-label="WhatsApp"
               >
-                <MessageCircle size={18} />
+                <MessageCircle size={17} />
               </a>
             </div>
           </div>
 
-          {/* Navigation */}
-          <div className="col-12 col-md-4">
+          {/* Columna 2: Catálogo & Líneas */}
+          <div className="col-6 col-md-6 col-lg-3">
             <h4
-              className="font-montserrat fw-semibold small text-uppercase text-muted mb-4"
-              style={{ letterSpacing: '0.05em' }}
+              className="font-montserrat fw-semibold small text-uppercase text-primary mb-4 d-flex align-items-center gap-2"
+              style={{ letterSpacing: '0.08em' }}
             >
-              Navegación
+              <Sparkles size={14} /> Colecciones
             </h4>
-            <ul className="list-unstyled d-flex flex-column gap-2">
+            <ul className="list-unstyled d-flex flex-column gap-2 mb-0">
               {[
-                { to: '/', label: 'Inicio' },
-                { to: '/catalogo', label: 'Catálogo Ropa' },
-                { to: '/drinkware', label: 'Drinkware' },
-                { to: '/disenar', label: 'Diseña el tuyo' },
-                { to: '/personalizado', label: 'Pedido Personalizado' },
+                { to: '/catalogo?linea=urbana', label: 'Línea Urbana (Streetwear)' },
+                { to: '/catalogo?linea=formal', label: 'Línea Formal & Premium' },
+                { to: '/drinkware', label: 'Drinkware & Accesorios' },
+                { to: '/disenar', label: 'Editor de Canvas en Vivo' },
+                { to: '/personalizado', label: 'Cotización para Empresas' },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="font-montserrat small text-muted text-decoration-none"
+                    className="font-montserrat small text-muted text-decoration-none d-inline-block hover-lift"
                   >
                     {link.label}
                   </Link>
@@ -70,49 +86,72 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
-          <div className="col-12 col-md-4">
+          {/* Columna 3: Taller & Estándares */}
+          <div className="col-6 col-md-6 col-lg-3">
             <h4
-              className="font-montserrat fw-semibold small text-uppercase text-muted mb-4"
-              style={{ letterSpacing: '0.05em' }}
+              className="font-montserrat fw-semibold small text-uppercase text-primary mb-4 d-flex align-items-center gap-2"
+              style={{ letterSpacing: '0.08em' }}
             >
-              Contacto
+              <ShieldCheck size={14} /> Garantía Escénica
             </h4>
-            <ul className="list-unstyled d-flex flex-column gap-2">
+            <ul className="list-unstyled d-flex flex-column gap-2 mb-0 font-montserrat small text-muted">
+              <li>• DTF Textil Ultra HD y Serigrafía</li>
+              <li>• Tintas ecológicas OEKO-TEX®</li>
+              <li>• Curado térmico de máxima adherencia</li>
+              <li>• Envíos a todo Chile con seguimiento</li>
+              <li>• Asesoría directa en diseño</li>
+            </ul>
+          </div>
+
+          {/* Columna 4: Contacto & Horarios */}
+          <div className="col-12 col-md-6 col-lg-3">
+            <h4
+              className="font-montserrat fw-semibold small text-uppercase text-primary mb-4 d-flex align-items-center gap-2"
+              style={{ letterSpacing: '0.08em' }}
+            >
+              <Clock size={14} /> Atención Directa
+            </h4>
+            <ul className="list-unstyled d-flex flex-column gap-3 mb-0 font-montserrat small text-muted">
               <li>
                 <a
                   href="https://wa.me/56944830378"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-montserrat small text-muted text-decoration-none d-flex align-items-center gap-2"
+                  className="text-text text-decoration-none d-flex align-items-center gap-2 hover-lift"
                 >
-                  <MessageCircle size={14} />
+                  <MessageCircle size={16} className="text-primary" />
                   +56 9 4483 0378
                 </a>
               </li>
-              <li>
-                <p className="font-montserrat small text-muted">
-                  Lunes a Viernes: 9:00 — 18:00
-                </p>
+              <li className="d-flex align-items-start gap-2">
+                <Clock size={16} className="text-primary flex-shrink-0 mt-1" />
+                <div>
+                  <div>Lun a Vie: 9:00 — 18:00 hrs</div>
+                  <div className="text-ghost">Sáb: 10:00 — 14:00 hrs</div>
+                </div>
               </li>
-              <li>
-                <p className="font-montserrat small text-muted">
-                  Sábado: 10:00 — 14:00
-                </p>
+              <li className="d-flex align-items-center gap-2">
+                <MapPin size={16} className="text-primary flex-shrink-0" />
+                <span>Chile — Despacho nacional</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-top border-border pt-5 d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3" style={{ marginTop: '3rem' }}>
-          <p className="font-montserrat text-ghost" style={{ fontSize: '0.75rem' }}>
-            © 2025 RC Estampa. Todos los derechos reservados.
+        {/* Footer bottom */}
+        <div
+          className="border-top border-border pt-4 mt-5 d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3"
+        >
+          <p className="font-montserrat text-ghost mb-0 text-center text-sm-start" style={{ fontSize: '0.78rem' }}>
+            © {new Date().getFullYear()} RC Estampa. Sistema de Diseño Escénico v2.0. Todos los derechos reservados.
           </p>
-          <p className="font-montserrat text-ghost" style={{ fontSize: '0.75rem' }}>
-            Desarrollado por Mateo Araneda Medina
-          </p>
+          <div className="d-flex align-items-center gap-2 text-ghost font-montserrat" style={{ fontSize: '0.78rem' }}>
+            <span className="live-dot live-dot-gold" style={{ width: '6px', height: '6px' }} />
+            <span>Taller Operativo en Línea</span>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
+
