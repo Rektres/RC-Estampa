@@ -18,6 +18,11 @@ class Pedido(models.Model):
         ('cancelado', 'Cancelado'),
     )
 
+    METODOS_PAGO = (
+        ('mercadopago', 'Mercado Pago'),
+        ('transferencia', 'Transferencia Bancaria'),
+    )
+
     numero = models.CharField(max_length=20, unique=True, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
@@ -32,6 +37,11 @@ class Pedido(models.Model):
     notas = models.TextField(blank=True)
     total = models.PositiveIntegerField(default=0)
     estado = models.CharField(max_length=15, choices=ESTADOS, default='pendiente')
+    metodo_pago = models.CharField(max_length=20, choices=METODOS_PAGO, default='mercadopago')
+    transaccion_id = models.CharField(max_length=100, blank=True)
+    url_pago = models.TextField(blank=True)
+    pagado_en = models.DateTimeField(null=True, blank=True)
+    datos_pago_raw = models.JSONField(default=dict, blank=True)
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

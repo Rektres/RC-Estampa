@@ -49,6 +49,7 @@ export interface PedidoInput {
   region: string;
   notas?: string;
   total: number;
+  metodo_pago?: 'mercadopago' | 'transferencia';
   items: PedidoItemInput[];
 }
 
@@ -56,6 +57,11 @@ export interface Pedido extends PedidoInput {
   id: number;
   numero: string;
   estado: string;
+  metodo_pago: 'mercadopago' | 'transferencia';
+  payment_url?: string;
+  url_pago?: string;
+  transaccion_id?: string;
+  pagado_en?: string;
   creado_en: string;
 }
 

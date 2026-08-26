@@ -16,14 +16,16 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
 
 class PedidoSerializer(serializers.ModelSerializer):
     items = ItemPedidoSerializer(many=True)
+    payment_url = serializers.CharField(source='url_pago', read_only=True)
 
     class Meta:
         model = Pedido
         fields = (
             'id', 'numero', 'nombre', 'email', 'telefono', 'direccion',
-            'ciudad', 'region', 'notas', 'total', 'estado', 'creado_en', 'items',
+            'ciudad', 'region', 'notas', 'total', 'estado', 'metodo_pago',
+            'transaccion_id', 'url_pago', 'payment_url', 'pagado_en', 'creado_en', 'items',
         )
-        read_only_fields = ('id', 'numero', 'estado', 'creado_en')
+        read_only_fields = ('id', 'numero', 'estado', 'transaccion_id', 'url_pago', 'payment_url', 'pagado_en', 'creado_en')
 
     def create(self, validated_data):
         items = validated_data.pop('items', [])
@@ -32,6 +34,15 @@ class PedidoSerializer(serializers.ModelSerializer):
         pedido = Pedido.objects.create(user=user, **validated_data)
         for item in items:
             ItemPedido.objects.create(pedido=pedido, **item)
+
+        # Generar preferencia de Mercado Pago si el método es mercadopago
+        if pedido.metodo_pago == 'mercadopago' and pedido.total > 0:
+            from .services.mercadopago import crear_preferencia_mercadopago
+            init_point = crear_preferencia_mercadopago(pedido)
+            if init_point:
+                pedido.url_pago = init_point
+                pedido.save(update_fields=['url_pago'])
+
         return pedido
 
 

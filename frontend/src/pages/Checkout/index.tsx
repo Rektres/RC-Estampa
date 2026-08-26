@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ShoppingBag, ChevronRight, CreditCard } from 'lucide-react';
+import { ShoppingBag, ChevronRight, CreditCard, Building2, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
 import { formatPrice } from '../../utils';
@@ -26,6 +26,7 @@ const STEPS = ['Carrito', 'Datos de envío', 'Pago'];
 
 export default function Checkout() {
   const [step, setStep] = useState(1);
+  const [metodoPago, setMetodoPago] = useState<'mercadopago' | 'transferencia'>('mercadopago');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const { items, total, clearCart } = useCartStore();
   const { user } = useAuthStore();
@@ -66,6 +67,7 @@ export default function Checkout() {
       region: data.region,
       notas: data.notas,
       total: totalAmount,
+      metodo_pago: metodoPago,
       items: items.map((it) => ({
         tipo: it.tipo,
         nombre: it.nombre,
@@ -85,7 +87,13 @@ export default function Checkout() {
     try {
       const pedido = await pedidosApi.crear(payload);
       clearCart();
-      navigate(`/confirmacion?pedido_id=${pedido.numero}&email=${encodeURIComponent(data.email)}`);
+
+      // Si se seleccionó Mercado Pago y retornó URL de pago, redirigir al checkout pro
+      if (metodoPago === 'mercadopago' && pedido.payment_url) {
+        window.location.href = pedido.payment_url;
+      } else {
+        navigate(`/confirmacion?pedido_id=${pedido.numero}&email=${encodeURIComponent(data.email)}&metodo=${metodoPago}`);
+      }
     } catch {
       setSubmitError('No se pudo procesar el pedido. Intenta nuevamente.');
     }
@@ -222,27 +230,115 @@ export default function Checkout() {
           {/* Step 3 — Payment */}
           {step >= 3 && (
             <div className="bg-card border border-border rounded p-4">
-              <h2 className="font-montserrat fw-semibold text-text mb-4 d-flex align-items-center gap-2">
+              <h2 className="font-montserrat fw-semibold text-text mb-3 d-flex align-items-center gap-2">
                 <CreditCard size={18} className="text-primary" />
-                Pago seguro
+                Selecciona tu medio de pago
               </h2>
               <p className="font-montserrat text-muted mb-4" style={{ fontSize: '0.875rem' }}>
-                Serás redirigido a MercadoPago para completar tu compra de forma segura.
+                Todas las transacciones están protegidas con cifrado SSL de 256 bits y tecnología antifraude.
               </p>
+
+              {/* Selector de Medios de Pago */}
+              <div className="d-flex flex-column gap-3 mb-4">
+                {/* Opción 1: Mercado Pago */}
+                <label
+                  className={`p-3 rounded-3 border d-flex align-items-start gap-3 cursor-pointer transition-all ${
+                    metodoPago === 'mercadopago'
+                      ? 'border-primary bg-elevated'
+                      : 'border-border bg-card hover-lift'
+                  }`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <input
+                    type="radio"
+                    name="metodo_pago"
+                    value="mercadopago"
+                    checked={metodoPago === 'mercadopago'}
+                    onChange={() => setMetodoPago('mercadopago')}
+                    className="mt-1 flex-shrink-0"
+                  />
+                  <div className="flex-grow-1">
+                    <div className="d-flex align-items-center justify-content-between mb-1">
+                      <div className="d-flex align-items-center gap-2">
+                        <span className="font-montserrat fw-bold text-text" style={{ fontSize: '0.92rem' }}>
+                          Mercado Pago Checkout Pro
+                        </span>
+                        <span className="badge bg-primary text-black font-montserrat fw-bold" style={{ fontSize: '0.65rem' }}>
+                          RECOMENDADO
+                        </span>
+                      </div>
+                    </div>
+                    <p className="font-montserrat text-muted small mb-2" style={{ fontSize: '0.78rem' }}>
+                      Tarjetas de Crédito, Débito / Redcompra, Dinero en cuenta de Mercado Pago y financiamiento en cuotas.
+                    </p>
+                    <div className="d-flex align-items-center gap-2 flex-wrap text-muted" style={{ fontSize: '0.72rem' }}>
+                      <span className="badge bg-elevated text-text border border-border">Visa</span>
+                      <span className="badge bg-elevated text-text border border-border">Mastercard</span>
+                      <span className="badge bg-elevated text-text border border-border">Redcompra</span>
+                      <span className="badge bg-elevated text-text border border-border">Mach</span>
+                    </div>
+                  </div>
+                </label>
+
+                {/* Opción 2: Transferencia Bancaria */}
+                <label
+                  className={`p-3 rounded-3 border d-flex align-items-start gap-3 cursor-pointer transition-all ${
+                    metodoPago === 'transferencia'
+                      ? 'border-primary bg-elevated'
+                      : 'border-border bg-card hover-lift'
+                  }`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <input
+                    type="radio"
+                    name="metodo_pago"
+                    value="transferencia"
+                    checked={metodoPago === 'transferencia'}
+                    onChange={() => setMetodoPago('transferencia')}
+                    className="mt-1 flex-shrink-0"
+                  />
+                  <div className="flex-grow-1">
+                    <div className="d-flex align-items-center gap-2 mb-1">
+                      <Building2 size={16} className="text-muted" />
+                      <span className="font-montserrat fw-bold text-text" style={{ fontSize: '0.92rem' }}>
+                        Transferencia Bancaria Directa
+                      </span>
+                    </div>
+                    <p className="font-montserrat text-muted small mb-0" style={{ fontSize: '0.78rem' }}>
+                      Genera el pedido y transfiere directamente a nuestra cuenta corriente. Tu pedido entrará a producción al validar el comprobante.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
               {submitError && (
-                <div className="alert alert-danger py-2 font-montserrat" style={{ fontSize: '0.875rem' }}>{submitError}</div>
+                <div className="alert alert-danger py-2 font-montserrat mb-3" style={{ fontSize: '0.875rem' }}>
+                  {submitError}
+                </div>
               )}
+
               <button
                 onClick={handleSubmit(onSubmit)}
                 disabled={isSubmitting}
-                className="btn btn-primary w-100 py-3 d-flex align-items-center justify-content-center gap-2"
+                className="btn btn-primary w-100 py-3 d-flex align-items-center justify-content-center gap-2 font-montserrat fw-bold shadow-sm"
               >
-                <CreditCard size={18} />
-                {isSubmitting ? 'Procesando...' : 'Pagar con MercadoPago'}
+                {metodoPago === 'mercadopago' ? (
+                  <>
+                    <CreditCard size={18} />
+                    <span>{isSubmitting ? 'Conectando con Mercado Pago...' : 'Pagar con Mercado Pago'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Building2 size={18} />
+                    <span>{isSubmitting ? 'Confirmando pedido...' : 'Confirmar Pedido por Transferencia'}</span>
+                  </>
+                )}
               </button>
-              <p className="font-montserrat text-ghost text-center mt-3 mb-0" style={{ fontSize: '0.75rem' }}>
-                Transacción segura y encriptada
-              </p>
+
+              <div className="d-flex align-items-center justify-content-center gap-2 mt-3 text-muted" style={{ fontSize: '0.75rem' }}>
+                <ShieldCheck size={14} className="text-primary" />
+                <span>Transacción encriptada con garantía oficial RC Estampa</span>
+              </div>
             </div>
           )}
         </div>

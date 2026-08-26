@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Manual & Checklist Maestro de SEO, CRO y AI-Readiness para Sitios Web</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
+
+    @page {
+      size: A4;
+      margin: 12mm 12mm 12mm 12mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      color: #1a1a2e;
+      background-color: #ffffff;
+      line-height: 1.45;
+      font-size: 9pt;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .cover-header {
+      background: linear-gradient(135deg, #070814 0%, #161836 100%);
+      color: #ffffff;
+      padding: 22px 20px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #c9a84c;
+      position: relative;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      background: rgba(201, 168, 76, 0.18);
+      border: 1px solid #c9a84c;
+      color: #e6c66e;
+      font-size: 7.2pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 2px 8px;
+      border-radius: 99px;
+      margin-bottom: 8px;
+    }
+
+    h1.doc-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 17pt;
+      line-height: 1.15;
+      color: #ffffff;
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+
+    p.doc-subtitle {
+      color: #b0b2c8;
+      font-size: 8.8pt;
+      max-width: 92%;
+    }
+
+    .meta-bar {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      justify-content: space-between;
+      font-size: 7.5pt;
+      color: #dfb755;
+      font-weight: 600;
+    }
+
+    .section-block {
+      margin-bottom: 14px;
+      page-break-inside: avoid;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 11.5pt;
+      color: #070814;
+      border-bottom: 2px solid #c9a84c;
+      padding-bottom: 3px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-title span.tag {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 7pt;
+      font-weight: 700;
+      color: #8c6e28;
+      background: #fbf7ee;
+      border: 1px solid #e2cf9b;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .item-card {
+      background: #faf9f6;
+      border: 1px solid #e7e4dc;
+      border-left: 3px solid #c9a84c;
+      border-radius: 5px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      page-break-inside: avoid;
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+
+    .item-num-title {
+      font-weight: 700;
+      font-size: 9.2pt;
+      color: #0f1026;
+    }
+
+    .item-badge-status {
+      font-size: 6.8pt;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .badge-code {
+      background: #e8f4fd;
+      color: #0a66c2;
+      border: 1px solid #b3d7ff;
+    }
+
+    .badge-google {
+      background: #fef3d6;
+      color: #9a6b00;
+      border: 1px solid #f6d37d;
+    }
+
+    .badge-cro {
+      background: #e6f9ed;
+      color: #128241;
+      border: 1px solid #a3e9be;
+    }
+
+    .item-desc {
+      font-size: 8.3pt;
+      color: #4a4d64;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+
+    .item-how {
+      background: #ffffff;
+      border: 1px dashed #d5d1c5;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 7.8pt;
+      color: #2b2d42;
+    }
+
+    .item-how strong {
+      color: #a8873a;
+    }
+
+    .code-snippet {
+      font-family: 'Courier New', monospace;
+      background: #0f1026;
+      color: #e2e8f0;
+      padding: 5px 7px;
+      border-radius: 4px;
+      font-size: 7.2pt;
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    table.checklist-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 7.8pt;
+    }
+
+    table.checklist-table th {
+      background: #070814;
+      color: #ffffff;
+      text-align: left;
+      padding: 5px 6px;
+      font-weight: 600;
+      border: 1px solid #070814;
+    }
+
+    table.checklist-table td {
+      padding: 4.5px 6px;
+      border: 1px solid #e2ded5;
+      vertical-align: middle;
+    }
+
+    table.checklist-table tr:nth-child(even) {
+      background-color: #faf8f5;
+    }
+
+    .checkbox-box {
+      display: inline-block;
+      width: 11px;
+      height: 11px;
+      border: 1.2px solid #71758e;
+      border-radius: 2px;
+      margin-right: 3px;
+      vertical-align: middle;
+    }
+
+    .summary-box {
+      background: #f6f3eb;
+      border: 1px solid #d9cdb0;
+      border-radius: 6px;
+      padding: 9px 12px;
+      margin-top: 10px;
+      font-size: 7.8pt;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PORTADA / HEADER -->
+  <div class="cover-header">
+    <div class="cover-badge">Estándar Maestro de Producción Digital</div>
+    <h1 class="doc-title">Manual de Auditoría e Implementación: SEO, CRO & AI-Readiness</h1>
+    <p class="doc-subtitle">Guía técnica y metodológica de 27 puntos clave para el desarrollo, lanzamiento y optimización de nuevos proyectos web de alto rendimiento.</p>
+    <div class="meta-bar">
+      <span>DOCUMENTO BASE DE AUDITORÍA & CONTROL</span>
+      <span>ESTÁNDAR: v2.0 ESCÉNICO LUXURY</span>
+      <span>COBERTURA: ON-PAGE · SCHEMAS · CRO · LLMs</span>
+    </div>
+  </div>
+
+  <!-- BLOQUE 1: ON-PAGE & METADATOS -->
+  <div class="section-block">
+    <div class="section-title">
+      <span>1. Arquitectura On-Page & Metadatos Dinámicos</span>
+      <span class="tag">Puntos 01 — 04</span>
+    </div>
+
+    <!-- Punto 1 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">01. Diferentes Metatítulos por Página (`&lt;title&gt;`)</span>
+        <span class="item-badge-status badge-code">Código Frontend</span>
+      </div>
+      <p class="item-desc">Cada vista o URL debe tener un título único, descriptivo y enfocado en la palabra clave principal de esa sección, evitando títulos genéricos repetidos en todo el sitio.</p>
+      <div class="item-how">
+        <strong>Fórmula recomendada:</strong> <code>[Palabra Clave Principal / Intención] | [Nombre de Marca]</code> (Máx. 55-60 caracteres).
+      </div>
+    </div>
+
+    <!-- Punto 2 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">02. Diferentes Metadescripciones (`meta description`)</span>
+        <span class="item-badge-status badge-code">Código Frontend</span>
+      </div>
+      <p class="item-desc">Cada página requiere un resumen persuasivo único que actúa como anuncio en los resultados de Google. Debe incluir propuesta de valor, llamado a la acción (CTA) y palabras clave secundarias.</p>
+      <div class="item-how">
+        <strong>Longitud óptima:</strong> 140 a 155 caracteres con llamado a la acción explícito.
+      </div>
+    </div>
+
+    <!-- Punto 3 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">03. Solo un H1 por Página</span>
+        <span class="item-badge-status badge-code">Estructura HTML</span>
+      </div>
+      <p class="item-desc">El tag <code>&lt;h1&gt;</code> define el tema central y jerárquico absoluto del documento para los motores de búsqueda. Nunca deben coexistir múltiples H1 en una misma página.</p>
+      <div class="item-how">
+        <strong>Regla de oro:</strong> Ubicarlo en el Hero de la página y reservar <code>&lt;h2&gt;</code> para secciones y <code>&lt;h3&gt;</code> para tarjetas/módulos.
+      </div>
+    </div>
+
+    <!-- Punto 4 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">04. H1 Diferente al Meta-Título</span>
+        <span class="item-badge-status badge-code">Estrategia SEO</span>
+      </div>
+      <p class="item-desc">El meta-título busca maximizar el CTR (clics) en Google mediante keywords comerciales. El H1 dentro del sitio prioriza la narrativa de marca, estética editorial y conexión con el usuario que ya ingresó.</p>
+    </div>
+  </div>
+
+  <!-- BLOQUE 2: ESTRUCTURA, CRO & CONTENIDO -->
+  <div class="section-block">
+    <div class="section-title">
+      <span>2. Estructura de Contenido, CRO & Experiencia de Usuario</span>
+      <span class="tag">Puntos 05 — 11</span>
+    </div>
+
+    <!-- Punto 5 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">05. Intención de Búsqueda (Search Intent)</span>
+        <span class="item-badge-status badge-cro">Estrategia UX</span>
+      </div>
+      <p class="item-desc">El contenido debe responder con exactitud a lo que busca el usuario: <em>Transaccional</em> (Comprar catálogo), <em>Creativo/Navegacional</em> (Diseñar en canvas) o <em>Comercial B2B</em> (Cotizar para empresas).</p>
+    </div>
+
+    <!-- Punto 6 & 7 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">06 & 07. TL;DR / Key Takeaways & Ubicación tras Intención</span>
+        <span class="item-badge-status badge-cro">Retención CRO</span>
+      </div>
+      <p class="item-desc">Los usuarios modernos escanean. Se deben presentar cápsulas de datos clave ("Trust Pills" o barras de estadísticas) inmediatamente después del titular y propuesta principal (ej. Gramaje 240g, Lavados 50+, Despacho 24-48h).</p>
+    </div>
+
+    <!-- Punto 8 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">08. Llamado a la Acción (CTA) tras Primer Párrafo</span>
+        <span class="item-badge-status badge-cro">Conversión Directa</span>
+      </div>
+      <p class="item-desc">No obligar al usuario a hacer scroll infinito para interactuar. Colocar un doble botón de acción (CTA Primario + CTA Secundario) justo debajo del primer párrafo explicativo del Hero.</p>
+    </div>
+
+    <!-- Punto 9 & 10 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">09 & 10. Jerarquía H1-H2-H3 & Enlazado Interno (Topic Clusters)</span>
+        <span class="item-badge-status badge-code">Arquitectura</span>
+      </div>
+      <p class="item-desc">Estructuración semántica ordenada y enlazado contextual cruzado entre colecciones, footer, navegación y páginas de producto para transferir autoridad y guiar al usuario.</p>
+    </div>
+
+    <!-- Punto 11 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">11. Uso de Tablas y Listas de Especificaciones</span>
+        <span class="item-badge-status badge-code">Legibilidad</span>
+      </div>
+      <p class="item-desc">Google favorece contenidos que sintetizan información técnica en listas con viñetas y tablas comparativas (composiciones, fichas técnicas, instrucciones de lavado).</p>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- BLOQUE 3: SCHEMAS & RICH SNIPPETS -->
+  <div class="section-block">
+    <div class="section-title">
+      <span>3. Datos Estructurados Schema.org & Rich Snippets</span>
+      <span class="tag">Puntos 12 — 16</span>
+    </div>
+
+    <!-- Punto 12 & 13 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">12 & 13. Módulo FAQ & Schema FAQPage (JSON-LD)</span>
+        <span class="item-badge-status badge-google">Google Rich Snippet</span>
+      </div>
+      <p class="item-desc">Crear un acordeón de Preguntas Frecuentes resolviendo dudas de compra (tiempos, lavado, formatos de archivo) y acompañarlo de su marcado JSON-LD oficial para aparecer con preguntas desplegables en Google Search.</p>
+      <div class="code-snippet">
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [{
+    "@type": "Question",
+    "name": "¿Cuáles son los tiempos de despacho?",
+    "acceptedAnswer": { "@type": "Answer", "text": "24 a 48 horas hábiles a todo Chile." }
+  }]
+}
+&lt;/script&gt;
+      </div>
+    </div>
+
+    <!-- Punto 14 & 15 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">14 & 15. Nombres de Archivo Semánticos & Atributos Alt Text</span>
+        <span class="item-badge-status badge-code">SEO de Imágenes</span>
+      </div>
+      <p class="item-desc">Nombrar los archivos de imagen descriptivamente con guiones (ej. <code>polera-oversize-negra-estampado-dtf.jpg</code> en lugar de <code>IMG_8291.jpg</code>) y asegurar que todas las etiquetas <code>&lt;img&gt;</code> tengan un <code>alt="..."</code> accesible y contextual.</p>
+    </div>
+
+    <!-- Punto 16 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">16. Schema de Negocio Local (`LocalBusiness` / `Organization`)</span>
+        <span class="item-badge-status badge-google">SEO Local</span>
+      </div>
+      <p class="item-desc">Inyectar en el <code>&lt;head&gt;</code> de la web los datos estructurados que le confirman a los motores de búsqueda el nombre comercial, logotipo, teléfonos de contacto, ubicación geográfica, horarios y redes sociales.</p>
+    </div>
+  </div>
+
+  <!-- BLOQUE 4: TECHNICAL SEO, RASTREO & AI-READINESS -->
+  <div class="section-block">
+    <div class="section-title">
+      <span>4. Technical SEO, Indexación & Motores de IA</span>
+      <span class="tag">Puntos 17 — 20</span>
+    </div>
+
+    <!-- Punto 17 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">17. Archivo `robots.txt`</span>
+        <span class="item-badge-status badge-code">Directiva Web</span>
+      </div>
+      <p class="item-desc">Indica a los rastreadores qué secciones indexar y cuáles ignorar. Debe dar acceso a las URLs públicas, declarar el Sitemap y bloquear rutas privadas (como <code>/admin/</code>, <code>/panel/</code>, <code>/api/</code>).</p>
+    </div>
+
+    <!-- Punto 18 & 19 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">18 & 19. URLs Limpias & Desindexación de Subcarpetas / Canonical</span>
+        <span class="item-badge-status badge-code">Higiene de URLs</span>
+      </div>
+      <p class="item-desc">URLs directas sin parámetros innecesarios (ej. <code>/catalogo/polera-oversize</code>) e inclusión de <code>&lt;link rel="canonical" href="..."&gt;</code> para evitar contenido duplicado en paginaciones o filtros.</p>
+    </div>
+
+    <!-- Punto 20 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">20. Creación del Archivo `llms.txt` (Estándar AI-Readiness)</span>
+        <span class="item-badge-status badge-google">Indexación IA</span>
+      </div>
+      <p class="item-desc">El archivo <code>/llms.txt</code> es el estándar para que los modelos de lenguaje (ChatGPT, Gemini, Claude, Perplexity) comprendan la marca, catálogo, procesos técnicos y canales de contacto al ser consultados por usuarios.</p>
+    </div>
+  </div>
+
+  <!-- BLOQUE 5: CONVERSIÓN MÓVIL & SOCIAL SHARING -->
+  <div class="section-block">
+    <div class="section-title">
+      <span>5. Optimización de Conversión Móvil & Social Sharing</span>
+      <span class="tag">Puntos 21 — 22</span>
+    </div>
+
+    <!-- Punto 21 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">21. Barra Flotante / CTA Fijo en Móvil (Sticky Bar)</span>
+        <span class="item-badge-status badge-cro">Conversión Móvil</span>
+      </div>
+      <p class="item-desc">Más del 70% del tráfico es móvil. Mantener una barra fija inferior con accesos rápidos directos (Diseñar, Catálogo, WhatsApp) eleva sustancialmente la tasa de conversión sin obstruir el contenido.</p>
+    </div>
+
+    <!-- Punto 22 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">22. Botón para Compartir (Web Share API & WhatsApp)</span>
+        <span class="item-badge-status badge-cro">Viralidad Orgánica</span>
+      </div>
+      <p class="item-desc">Permitir a los usuarios compartir productos, cotizaciones o diseños directamente a través de la Web Share API en teléfonos o mediante enlace directo a WhatsApp.</p>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- BLOQUE 6: HERRAMIENTAS GOOGLE & METAETIQUETAS SOCIALES -->
+  <div class="section-block">
+    <div class="section-title">
+      <span>6. Plataformas Google, Rastreo & Open Graph</span>
+      <span class="tag">Puntos 23 — 27</span>
+    </div>
+
+    <!-- Punto 23 & 24 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">23 & 24. Google Analytics 4 (GA4) & Google Search Console (GSC)</span>
+        <span class="item-badge-status badge-google">Configuración Externa</span>
+      </div>
+      <p class="item-desc">Integrar el script de medición de GA4 (ID <code>G-XXXXXXXXXX</code>) para analizar tráfico, eventos de compra y embudos. Verificar la propiedad en GSC (mediante registro DNS o meta-tag) para auditar indexación y palabras clave orgánicas.</p>
+    </div>
+
+    <!-- Punto 25 & 26 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">25 & 26. Generación de `sitemap.xml` & Envío en GSC</span>
+        <span class="item-badge-status badge-google">Rastreo e Indexación</span>
+      </div>
+      <p class="item-desc">Generar el mapa de sitio XML con todas las URLs canónicas públicas y sus prioridades de actualización. Una vez verificado el dominio en Search Console, enviar la URL del sitemap para indexación inmediata.</p>
+    </div>
+
+    <!-- Punto 27 -->
+    <div class="item-card">
+      <div class="item-header">
+        <span class="item-num-title">27. Open Graph & Twitter Cards (Punto Maestro Comodín)</span>
+        <span class="item-badge-status badge-code">Previsualización Social</span>
+      </div>
+      <p class="item-desc">Etiquetas <code>og:title</code>, <code>og:description</code>, <code>og:image</code> y <code>twitter:card</code> indispensables para que al compartir un link en WhatsApp, Instagram, Telegram o LinkedIn aparezca una tarjeta gráfica atractiva con foto y titular.</p>
+    </div>
+  </div>
+
+  <!-- TABLA RESUMEN / AUDITORÍA CHECKLIST -->
+  <div class="section-block">
+    <div class="section-title">
+      <span>Checklist de Verificación Rápida para Nuevos Sitios</span>
+      <span class="tag">Auditoría Imprimible</span>
+    </div>
+
+    <table class="checklist-table">
+      <thead>
+        <tr>
+          <th style="width: 32px;">#</th>
+          <th>Punto de Control</th>
+          <th style="width: 105px;">Categoría</th>
+          <th style="width: 80px;">Tipo</th>
+          <th style="width: 40px; text-align: center;">Check</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>01</strong></td>
+          <td>Diferentes metatítulos por página (<code>&lt;title&gt;</code>)</td>
+          <td>On-Page SEO</td>
+          <td>Código Web</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>02</strong></td>
+          <td>Diferentes metadescripciones (<code>meta description</code>)</td>
+          <td>On-Page SEO</td>
+          <td>Código Web</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>03</strong></td>
+          <td>Exactamente un solo <code>&lt;h1&gt;</code> por vista</td>
+          <td>Semántica</td>
+          <td>Estructura</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>04</strong></td>
+          <td>H1 diferenciado del metatítulo</td>
+          <td>On-Page SEO</td>
+          <td>Estrategia</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>05</strong></td>
+          <td>Alineación estricta con la intención de búsqueda</td>
+          <td>UX / Search</td>
+          <td>Contenido</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>06</strong></td>
+          <td>Bloques TL;DR / Key Takeaways</td>
+          <td>CRO / Retención</td>
+          <td>Diseño UI</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>07</strong></td>
+          <td>Ubicación de resúmenes tras la intención de búsqueda</td>
+          <td>CRO / Retención</td>
+          <td>Diseño UI</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>08</strong></td>
+          <td>CTA primario inmediatamente tras el primer párrafo</td>
+          <td>CRO / Conversión</td>
+          <td>Diseño UI</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>09</strong></td>
+          <td>Jerarquía semántica ordenada (H1 → H2 → H3)</td>
+          <td>Semántica</td>
+          <td>Estructura</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>10</strong></td>
+          <td>Enlazado interno coherente y arquitectura de clusters</td>
+          <td>Arquitectura</td>
+          <td>Navegación</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>11</strong></td>
+          <td>Tablas comparativas y listas técnicas de producto</td>
+          <td>Legibilidad</td>
+          <td>Contenido</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>12</strong></td>
+          <td>Módulo de Preguntas Frecuentes (FAQ)</td>
+          <td>CRO / Soporte</td>
+          <td>Componente</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>13</strong></td>
+          <td>Schema de FAQ (<code>schema.org/FAQPage</code> JSON-LD)</td>
+          <td>Datos Estructurados</td>
+          <td>Código Web</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>14</strong></td>
+          <td>Nombres de archivo de imágenes semánticos con guiones</td>
+          <td>SEO Multimedia</td>
+          <td>Assets</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>15</strong></td>
+          <td>Texto alternativo descriptivo en todas las imágenes (<code>alt</code>)</td>
+          <td>Accesibilidad</td>
+          <td>Assets</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>16</strong></td>
+          <td>Schema de negocio local (<code>LocalBusiness</code> JSON-LD)</td>
+          <td>SEO Local</td>
+          <td>Código Web</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>17</strong></td>
+          <td>Archivo <code>robots.txt</code> configurado</td>
+          <td>Technical SEO</td>
+          <td>Estándar Web</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>18</strong></td>
+          <td>URLs canónicas, cortas y limpias sin conectores</td>
+          <td>Technical SEO</td>
+          <td>Routing</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>19</strong></td>
+          <td>Paginaciones limpias con directivas canonical</td>
+          <td>Technical SEO</td>
+          <td>Indexación</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>20</strong></td>
+          <td>Archivo <code>llms.txt</code> para indexación de Inteligencia Artificial</td>
+          <td>AI-Readiness</td>
+          <td>Estándar Web</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>21</strong></td>
+          <td>Barra CTA fija en dispositivos móviles (Sticky Bar)</td>
+          <td>CRO Móvil</td>
+          <td>Componente</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>22</strong></td>
+          <td>Botón para compartir con Web Share API y WhatsApp</td>
+          <td>Viralidad</td>
+          <td>Componente</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>23</strong></td>
+          <td>Google Analytics 4 (GA4) vinculado</td>
+          <td>Analítica</td>
+          <td>Externo / Google</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>24</strong></td>
+          <td>Google Search Console (GSC) verificado</td>
+          <td>Indexación</td>
+          <td>Externo / Google</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>25</strong></td>
+          <td>Generación de <code>sitemap.xml</code></td>
+          <td>Technical SEO</td>
+          <td>Estándar Web</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>26</strong></td>
+          <td>Sitemap enviado y validado en Google Search Console</td>
+          <td>Indexación</td>
+          <td>Externo / Google</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+        <tr>
+          <td><strong>27</strong></td>
+          <td>Open Graph & Twitter Cards para WhatsApp y Redes Sociales</td>
+          <td>Social Sharing</td>
+          <td>Código Web</td>
+          <td style="text-align: center;"><span class="checkbox-box"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="summary-box">
+      <strong>Instrucciones para Auditorías Futuras:</strong> Al iniciar un nuevo sitio web o tienda digital, utiliza este manual como control de calidad antes de pasar a fase de producción. Cumplir los 27 puntos garantiza una base técnica sólida de indexación en Google, optimización para motores de IA y altas tasas de conversión desde dispositivos móviles.
+    </div>
+  </div>
+
+</body>
+</html>
