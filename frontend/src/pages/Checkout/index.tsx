@@ -379,8 +379,16 @@ export default function Checkout() {
                           setSubmitError(res.message || 'El pago fue rechazado. Intenta con otra tarjeta.');
                         }
                       } catch (err: unknown) {
-                        const errorMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-                        setSubmitError(errorMsg || 'No se pudo procesar el pago con la tarjeta. Intenta nuevamente.');
+                        const rawMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || '';
+                        let translated = rawMsg;
+                        if (rawMsg.toLowerCase().includes('unauthorized use of live credentials')) {
+                          translated = 'Las credenciales actuales son de producción y requieren una tarjeta bancaria real o cuenta de prueba autorizada.';
+                        } else if (rawMsg.toLowerCase().includes('invalid token')) {
+                          translated = 'La sesión de la tarjeta expiró. Por favor, reingresa los datos.';
+                        } else if (!translated) {
+                          translated = 'No se pudo procesar el pago con la tarjeta. Intenta nuevamente.';
+                        }
+                        setSubmitError(translated);
                       }
                     }}
                   />
