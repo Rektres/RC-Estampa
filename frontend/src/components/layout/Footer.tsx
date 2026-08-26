@@ -130,9 +130,12 @@ export default function Footer() {
                   <div className="text-ghost">Sáb: 10:00 — 14:00 hrs</div>
                 </div>
               </li>
-              <li className="d-flex align-items-center gap-2">
-                <MapPin size={16} className="text-primary flex-shrink-0" />
-                <span>Chile — Despacho nacional</span>
+              <li className="d-flex align-items-start gap-2">
+                <MapPin size={16} className="text-primary flex-shrink-0 mt-1" />
+                <div>
+                  <div className="text-text fw-semibold">Venta 100% Online</div>
+                  <div className="text-ghost">Despachos a todo Chile a domicilio</div>
+                </div>
               </li>
             </ul>
           </div>

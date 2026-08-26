@@ -4,6 +4,7 @@ import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
 import CartDrawer from './CartDrawer';
 import MobileStickyBar from './MobileStickyBar';
+import CookieBanner from '../shared/CookieBanner';
 
 export default function Layout() {
   return (
@@ -16,6 +17,7 @@ export default function Layout() {
       <WhatsAppButton />
       <MobileStickyBar />
       <CartDrawer />
+      <CookieBanner />
     </div>
   );
 }

@@ -51,8 +51,16 @@
   <!-- Cotizaciones Personalizadas & B2B -->
   <url>
     <loc>https://rcestampa.cl/personalizado</loc>
-    <lastmod>2026-08-25</lastmod>
+    <lastmod>2026-08-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+
+  <!-- Términos, Condiciones y Privacidad -->
+  <url>
+    <loc>https://rcestampa.cl/terminos-y-privacidad</loc>
+    <lastmod>2026-08-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>

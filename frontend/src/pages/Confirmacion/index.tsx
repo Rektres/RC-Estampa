@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle, AlertCircle, Clock, ShoppingBag, MessageCircle, Building2 } from 'lucide-react';
+import { useSEO } from '../../hooks/useSEO';
 
 export default function Confirmacion() {
   const [params] = useSearchParams();
@@ -13,6 +14,11 @@ export default function Confirmacion() {
   const isFailure = statusParam === 'failure' || statusParam === 'rejected' || statusParam === 'null';
   const isPending = statusParam === 'pending' || statusParam === 'in_process';
   const isTransferencia = metodo === 'transferencia';
+
+  useSEO({
+    title: isApproved ? '¡Compra Exitosa! · Pedido Confirmado' : isFailure ? 'Pago No Completado' : 'Estado de tu Pedido',
+    description: 'Comprobante y seguimiento de tu compra en RC Estampa.',
+  });
 
   return (
     <div className="container text-center py-5" style={{ maxWidth: '42rem' }}>

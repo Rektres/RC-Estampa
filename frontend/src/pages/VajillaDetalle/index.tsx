@@ -8,6 +8,7 @@ import LineaBadge from '../../components/shared/LineaBadge';
 import HoverSwapCard from '../../components/shared/HoverSwapCard';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
+import { useSEO } from '../../hooks/useSEO';
 
 export default function VajillaDetalle() {
   const { slug } = useParams<{ slug: string }>();
@@ -15,6 +16,13 @@ export default function VajillaDetalle() {
   const { data: allVaj } = useAsync(() => catalogoApi.drinkwareAll(), []);
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
+
+  useSEO({
+    title: producto ? `${producto.nombre} | Drinkware Personalizado` : 'Detalle Drinkware',
+    description: producto ? producto.descripcion : 'Botellas térmicas, mugs y vasos grabados en láser y sublimación de alta calidad con despacho en todo Chile.',
+    image: producto?.imagenes?.[0]?.imagen,
+    type: 'product',
+  });
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState('');

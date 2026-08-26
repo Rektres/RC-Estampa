@@ -10,6 +10,7 @@ import { formatPrice } from '../../utils';
 import { useCartStore } from '../../store/cartStore';
 import { catalogoApi, disenosApi } from '../../api';
 import { useAsync } from '../../api/hooks';
+import { useSEO } from '../../hooks/useSEO';
 
 const CANVAS_SIZE = 500;
 const MAX_IMAGES = 3;
@@ -127,6 +128,11 @@ export default function DisenadorEditor() {
   const tallasStandard = editor?.tallas ?? [];
   const precio = editor?.precios?.[producto] ?? 15000;
   const label = PRODUCT_LABELS[producto] ?? producto;
+
+  useSEO({
+    title: `Diseñar ${label} Personalizada · Editor 3D`,
+    description: `Crea y personaliza tu ${label} en vivo con estampado DTF textil o grabado láser. Despacho a todo Chile.`,
+  });
 
   const saveHistory = useCallback(() => {
     const canvas = fabricRef.current;

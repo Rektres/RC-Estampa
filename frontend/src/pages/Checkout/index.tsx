@@ -10,6 +10,7 @@ import { useAuthStore } from '../../store/authStore';
 import { formatPrice } from '../../utils';
 import { catalogoApi, pedidosApi, direccionesApi, type PedidoInput } from '../../api';
 import { useAsync } from '../../api/hooks';
+import { useSEO } from '../../hooks/useSEO';
 
 const schema = z.object({
   nombre: z.string().min(2, 'Requerido'),
@@ -27,6 +28,11 @@ type FormData = z.infer<typeof schema>;
 const STEPS = ['Carrito', 'Datos de envío', 'Pago'];
 
 export default function Checkout() {
+  useSEO({
+    title: 'Finalizar Compra · Checkout Seguro',
+    description: 'Completa tu pedido de ropa o drinkware personalizado con despacho a todo Chile.',
+  });
+
   const [step, setStep] = useState(1);
   const [metodoPago, setMetodoPago] = useState<'mercadopago' | 'transferencia'>('mercadopago');
   const [submitError, setSubmitError] = useState<string | null>(null);

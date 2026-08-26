@@ -9,6 +9,7 @@ import LineaBadge from '../../components/shared/LineaBadge';
 import HoverSwapCard from '../../components/shared/HoverSwapCard';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
+import { useSEO } from '../../hooks/useSEO';
 
 export default function ProductoDetalle() {
   const { slug } = useParams<{ slug: string }>();
@@ -16,6 +17,13 @@ export default function ProductoDetalle() {
   const { data: allProd } = useAsync(() => catalogoApi.productosAll(), []);
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
+
+  useSEO({
+    title: producto ? `${producto.nombre} | Ropa Urbana` : 'Detalle de Producto',
+    description: producto ? producto.descripcion : 'Descubre nuestra colección de ropa urbana personalizada con estampado DTF de alta fidelidad en Santiago de Chile.',
+    image: producto?.imagenes?.[0]?.imagen,
+    type: 'product',
+  });
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedTalla, setSelectedTalla] = useState('');

@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, ShieldCheck, Mail, ArrowRight, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../api';
+import { useSEO } from '../../hooks/useSEO';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -36,6 +37,11 @@ type RegisterData = z.infer<typeof registerSchema>;
 
 export default function Auth() {
   const [mode, setMode] = useState<'login' | 'register' | 'verify'>('login');
+
+  useSEO({
+    title: mode === 'register' ? 'Crear Cuenta · Registro de Cliente' : mode === 'verify' ? 'Verificar Cuenta' : 'Iniciar Sesión · Mi Cuenta',
+    description: 'Accede a tu cuenta de RC Estampa para gestionar tus compras, direcciones de despacho y favoritos.',
+  });
   const [pendingEmail, setPendingEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [showPass, setShowPass] = useState(false);
