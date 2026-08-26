@@ -1,24 +1,26 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Table, Modal } from 'react-bootstrap';
-import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, BarChart3, Shirt, Coffee, Tags } from 'lucide-react';
 import { panelApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { formatPrice } from '../../utils';
 import LineaBadge from '../../components/shared/LineaBadge';
 import Categorias from './Categorias';
+import Estadisticas from './Estadisticas';
 import type { Producto, ProductoVajilla } from '../../types';
 
-type Tab = 'ropa' | 'drinkware' | 'categorias';
+type Tab = 'estadisticas' | 'ropa' | 'drinkware' | 'categorias';
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'ropa', label: 'Ropa' },
-  { key: 'drinkware', label: 'Drinkware' },
-  { key: 'categorias', label: 'Categorías' },
+const TABS: { key: Tab; label: string; icon: typeof BarChart3 }[] = [
+  { key: 'estadisticas', label: 'Estadísticas & Ventas', icon: BarChart3 },
+  { key: 'ropa', label: 'Ropa', icon: Shirt },
+  { key: 'drinkware', label: 'Drinkware', icon: Coffee },
+  { key: 'categorias', label: 'Categorías', icon: Tags },
 ];
 
 export default function Panel() {
-  const [tab, setTab] = useState<Tab>('ropa');
+  const [tab, setTab] = useState<Tab>('estadisticas');
   const [reload, setReload] = useState(0);
   const [q, setQ] = useState('');
   const [catFilter, setCatFilter] = useState('');
@@ -29,7 +31,7 @@ export default function Panel() {
   const recurso = tab === 'drinkware' ? panelApi.drinkware : panelApi.productos;
 
   const { data: items, loading } = useAsync<(Producto | ProductoVajilla)[]>(
-    () => (tab === 'categorias' ? Promise.resolve([]) : recurso.list()),
+    () => (tab === 'categorias' || tab === 'estadisticas' ? Promise.resolve([]) : recurso.list()),
     [tab, reload]
   );
 
@@ -80,7 +82,7 @@ export default function Panel() {
     <div className="container py-5">
       <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
         <h1 className="font-italiana text-text mb-0" style={{ fontSize: '2.25rem' }}>Panel de administración</h1>
-        {tab !== 'categorias' && (
+        {(tab === 'ropa' || tab === 'drinkware') && (
           <Link to={`/panel/${tipoRuta}/nuevo`} className="btn btn-primary d-inline-flex align-items-center gap-2">
             <Plus size={16} />
             Nuevo producto
@@ -89,24 +91,30 @@ export default function Panel() {
       </div>
 
       {/* Tabs */}
-      <div className="d-flex gap-2 border-bottom border-border mb-4">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => { setTab(t.key); setQ(''); setCatFilter(''); }}
-            className={`font-montserrat fw-semibold px-3 py-2 bg-transparent border-0 border-bottom border-2 ${
-              tab === t.key ? 'text-primary border-primary' : 'text-muted'
-            }`}
-            style={tab === t.key ? undefined : { borderBottomColor: 'transparent' }}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="d-flex gap-2 border-bottom border-border mb-4 overflow-x-auto">
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.key}
+              onClick={() => { setTab(t.key); setQ(''); setCatFilter(''); }}
+              className={`font-montserrat fw-semibold px-3 py-2 bg-transparent border-0 border-bottom border-2 d-inline-flex align-items-center gap-2 text-nowrap ${
+                tab === t.key ? 'text-primary border-primary' : 'text-muted'
+              }`}
+              style={tab === t.key ? undefined : { borderBottomColor: 'transparent' }}
+            >
+              <Icon size={16} />
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {error && <div className="alert alert-danger py-2 font-montserrat" style={{ fontSize: '0.875rem' }}>{error}</div>}
 
-      {tab === 'categorias' ? (
+      {tab === 'estadisticas' ? (
+        <Estadisticas />
+      ) : tab === 'categorias' ? (
         <Categorias />
       ) : (
         <>

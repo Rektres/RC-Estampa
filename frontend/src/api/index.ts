@@ -203,6 +203,56 @@ function crudPanel<T>(recurso: 'productos' | 'drinkware') {
   };
 }
 
+export interface EstadisticasData {
+  periodo: string;
+  kpis: {
+    total_ventas_bruto: number;
+    total_ventas_neto: number;
+    total_comision_mp: number;
+    total_pedidos_pagados: number;
+    total_pedidos_generados: number;
+    ticket_promedio: number;
+    tasa_conversion: number;
+    conteo_estados: Record<string, number>;
+  };
+  top_productos: {
+    nombre: string;
+    tipo: string;
+    imagen?: string;
+    unidades_vendidas: number;
+    ingresos_totales: number;
+  }[];
+  ventas_por_linea: {
+    linea: string;
+    unidades: number;
+    ingresos: number;
+  }[];
+  medios_pago: {
+    metodo: string;
+    conteo: number;
+    total: number;
+  }[];
+  ventas_por_region: {
+    region: string;
+    conteo: number;
+    total: number;
+  }[];
+  ultimas_transacciones: {
+    numero: string;
+    nombre: string;
+    email: string;
+    total: number;
+    monto_neto?: number | null;
+    comision_mp?: number;
+    estado: string;
+    metodo_pago: string;
+    payment_method_id?: string;
+    card_last_four?: string;
+    pagado_en?: string;
+    creado_en: string;
+  }[];
+}
+
 export const panelApi = {
   productos: crudPanel<Producto>('productos'),
   drinkware: crudPanel<ProductoVajilla>('drinkware'),
@@ -219,4 +269,6 @@ export const panelApi = {
     form.append('file', file);
     return api.post<{ url: string }>('/panel/upload/', form).then((r) => r.data);
   },
+  estadisticas: (periodo: string = 'todo') =>
+    api.get<EstadisticasData>('/panel/estadisticas/', { params: { periodo } }).then((r) => r.data),
 };
