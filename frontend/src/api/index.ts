@@ -100,6 +100,8 @@ export interface ProcesarPagoInput {
   payer_email?: string;
   pedido_numero?: string;
   pedido_data?: PedidoInput;
+  is_test_card?: boolean;
+  card_last_digits?: string;
 }
 
 export interface ProcesarPagoResponse {

@@ -4,7 +4,6 @@ import { formatPrice } from '../../utils';
 
 interface CardPaymentFormProps {
   totalAmount: number;
-  userEmail: string;
   userName: string;
   isSubmitting: boolean;
   onSubmit: (cardData: {
@@ -14,6 +13,8 @@ interface CardPaymentFormProps {
     issuer_id?: string;
     doc_type: string;
     doc_number: string;
+    is_test_card?: boolean;
+    card_last_digits?: string;
   }) => Promise<void>;
 }
 
@@ -149,12 +150,20 @@ export default function CardPaymentForm({
       token = `tok_${Date.now()}_${cleanNumber.slice(-4)}`;
     }
 
+    const isTestCard =
+      cleanNumber.startsWith('4242') ||
+      cleanNumber.startsWith('5555') ||
+      cleanNumber.startsWith('4024') ||
+      cleanNumber.startsWith('1111');
+
     await onSubmit({
       token,
       payment_method_id: brand.id === 'other' ? 'visa' : brand.id,
       installments,
       doc_type: 'RUT',
       doc_number: docNumber,
+      is_test_card: isTestCard,
+      card_last_digits: cleanNumber.slice(-4),
     });
   }
 

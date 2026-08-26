@@ -327,7 +327,6 @@ export default function Checkout() {
                   <CardPaymentForm
                     totalAmount={totalAmount}
                     userName={user?.nombre || ''}
-                    userEmail={user?.email || ''}
                     isSubmitting={isSubmitting}
                     onSubmit={async (cardData) => {
                       setSubmitError(null);
@@ -369,6 +368,8 @@ export default function Checkout() {
                           doc_number: cardData.doc_number,
                           payer_email: formData.email,
                           pedido_data: payload,
+                          is_test_card: cardData.is_test_card,
+                          card_last_digits: cardData.card_last_digits,
                         });
 
                         if (res.success || res.status === 'approved' || res.status === 'in_process') {

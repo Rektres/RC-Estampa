@@ -134,6 +134,9 @@ def procesar_pago_tarjeta(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        is_test_card = data.get('is_test_card', False)
+        card_last_digits = data.get('card_last_digits', '')
+
         # 2. Procesar el cobro directo en Mercado Pago API
         resultado = procesar_pago_directo_mercadopago(
             pedido=pedido,
@@ -144,6 +147,8 @@ def procesar_pago_tarjeta(request):
             payer_email=payer_email,
             doc_type=doc_type,
             doc_number=doc_number,
+            is_test_card=is_test_card,
+            card_last_digits=card_last_digits,
         )
 
         resultado['pedido'] = PedidoSerializer(pedido).data
