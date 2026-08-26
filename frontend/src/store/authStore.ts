@@ -8,6 +8,7 @@ interface AuthStore {
   refresh: string | null;
   isAuthenticated: boolean;
   login: (user: User, access: string, refresh: string) => void;
+  setUser: (user: User) => void;
   setAccess: (access: string) => void;
   logout: () => void;
 }
@@ -20,6 +21,7 @@ export const useAuthStore = create<AuthStore>()(
       refresh: null,
       isAuthenticated: false,
       login: (user, access, refresh) => set({ user, access, refresh, isAuthenticated: true }),
+      setUser: (user) => set({ user }),
       setAccess: (access) => set({ access }),
       logout: () => set({ user: null, access: null, refresh: null, isAuthenticated: false }),
     }),

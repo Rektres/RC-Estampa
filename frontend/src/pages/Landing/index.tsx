@@ -13,7 +13,7 @@ import { useSEO } from '../../hooks/useSEO';
 
 export default function Landing() {
   useSEO({
-    title: 'Atelier de Estampado Textil & Drinkware',
+    title: 'RC Estampa de Estampado Textil & Drinkware',
     description: 'Personalización y estampado de alta definición en poleras oversize, polerones, tazas y botellas térmicas. DTF Textil Ultra HD y serigrafía en Chile.',
     keywords: 'estampado textil santiago, dtf textil chile, poleras personalizadas, serigrafia santiago, drinkware personalizado, botellas termicas grabadas, rc estampa',
   });

@@ -106,7 +106,7 @@ export default function HeroEscenico() {
                   <div className="d-flex align-items-center gap-2">
                     <span className="live-dot" />
                     <span className="font-montserrat fw-semibold text-text text-uppercase" style={{ fontSize: '0.7rem', letterSpacing: '0.1em' }}>
-                      Producción Activa en Atelier
+                      Producción Activa en RC Estampa
                     </span>
                   </div>
                   <span className="badge bg-primary-10 text-primary border border-primary-30 font-montserrat" style={{ fontSize: '0.65rem' }}>

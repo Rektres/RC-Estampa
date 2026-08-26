@@ -2,7 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import DireccionEnvio
+from .models import DireccionEnvio, Favorito
+from catalogo.serializers import ProductoListaSerializer, ProductoVajillaSerializer
 
 User = get_user_model()
 
@@ -10,7 +11,11 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'nombre', 'rol')
+        fields = (
+            'id', 'email', 'nombre', 'rol', 'telefono', 'rut',
+            'direccion', 'ciudad', 'region', 'email_verificado'
+        )
+        read_only_fields = ('id', 'email', 'rol', 'email_verificado')
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -18,14 +23,23 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'nombre', 'password')
+        fields = (
+            'id', 'email', 'nombre', 'password', 'telefono',
+            'rut', 'direccion', 'ciudad', 'region'
+        )
 
     def create(self, validated_data):
-        return User.objects.create_user(
+        user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
             nombre=validated_data.get('nombre', ''),
+            telefono=validated_data.get('telefono', ''),
+            rut=validated_data.get('rut', ''),
+            direccion=validated_data.get('direccion', ''),
+            ciudad=validated_data.get('ciudad', ''),
+            region=validated_data.get('region', ''),
         )
+        return user
 
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -44,3 +58,13 @@ class DireccionEnvioSerializer(serializers.ModelSerializer):
             'id', 'nombre_destinatario', 'direccion', 'ciudad',
             'region', 'codigo_postal', 'es_principal',
         )
+
+
+class FavoritoSerializer(serializers.ModelSerializer):
+    producto_detalle = ProductoListaSerializer(source='producto', read_only=True)
+    drinkware_detalle = ProductoVajillaSerializer(source='drinkware', read_only=True)
+
+    class Meta:
+        model = Favorito
+        fields = ('id', 'producto', 'drinkware', 'producto_detalle', 'drinkware_detalle', 'creado_en')
+

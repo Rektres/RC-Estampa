@@ -1,4 +1,4 @@
-# robots.txt para RC Estampa Atelier
+# robots.txt para RC Estampa RC Estampa
 User-agent: *
 Allow: /
 Allow: /catalogo

@@ -1,24 +1,28 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ShoppingBag, Minus, Plus, Ruler } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ShoppingBag, Minus, Plus, Ruler, Heart, Check } from 'lucide-react';
 import { Modal } from 'react-bootstrap';
-import { catalogoApi } from '../../api';
+import { catalogoApi, favoritosApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { formatPrice } from '../../utils';
 import LineaBadge from '../../components/shared/LineaBadge';
 import HoverSwapCard from '../../components/shared/HoverSwapCard';
 import { useCartStore } from '../../store/cartStore';
+import { useAuthStore } from '../../store/authStore';
 
 export default function ProductoDetalle() {
   const { slug } = useParams<{ slug: string }>();
   const { data: producto, loading } = useAsync(() => catalogoApi.producto(slug!), [slug]);
   const { data: allProd } = useAsync(() => catalogoApi.productosAll(), []);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedTalla, setSelectedTalla] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [cantidad, setCantidad] = useState(1);
   const [tallaModalOpen, setTallaModalOpen] = useState(false);
+  const [favSaved, setFavSaved] = useState(false);
   const { addItem, openCart } = useCartStore();
 
   if (loading) {
@@ -221,16 +225,38 @@ export default function ProductoDetalle() {
             </div>
           </div>
 
-          <button
-            onClick={handleAddToCart}
-            disabled={!stockOk || !selectedTalla}
-            className={`btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2 py-3 small ${
-              (!stockOk || !selectedTalla) ? 'opacity-50' : ''
-            }`}
-          >
-            <ShoppingBag size={18} />
-            {selectedTalla ? 'Agregar al carrito' : 'Selecciona una talla'}
-          </button>
+          <div className="d-flex gap-2">
+            <button
+              onClick={handleAddToCart}
+              disabled={!stockOk || !selectedTalla}
+              className={`btn btn-primary flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-3 small ${
+                (!stockOk || !selectedTalla) ? 'opacity-50' : ''
+              }`}
+            >
+              <ShoppingBag size={18} />
+              {selectedTalla ? 'Agregar al carrito' : 'Selecciona una talla'}
+            </button>
+
+            <button
+              onClick={async () => {
+                if (!isAuthenticated) {
+                  navigate('/auth');
+                  return;
+                }
+                try {
+                  await favoritosApi.agregar({ producto: producto.id });
+                  setFavSaved(true);
+                  setTimeout(() => setFavSaved(false), 3000);
+                } catch {
+                  // Ignore
+                }
+              }}
+              className={`btn ${favSaved ? 'btn-success' : 'btn-outline-secondary'} px-3 d-flex align-items-center justify-content-center`}
+              title="Guardar en favoritos"
+            >
+              {favSaved ? <Check size={18} /> : <Heart size={18} className="text-primary" />}
+            </button>
+          </div>
 
           <div className="w-100 bg-border" style={{ height: '1px' }} />
 

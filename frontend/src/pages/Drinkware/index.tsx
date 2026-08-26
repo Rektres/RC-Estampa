@@ -77,7 +77,7 @@ export default function Drinkware() {
           <span className="glyph">★</span>
           <span>DRINKWARE & VAJILLA TÉRMICA</span>
         </div>
-        <h1 className="font-italiana text-text mb-1" style={{ fontSize: '3rem' }}>Drinkware Atelier</h1>
+        <h1 className="font-italiana text-text mb-1" style={{ fontSize: '3rem' }}>Drinkware RC Estampa</h1>
         <p className="font-montserrat small text-muted mb-0">Botellas térmicas, mugs y vasos con grabado térmico de alta adherencia.</p>
       </div>
 

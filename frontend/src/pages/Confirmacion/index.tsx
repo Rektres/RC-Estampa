@@ -88,28 +88,32 @@ export default function Confirmacion() {
         </div>
       )}
 
-      {/* Qué sigue */}
-      <div className="bg-card border border-border rounded-4 p-4 mb-4 text-start d-flex flex-column gap-3 shadow-sm">
-        <p className="font-montserrat fw-semibold text-text mb-0" style={{ fontSize: '0.9rem' }}>
-          Próximos pasos en el Atelier
-        </p>
-        <ul className="list-unstyled d-flex flex-column gap-2 mb-0">
-          {[
-            'Revisión y calibración técnica de archivos gráficos',
-            'Impresión DTF Textil Ultra HD o sublimación a 200°C',
-            'Control de calidad y termo-fijación de acabado luxury',
-            'Embalaje seguro y despacho nacional con código de seguimiento',
-          ].map((step, i) => (
-            <li key={i} className="d-flex align-items-start gap-2 font-montserrat text-muted" style={{ fontSize: '0.85rem' }}>
-              <span className="text-primary fw-bold flex-shrink-0">{i + 1}.</span>
-              <span>{step}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* Mensaje de Confirmación y Notificación */}
+      {!isFailure && (
+        <div className="bg-card border border-border rounded-4 p-4 mb-4 text-start shadow-sm">
+          <p className="font-montserrat text-text mb-3" style={{ fontSize: '0.92rem', lineHeight: '1.6' }}>
+            Hemos recibido tu orden y ya se encuentra en cola de producción. Te enviamos un correo electrónico a <span className="text-primary fw-bold">{email || 'tu casilla'}</span> con el desglose de productos y el comprobante de pago.
+          </p>
 
+          <div className="row g-3 pt-3 border-top border-border font-montserrat" style={{ fontSize: '0.85rem' }}>
+            <div className="col-12 col-sm-6">
+              <span className="text-muted d-block small">Tiempo de producción:</span>
+              <span className="text-text fw-semibold">3 a 5 días hábiles</span>
+            </div>
+            <div className="col-12 col-sm-6">
+              <span className="text-muted d-block small">Despacho:</span>
+              <span className="text-text fw-semibold">A todo Chile con código de seguimiento</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Botones de acción */}
       <div className="d-flex flex-column flex-sm-row gap-3 justify-content-center">
-        <Link to="/" className="btn btn-primary d-inline-flex align-items-center gap-2 justify-content-center px-4 py-2">
+        <Link to="/mi-cuenta" className="btn btn-primary d-inline-flex align-items-center gap-2 justify-content-center px-4 py-2">
+          <span>Ver seguimiento en Mi Cuenta</span>
+        </Link>
+        <Link to="/" className="btn btn-outline-secondary d-inline-flex align-items-center gap-2 justify-content-center px-4 py-2">
           <ShoppingBag size={16} />
           Volver a la tienda
         </Link>
@@ -120,7 +124,7 @@ export default function Confirmacion() {
           className="btn btn-secondary d-inline-flex align-items-center gap-2 justify-content-center px-4 py-2"
         >
           <MessageCircle size={16} />
-          Confirmar por WhatsApp
+          WhatsApp
         </a>
       </div>
     </div>

@@ -44,6 +44,29 @@ def traducir_mensaje_error(raw_msg):
     return f'Error en la transacción: {raw_msg}'
 
 
+def descontar_stock_y_notificar(pedido):
+    """
+    Descuenta el inventario de las variantes compradas y envía el correo de confirmación.
+    """
+    try:
+        from catalogo.models import VarianteProducto
+        for item in pedido.items.all():
+            if item.variante_id:
+                variante = VarianteProducto.objects.filter(id=item.variante_id).first()
+                if variante and variante.stock is not None:
+                    variante.stock = max(0, variante.stock - item.cantidad)
+                    variante.save(update_fields=['stock'])
+                    logger.info(f"Stock actualizado para variante {variante.id}: {variante.stock}")
+    except Exception as exc:
+        logger.error(f"Error al descontar stock para pedido {pedido.numero}: {exc}")
+
+    try:
+        from config.emails import enviar_email_confirmacion_pedido
+        enviar_email_confirmacion_pedido(pedido)
+    except Exception as exc:
+        logger.error(f"Error al disparar email de confirmación para pedido {pedido.numero}: {exc}")
+
+
 def procesar_pago_directo_mercadopago(
     pedido,
     token,
@@ -93,6 +116,9 @@ def procesar_pago_directo_mercadopago(
         pedido.pagado_en = timezone.now()
         pedido.save()
 
+        # Descontar stock y enviar correo de confirmación
+        descontar_stock_y_notificar(pedido)
+
         logger.info(f"Pedido {pedido.numero} aprobado con tarjeta de prueba en modo simulación.")
         return {
             'success': True,
@@ -129,7 +155,7 @@ def procesar_pago_directo_mercadopago(
         payment_data = {
             "transaction_amount": monto_total,
             "token": str(token),
-            "description": f"Compra Pedido {pedido.numero} - RC Estampa Atelier",
+            "description": f"Compra Pedido {pedido.numero} - RC Estampa RC Estampa",
             "installments": int(installments) if installments else 1,
             "payment_method_id": str(payment_method_id),
             "payer": {
@@ -170,6 +196,7 @@ def procesar_pago_directo_mercadopago(
             pedido.estado = 'pagado'
             pedido.pagado_en = timezone.now()
             pedido.save()
+            descontar_stock_y_notificar(pedido)
             return {
                 'success': True,
                 'status': 'approved',
@@ -202,6 +229,7 @@ def procesar_pago_directo_mercadopago(
             pedido.estado = 'pagado'
             pedido.pagado_en = timezone.now()
             pedido.save()
+            descontar_stock_y_notificar(pedido)
             return {
                 'success': True,
                 'status': 'approved',

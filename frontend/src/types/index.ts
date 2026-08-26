@@ -118,6 +118,21 @@ export interface User {
   email: string;
   nombre: string;
   rol: 'admin' | 'cliente';
+  telefono?: string;
+  rut?: string;
+  direccion?: string;
+  ciudad?: string;
+  region?: string;
+  email_verificado?: boolean;
+}
+
+export interface Favorito {
+  id: number;
+  producto?: number | null;
+  drinkware?: number | null;
+  producto_detalle?: Producto;
+  drinkware_detalle?: ProductoVajilla;
+  creado_en: string;
 }
 
 // --- Inputs del panel de administración ---

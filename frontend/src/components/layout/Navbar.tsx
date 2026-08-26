@@ -79,7 +79,7 @@ export default function Navbar() {
                   className="font-montserrat text-muted text-uppercase"
                   style={{ fontSize: '0.58rem', letterSpacing: '0.18em' }}
                 >
-                  Atelier & Estampados
+                  Grabados & Estampados
                 </span>
               </div>
             </Link>

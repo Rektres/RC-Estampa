@@ -39,6 +39,14 @@ class User(AbstractUser):
     email = models.EmailField('email', unique=True)
     nombre = models.CharField(max_length=150, blank=True)
     rol = models.CharField(max_length=10, choices=ROLES, default='cliente')
+    telefono = models.CharField(max_length=30, blank=True)
+    rut = models.CharField(max_length=20, blank=True)
+    direccion = models.CharField(max_length=255, blank=True)
+    ciudad = models.CharField(max_length=100, blank=True)
+    region = models.CharField(max_length=100, blank=True)
+    codigo_verificacion = models.CharField(max_length=6, blank=True)
+    codigo_expiracion = models.DateTimeField(null=True, blank=True)
+    email_verificado = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -60,3 +68,22 @@ class DireccionEnvio(models.Model):
 
     def __str__(self):
         return f'{self.nombre_destinatario} - {self.ciudad}'
+
+
+class Favorito(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favoritos')
+    producto = models.ForeignKey(
+        'catalogo.Producto', on_delete=models.CASCADE, null=True, blank=True, related_name='favoritos_producto'
+    )
+    drinkware = models.ForeignKey(
+        'catalogo.ProductoVajilla', on_delete=models.CASCADE, null=True, blank=True, related_name='favoritos_drinkware'
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-creado_en',)
+
+    def __str__(self):
+        item_nombre = self.producto.nombre if self.producto else (self.drinkware.nombre if self.drinkware else 'Item')
+        return f'{self.user.email} - {item_nombre}'
+

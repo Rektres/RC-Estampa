@@ -24,7 +24,7 @@ export default function Footer() {
               <div>
                 <span className="font-italiana fs-3 text-text d-block lh-1">RC Estampa</span>
                 <span className="font-montserrat text-muted text-uppercase" style={{ fontSize: '0.6rem', letterSpacing: '0.15em' }}>
-                  Atelier & Estampados
+                  Grabados & Estampados
                 </span>
               </div>
             </div>
@@ -142,9 +142,18 @@ export default function Footer() {
         <div
           className="border-top border-border pt-4 mt-5 d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3"
         >
-          <p className="font-montserrat text-ghost mb-0 text-center text-sm-start" style={{ fontSize: '0.78rem' }}>
-            © {new Date().getFullYear()} RC Estampa. Sistema de Diseño Escénico v2.0. Todos los derechos reservados.
-          </p>
+          <div className="d-flex flex-column flex-sm-row align-items-center gap-3">
+            <p className="font-montserrat text-ghost mb-0 text-center text-sm-start" style={{ fontSize: '0.78rem' }}>
+              © {new Date().getFullYear()} RC Estampa SpA. Todos los derechos reservados.
+            </p>
+            <Link
+              to="/terminos-y-privacidad"
+              className="font-montserrat text-muted small text-decoration-none hover-lift"
+              style={{ fontSize: '0.75rem' }}
+            >
+              Términos & Privacidad (Ley N° 21.719)
+            </Link>
+          </div>
           <div className="d-flex align-items-center gap-2 text-ghost font-montserrat" style={{ fontSize: '0.78rem' }}>
             <span className="live-dot live-dot-gold" style={{ width: '6px', height: '6px' }} />
             <span>Taller Operativo en Línea</span>

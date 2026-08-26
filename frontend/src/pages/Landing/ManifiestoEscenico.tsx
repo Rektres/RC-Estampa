@@ -59,7 +59,7 @@ export default function ManifiestoEscenico() {
                 className="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2 rounded-3 hover-lift"
               >
                 <Sparkles size={16} />
-                <span>Crear Pieza en el Atelier</span>
+                <span>Crear Pieza en el taller de RC Estampa</span>
                 <ArrowRight size={15} />
               </Link>
               <span className="font-montserrat text-ghost small" style={{ fontSize: '0.78rem' }}>

@@ -1,21 +1,25 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ShoppingBag, Minus, Plus, Droplets, Sparkles } from 'lucide-react';
-import { catalogoApi } from '../../api';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ShoppingBag, Minus, Plus, Droplets, Sparkles, Heart, Check } from 'lucide-react';
+import { catalogoApi, favoritosApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { formatPrice } from '../../utils';
 import LineaBadge from '../../components/shared/LineaBadge';
 import HoverSwapCard from '../../components/shared/HoverSwapCard';
 import { useCartStore } from '../../store/cartStore';
+import { useAuthStore } from '../../store/authStore';
 
 export default function VajillaDetalle() {
   const { slug } = useParams<{ slug: string }>();
   const { data: producto, loading } = useAsync(() => catalogoApi.drinkwareItem(slug!), [slug]);
   const { data: allVaj } = useAsync(() => catalogoApi.drinkwareAll(), []);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState('');
   const [cantidad, setCantidad] = useState(1);
+  const [favSaved, setFavSaved] = useState(false);
   const { addItem, openCart } = useCartStore();
 
   if (loading) {
@@ -173,10 +177,32 @@ export default function VajillaDetalle() {
             </div>
           </div>
 
-          <button onClick={handleAddToCart} className="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2 py-3 small">
-            <ShoppingBag size={18} />
-            Agregar al carrito
-          </button>
+          <div className="d-flex gap-2">
+            <button onClick={handleAddToCart} className="btn btn-primary flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-3 small">
+              <ShoppingBag size={18} />
+              Agregar al carrito
+            </button>
+
+            <button
+              onClick={async () => {
+                if (!isAuthenticated) {
+                  navigate('/auth');
+                  return;
+                }
+                try {
+                  await favoritosApi.agregar({ drinkware: producto.id });
+                  setFavSaved(true);
+                  setTimeout(() => setFavSaved(false), 3000);
+                } catch {
+                  // Ignore
+                }
+              }}
+              className={`btn ${favSaved ? 'btn-success' : 'btn-outline-secondary'} px-3 d-flex align-items-center justify-content-center`}
+              title="Guardar en favoritos"
+            >
+              {favSaved ? <Check size={18} /> : <Heart size={18} className="text-primary" />}
+            </button>
+          </div>
 
           {/* CTA diseñador */}
           <div className="bg-elevated border border-border rounded p-3 d-flex align-items-center gap-3">

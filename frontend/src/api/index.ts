@@ -1,7 +1,7 @@
 import { api } from './client';
 import type {
   Producto, ProductoVajilla, FotoCliente, User,
-  ProductoInput, Categoria,
+  ProductoInput, Categoria, Favorito,
 } from '../types';
 
 export interface Paginated<T> {
@@ -82,12 +82,35 @@ export const catalogoApi = {
   editor: () => api.get<EditorConfig>('/editor/').then((r) => r.data),
 };
 
+export interface RegisterInput {
+  email: string;
+  nombre: string;
+  password?: string;
+  telefono?: string;
+  rut?: string;
+  direccion?: string;
+  ciudad?: string;
+  region?: string;
+}
+
 export const authApi = {
-  register: (data: { email: string; nombre: string; password: string }) =>
-    api.post('/auth/register/', data).then((r) => r.data),
+  register: (data: RegisterInput) =>
+    api.post<{ success: boolean; message: string; email: string }>('/auth/register/', data).then((r) => r.data),
+  verificarCodigo: (data: { email: string; codigo: string }) =>
+    api.post<AuthResponse>('/auth/verificar-codigo/', data).then((r) => r.data),
+  reenviarCodigo: (data: { email: string }) =>
+    api.post<{ success: boolean; message: string }>('/auth/reenviar-codigo/', data).then((r) => r.data),
   login: (email: string, password: string) =>
     api.post<AuthResponse>('/auth/token/', { email, password }).then((r) => r.data),
   me: () => api.get<User>('/auth/me/').then((r) => r.data),
+  updateMe: (data: Partial<User>) => api.patch<User>('/auth/me/', data).then((r) => r.data),
+};
+
+export const favoritosApi = {
+  listar: () => api.get<Favorito[]>('/auth/favoritos/').then((r) => r.data),
+  agregar: (data: { producto?: number; drinkware?: number }) =>
+    api.post<Favorito>('/auth/favoritos/', data).then((r) => r.data),
+  eliminar: (id: number) => api.delete(`/auth/favoritos/${id}/`).then((r) => r.data),
 };
 
 export interface ProcesarPagoInput {
@@ -116,6 +139,7 @@ export interface ProcesarPagoResponse {
 export const pedidosApi = {
   crear: (data: PedidoInput) => api.post<Pedido>('/pedidos/', data).then((r) => r.data),
   obtener: (numero: string) => api.get<Pedido>(`/pedidos/${numero}/`).then((r) => r.data),
+  misPedidos: () => api.get<Pedido[]>('/pedidos/').then((r) => r.data),
   procesarPago: (data: ProcesarPagoInput) =>
     api.post<ProcesarPagoResponse>('/pagos/procesar/', data).then((r) => r.data),
 };

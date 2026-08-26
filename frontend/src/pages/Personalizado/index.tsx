@@ -67,7 +67,7 @@ export default function Personalizado() {
             <span className="glyph">★</span>
             <span>SOLICITUD REGISTRADA CON ÉXITO</span>
           </div>
-          <h2 className="font-italiana text-text fs-1 mb-3">¡Solicitud Recibida en Atelier!</h2>
+          <h2 className="font-italiana text-text fs-1 mb-3">¡Solicitud Recibida en RC Estampa!</h2>
           <p className="font-montserrat text-muted mb-2">
             Código de seguimiento: <span className="text-primary fw-bold fs-5 font-montserrat">{numero}</span>
           </p>

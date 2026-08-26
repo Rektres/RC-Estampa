@@ -1,4 +1,5 @@
 import logging
+from django.db import models
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, mixins, permissions, status, viewsets
@@ -12,11 +13,22 @@ from .services.mercadopago import obtener_info_pago_mercadopago
 logger = logging.getLogger(__name__)
 
 
-class PedidoViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class PedidoViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = PedidoSerializer
     permission_classes = [permissions.AllowAny]
-    queryset = Pedido.objects.all()
     lookup_field = 'numero'
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated:
+            if getattr(user, 'rol', '') == 'admin' or user.is_staff:
+                return Pedido.objects.all().order_by('-creado_en')
+            return Pedido.objects.filter(models.Q(user=user) | models.Q(email__iexact=user.email)).order_by('-creado_en')
+        email = self.request.query_params.get('email')
+        if email:
+            return Pedido.objects.filter(email__iexact=email).order_by('-creado_en')
+        return Pedido.objects.none()
+
 
 
 class CotizacionViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):

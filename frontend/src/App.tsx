@@ -12,6 +12,7 @@ import Checkout from './pages/Checkout';
 import Confirmacion from './pages/Confirmacion';
 import Auth from './pages/Auth';
 import Perfil from './pages/Perfil';
+import TerminosYPrivacidad from './pages/Legal/TerminosYPrivacidad';
 import RequireAdmin from './components/shared/RequireAdmin';
 import Panel from './pages/Panel';
 import PanelProductoForm from './pages/Panel/ProductoForm';
@@ -33,6 +34,8 @@ export default function App() {
           <Route path="/confirmacion" element={<Confirmacion />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="/mi-cuenta" element={<Perfil />} />
+          <Route path="/terminos-y-privacidad" element={<TerminosYPrivacidad />} />
           <Route element={<RequireAdmin />}>
             <Route path="/panel" element={<Panel />} />
             <Route path="/panel/:tipo/nuevo" element={<PanelProductoForm />} />
