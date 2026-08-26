@@ -89,3 +89,72 @@ def mercadopago_webhook(request):
         logger.error(f"Error procesando webhook de Mercado Pago: {exc}")
         return Response({"status": "error", "message": str(exc)}, status=status.HTTP_200_OK)
 
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def procesar_pago_tarjeta(request):
+    """
+    Endpoint para procesar pagos con tarjeta directamente en el sitio (Checkout API).
+    Crea el pedido si no existe y procesa el token de tarjeta con Mercado Pago.
+    """
+    try:
+        from .services.mercadopago_api import procesar_pago_directo_mercadopago
+
+        data = request.data
+        token = data.get('token')
+        payment_method_id = data.get('payment_method_id')
+        installments = data.get('installments', 1)
+        issuer_id = data.get('issuer_id')
+        doc_type = data.get('doc_type', 'RUT')
+        doc_number = data.get('doc_number', '')
+        payer_email = data.get('payer_email')
+        pedido_numero = data.get('pedido_numero')
+        pedido_input = data.get('pedido_data')
+
+        if not token or not payment_method_id:
+            return Response(
+                {"success": False, "message": "Faltan datos de la tarjeta (token o método de pago)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 1. Obtener o crear el pedido
+        pedido = None
+        if pedido_numero:
+            pedido = Pedido.objects.filter(numero=pedido_numero).first()
+
+        if not pedido and pedido_input:
+            serializer = PedidoSerializer(data=pedido_input, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            pedido = serializer.save()
+
+        if not pedido:
+            return Response(
+                {"success": False, "message": "No se pudo identificar el pedido para el cobro."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 2. Procesar el cobro directo en Mercado Pago API
+        resultado = procesar_pago_directo_mercadopago(
+            pedido=pedido,
+            token=token,
+            payment_method_id=payment_method_id,
+            installments=installments,
+            issuer_id=issuer_id,
+            payer_email=payer_email,
+            doc_type=doc_type,
+            doc_number=doc_number,
+        )
+
+        resultado['pedido'] = PedidoSerializer(pedido).data
+        http_code = status.HTTP_200_OK if resultado.get('success') else status.HTTP_400_BAD_REQUEST
+        return Response(resultado, status=http_code)
+
+    except Exception as exc:
+        logger.error(f"Error en procesar_pago_tarjeta: {exc}")
+        return Response(
+            {"success": False, "message": f"Error al procesar el pago: {str(exc)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+

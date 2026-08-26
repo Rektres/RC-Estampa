@@ -90,9 +90,32 @@ export const authApi = {
   me: () => api.get<User>('/auth/me/').then((r) => r.data),
 };
 
+export interface ProcesarPagoInput {
+  token: string;
+  payment_method_id: string;
+  installments: number;
+  issuer_id?: string;
+  doc_type?: string;
+  doc_number?: string;
+  payer_email?: string;
+  pedido_numero?: string;
+  pedido_data?: PedidoInput;
+}
+
+export interface ProcesarPagoResponse {
+  success: boolean;
+  status: string;
+  status_detail?: string;
+  payment_id?: number | string;
+  message?: string;
+  pedido?: Pedido;
+}
+
 export const pedidosApi = {
   crear: (data: PedidoInput) => api.post<Pedido>('/pedidos/', data).then((r) => r.data),
   obtener: (numero: string) => api.get<Pedido>(`/pedidos/${numero}/`).then((r) => r.data),
+  procesarPago: (data: ProcesarPagoInput) =>
+    api.post<ProcesarPagoResponse>('/pagos/procesar/', data).then((r) => r.data),
 };
 
 export const cotizacionesApi = {

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ShoppingBag, ChevronRight, CreditCard, Building2, ShieldCheck } from 'lucide-react';
+import CardPaymentForm from '../../components/checkout/CardPaymentForm';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
 import { formatPrice } from '../../utils';
@@ -35,7 +36,7 @@ export default function Checkout() {
   const { data: editorCfg } = useAsync(() => catalogoApi.editor(), []);
   const regiones = editorCfg?.regiones ?? [];
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       nombre: user?.nombre ?? '',
@@ -232,20 +233,20 @@ export default function Checkout() {
             <div className="bg-card border border-border rounded p-4">
               <h2 className="font-montserrat fw-semibold text-text mb-3 d-flex align-items-center gap-2">
                 <CreditCard size={18} className="text-primary" />
-                Selecciona tu medio de pago
+                Medio de pago
               </h2>
               <p className="font-montserrat text-muted mb-4" style={{ fontSize: '0.875rem' }}>
-                Todas las transacciones están protegidas con cifrado SSL de 256 bits y tecnología antifraude.
+                Completa tu compra de forma rápida y segura en nuestro checkout protegido.
               </p>
 
               {/* Selector de Medios de Pago */}
               <div className="d-flex flex-column gap-3 mb-4">
-                {/* Opción 1: Mercado Pago */}
+                {/* Opción 1: Tarjeta On-Site con Mercado Pago API */}
                 <label
-                  className={`p-3 rounded-3 border d-flex align-items-start gap-3 cursor-pointer transition-all ${
+                  className={`p-3 rounded-3 border d-flex align-items-start gap-3 transition-all ${
                     metodoPago === 'mercadopago'
                       ? 'border-primary bg-elevated'
-                      : 'border-border bg-card hover-lift'
+                      : 'border-border bg-card'
                   }`}
                   style={{ cursor: 'pointer' }}
                 >
@@ -261,31 +262,31 @@ export default function Checkout() {
                     <div className="d-flex align-items-center justify-content-between mb-1">
                       <div className="d-flex align-items-center gap-2">
                         <span className="font-montserrat fw-bold text-text" style={{ fontSize: '0.92rem' }}>
-                          Mercado Pago Checkout Pro
+                          Tarjeta de Crédito o Débito
                         </span>
                         <span className="badge bg-primary text-black font-montserrat fw-bold" style={{ fontSize: '0.65rem' }}>
-                          RECOMENDADO
+                          PAGO DIRECTO EN EL SITIO
                         </span>
                       </div>
                     </div>
                     <p className="font-montserrat text-muted small mb-2" style={{ fontSize: '0.78rem' }}>
-                      Tarjetas de Crédito, Débito / Redcompra, Dinero en cuenta de Mercado Pago y financiamiento en cuotas.
+                      Visa, Mastercard, American Express, Redcompra y Mach. Sin salir de la tienda.
                     </p>
                     <div className="d-flex align-items-center gap-2 flex-wrap text-muted" style={{ fontSize: '0.72rem' }}>
-                      <span className="badge bg-elevated text-text border border-border">Visa</span>
-                      <span className="badge bg-elevated text-text border border-border">Mastercard</span>
-                      <span className="badge bg-elevated text-text border border-border">Redcompra</span>
-                      <span className="badge bg-elevated text-text border border-border">Mach</span>
+                      <span className="badge bg-card text-text border border-border">Visa</span>
+                      <span className="badge bg-card text-text border border-border">Mastercard</span>
+                      <span className="badge bg-card text-text border border-border">Redcompra</span>
+                      <span className="badge bg-card text-text border border-border">Cuotas</span>
                     </div>
                   </div>
                 </label>
 
                 {/* Opción 2: Transferencia Bancaria */}
                 <label
-                  className={`p-3 rounded-3 border d-flex align-items-start gap-3 cursor-pointer transition-all ${
+                  className={`p-3 rounded-3 border d-flex align-items-start gap-3 transition-all ${
                     metodoPago === 'transferencia'
                       ? 'border-primary bg-elevated'
-                      : 'border-border bg-card hover-lift'
+                      : 'border-border bg-card'
                   }`}
                   style={{ cursor: 'pointer' }}
                 >
@@ -317,28 +318,90 @@ export default function Checkout() {
                 </div>
               )}
 
-              <button
-                onClick={handleSubmit(onSubmit)}
-                disabled={isSubmitting}
-                className="btn btn-primary w-100 py-3 d-flex align-items-center justify-content-center gap-2 font-montserrat fw-bold shadow-sm"
-              >
-                {metodoPago === 'mercadopago' ? (
-                  <>
-                    <CreditCard size={18} />
-                    <span>{isSubmitting ? 'Conectando con Mercado Pago...' : 'Pagar con Mercado Pago'}</span>
-                  </>
-                ) : (
-                  <>
+              {/* Si se eligió Mercado Pago, mostramos el formulario de tarjeta integrado */}
+              {metodoPago === 'mercadopago' ? (
+                <div className="pt-2 border-top border-border">
+                  <h3 className="font-montserrat fw-bold text-text fs-6 mb-3">
+                    Ingresa los datos de tu tarjeta
+                  </h3>
+                  <CardPaymentForm
+                    totalAmount={totalAmount}
+                    userName={user?.nombre || ''}
+                    userEmail={user?.email || ''}
+                    isSubmitting={isSubmitting}
+                    onSubmit={async (cardData) => {
+                      setSubmitError(null);
+                      const formData = getValues();
+                      const payload: PedidoInput = {
+                        nombre: formData.nombre,
+                        email: formData.email,
+                        telefono: formData.telefono,
+                        direccion: formData.direccion,
+                        ciudad: formData.ciudad,
+                        region: formData.region,
+                        notas: formData.notas,
+                        total: totalAmount,
+                        metodo_pago: 'mercadopago',
+                        items: items.map((it) => ({
+                          tipo: it.tipo,
+                          nombre: it.nombre,
+                          imagen: it.imagen,
+                          talla: it.talla,
+                          color: it.tipo === 'catalogo' ? it.color : undefined,
+                          prenda: it.tipo === 'diseno' ? it.prenda : undefined,
+                          color_base: it.tipo === 'diseno' ? it.color_base : undefined,
+                          linea: it.tipo === 'catalogo' ? it.linea : undefined,
+                          precio: it.precio ?? null,
+                          cantidad: it.cantidad,
+                          producto_id: it.tipo === 'catalogo' ? it.productoId : undefined,
+                          variante_id: it.tipo === 'catalogo' ? it.varianteId : undefined,
+                          diseno_id: it.tipo === 'diseno' ? it.disenoId : undefined,
+                        })),
+                      };
+
+                      try {
+                        const res = await pedidosApi.procesarPago({
+                          token: cardData.token,
+                          payment_method_id: cardData.payment_method_id,
+                          installments: cardData.installments,
+                          issuer_id: cardData.issuer_id,
+                          doc_type: cardData.doc_type,
+                          doc_number: cardData.doc_number,
+                          payer_email: formData.email,
+                          pedido_data: payload,
+                        });
+
+                        if (res.success || res.status === 'approved' || res.status === 'in_process') {
+                          clearCart();
+                          const num = res.pedido?.numero || 'RC-ESTAMPA';
+                          navigate(`/confirmacion?pedido_id=${num}&email=${encodeURIComponent(formData.email)}&status=${res.status}&payment_id=${res.payment_id || ''}`);
+                        } else {
+                          setSubmitError(res.message || 'El pago fue rechazado. Intenta con otra tarjeta.');
+                        }
+                      } catch (err: unknown) {
+                        const errorMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                        setSubmitError(errorMsg || 'No se pudo procesar el pago con la tarjeta. Intenta nuevamente.');
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <button
+                    onClick={handleSubmit(onSubmit)}
+                    disabled={isSubmitting}
+                    className="btn btn-primary w-100 py-3 d-flex align-items-center justify-content-center gap-2 font-montserrat fw-bold shadow-sm"
+                  >
                     <Building2 size={18} />
                     <span>{isSubmitting ? 'Confirmando pedido...' : 'Confirmar Pedido por Transferencia'}</span>
-                  </>
-                )}
-              </button>
+                  </button>
 
-              <div className="d-flex align-items-center justify-content-center gap-2 mt-3 text-muted" style={{ fontSize: '0.75rem' }}>
-                <ShieldCheck size={14} className="text-primary" />
-                <span>Transacción encriptada con garantía oficial RC Estampa</span>
-              </div>
+                  <div className="d-flex align-items-center justify-content-center gap-2 mt-3 text-muted" style={{ fontSize: '0.75rem' }}>
+                    <ShieldCheck size={14} className="text-primary" />
+                    <span>Garantía de compra y seguimiento directo en taller</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
