@@ -68,5 +68,17 @@ class FavoritoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorito
         fields = ('id', 'producto', 'drinkware', 'producto_detalle', 'drinkware_detalle', 'creado_en')
+        extra_kwargs = {
+            'producto': {'required': False, 'allow_null': True},
+            'drinkware': {'required': False, 'allow_null': True},
+        }
+
+    def validate(self, attrs):
+        producto = attrs.get('producto')
+        drinkware = attrs.get('drinkware')
+        if not producto and not drinkware:
+            raise serializers.ValidationError('Debes indicar un producto o un artículo de drinkware.')
+        return attrs
+
 
 

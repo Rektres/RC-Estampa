@@ -147,6 +147,7 @@ class MeView(generics.RetrieveUpdateAPIView):
 class DireccionEnvioViewSet(viewsets.ModelViewSet):
     serializer_class = DireccionEnvioSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def get_queryset(self):
         return DireccionEnvio.objects.filter(user=self.request.user)
@@ -158,6 +159,7 @@ class DireccionEnvioViewSet(viewsets.ModelViewSet):
 class FavoritoViewSet(viewsets.ModelViewSet):
     serializer_class = FavoritoSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def get_queryset(self):
         return Favorito.objects.filter(user=self.request.user)
@@ -171,4 +173,5 @@ class FavoritoViewSet(viewsets.ModelViewSet):
         elif drinkware:
             Favorito.objects.filter(user=self.request.user, drinkware=drinkware).delete()
         serializer.save(user=self.request.user)
+
 

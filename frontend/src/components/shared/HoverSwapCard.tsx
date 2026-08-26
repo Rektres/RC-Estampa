@@ -1,10 +1,12 @@
 import { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingBag, Eye, Sparkles } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingBag, Eye, Sparkles, Heart } from 'lucide-react';
 import LineaBadge from './LineaBadge';
 import { formatPrice } from '../../utils';
 import type { Producto, ProductoVajilla, VarianteProducto } from '../../types';
 import { useCartStore } from '../../store/cartStore';
+import { useAuthStore } from '../../store/authStore';
+import { favoritosApi } from '../../api';
 
 type Props = {
   producto: Producto | ProductoVajilla;
@@ -18,8 +20,12 @@ function isVajilla(p: Producto | ProductoVajilla): p is ProductoVajilla {
 
 export default function HoverSwapCard({ producto, prefixPath, onOpenSpecs }: Props) {
   const [hovered, setHovered] = useState(false);
+  const [isFav, setIsFav] = useState(false);
+  const [favId, setFavId] = useState<number | null>(null);
   const touchCount = useRef(0);
   const { openCart, addItem } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
   const path = prefixPath ?? (isVajilla(producto) ? '/drinkware' : '/catalogo');
 
   const frente = producto.imagenes.find((i) => i.es_frente) ?? producto.imagenes[0];
@@ -30,6 +36,29 @@ export default function HoverSwapCard({ producto, prefixPath, onOpenSpecs }: Pro
     if (touchCount.current >= 2) {
       touchCount.current = 0;
       setHovered((h) => !h);
+    }
+  }
+
+  async function handleToggleFavorite(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      navigate('/auth');
+      return;
+    }
+    try {
+      if (isFav && favId) {
+        await favoritosApi.eliminar(favId);
+        setIsFav(false);
+        setFavId(null);
+      } else {
+        const payload = isVajilla(producto) ? { drinkware: producto.id } : { producto: producto.id };
+        const res = await favoritosApi.agregar(payload);
+        setIsFav(true);
+        setFavId(res.id);
+      }
+    } catch {
+      // Ignore
     }
   }
 
@@ -92,6 +121,27 @@ export default function HoverSwapCard({ producto, prefixPath, onOpenSpecs }: Pro
       >
         {/* Image container — aspect 3/4 */}
         <div className="position-relative overflow-hidden bg-elevated" style={{ aspectRatio: '3/4' }}>
+          {/* Botón flotante de favoritos */}
+          <button
+            onClick={handleToggleFavorite}
+            className="btn p-2 rounded-circle position-absolute top-0 end-0 m-2 border-0 d-flex align-items-center justify-content-center hover-lift"
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.45)',
+              backdropFilter: 'blur(6px)',
+              zIndex: 10,
+              width: '2rem',
+              height: '2rem',
+            }}
+            title={isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+            aria-label="Favorito"
+          >
+            <Heart
+              size={14}
+              fill={isFav ? 'var(--brand-primary)' : 'none'}
+              color={isFav ? 'var(--brand-primary)' : '#ffffff'}
+            />
+          </button>
+
           {/* Front image */}
           {frente && (
             <img

@@ -114,7 +114,15 @@ export const direccionesApi = {
 };
 
 export const favoritosApi = {
-  listar: () => api.get<Favorito[]>('/auth/favoritos/').then((r) => r.data),
+  listar: () =>
+    api.get<Favorito[] | { results: Favorito[] }>('/auth/favoritos/').then((r) => {
+      const data = r.data;
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray((data as { results: Favorito[] }).results)) {
+        return (data as { results: Favorito[] }).results;
+      }
+      return [];
+    }),
   agregar: (data: { producto?: number; drinkware?: number }) =>
     api.post<Favorito>('/auth/favoritos/', data).then((r) => r.data),
   eliminar: (id: number) => api.delete(`/auth/favoritos/${id}/`).then((r) => r.data),

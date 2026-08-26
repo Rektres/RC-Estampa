@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Minus, Plus, Droplets, Sparkles, Heart, Check } from 'lucide-react';
+import { ShoppingBag, Minus, Plus, Droplets, Sparkles, Heart } from 'lucide-react';
 import { catalogoApi, favoritosApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { formatPrice } from '../../utils';
@@ -19,8 +19,25 @@ export default function VajillaDetalle() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState('');
   const [cantidad, setCantidad] = useState(1);
-  const [favSaved, setFavSaved] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favId, setFavId] = useState<number | null>(null);
+  const [isFavLoading, setIsFavLoading] = useState(false);
   const { addItem, openCart } = useCartStore();
+
+  useEffect(() => {
+    if (isAuthenticated && producto) {
+      favoritosApi.listar().then((favs) => {
+        const found = favs.find((f) => f.drinkware === producto.id || f.drinkware_detalle?.id === producto.id);
+        if (found) {
+          setIsFavorite(true);
+          setFavId(found.id);
+        } else {
+          setIsFavorite(false);
+          setFavId(null);
+        }
+      }).catch(() => {});
+    }
+  }, [isAuthenticated, producto]);
 
   if (loading) {
     return (
@@ -189,18 +206,33 @@ export default function VajillaDetalle() {
                   navigate('/auth');
                   return;
                 }
+                if (!producto) return;
+                setIsFavLoading(true);
                 try {
-                  await favoritosApi.agregar({ drinkware: producto.id });
-                  setFavSaved(true);
-                  setTimeout(() => setFavSaved(false), 3000);
+                  if (isFavorite && favId) {
+                    await favoritosApi.eliminar(favId);
+                    setIsFavorite(false);
+                    setFavId(null);
+                  } else {
+                    const created = await favoritosApi.agregar({ drinkware: producto.id });
+                    setIsFavorite(true);
+                    setFavId(created.id);
+                  }
                 } catch {
                   // Ignore
+                } finally {
+                  setIsFavLoading(false);
                 }
               }}
-              className={`btn ${favSaved ? 'btn-success' : 'btn-outline-secondary'} px-3 d-flex align-items-center justify-content-center`}
-              title="Guardar en favoritos"
+              disabled={isFavLoading}
+              className={`btn ${isFavorite ? 'btn-primary text-black' : 'btn-outline-secondary'} px-3 d-flex align-items-center justify-content-center`}
+              title={isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
             >
-              {favSaved ? <Check size={18} /> : <Heart size={18} className="text-primary" />}
+              <Heart
+                size={18}
+                fill={isFavorite ? 'currentColor' : 'none'}
+                className={isFavorite ? 'text-black' : 'text-primary'}
+              />
             </button>
           </div>
 
