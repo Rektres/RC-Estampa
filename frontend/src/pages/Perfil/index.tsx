@@ -31,6 +31,7 @@ export default function Perfil() {
     telefono: user?.telefono || '',
     rut: user?.rut || '',
     direccion: user?.direccion || '',
+    comuna: user?.comuna || '',
     ciudad: user?.ciudad || '',
     region: user?.region || 'Región Metropolitana',
   });
@@ -440,13 +441,24 @@ export default function Perfil() {
               </div>
 
               <div className="col-12 col-sm-6">
-                <label className="form-label fw-semibold text-text small">Ciudad / Comuna</label>
+                <label className="form-label fw-semibold text-text small">Comuna</label>
+                <input
+                  type="text"
+                  value={formData.comuna}
+                  onChange={(e) => setFormData({ ...formData, comuna: e.target.value })}
+                  className="form-control bg-elevated"
+                  placeholder="Ej: Providencia / Las Condes"
+                />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label className="form-label fw-semibold text-text small">Ciudad</label>
                 <input
                   type="text"
                   value={formData.ciudad}
                   onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
                   className="form-control bg-elevated"
-                  placeholder="Santiago / Las Condes / Temuco"
+                  placeholder="Ej: Santiago / Valparaíso"
                 />
               </div>
 

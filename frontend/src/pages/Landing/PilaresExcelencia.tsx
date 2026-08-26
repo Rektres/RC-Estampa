@@ -87,7 +87,7 @@ export default function PilaresExcelencia() {
                   className="font-montserrat text-primary text-uppercase fw-semibold"
                   style={{ fontSize: '0.68rem', letterSpacing: '0.1em' }}
                 >
-                  Estándar Escénico Certificado
+                  Estándar de Calidad Certificado
                 </span>
               </div>
             </div>

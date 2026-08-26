@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ShoppingBag, ChevronRight, CreditCard, Building2, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, ChevronRight, CreditCard, Building2, ShieldCheck, MapPin, Plus } from 'lucide-react';
 import CardPaymentForm from '../../components/checkout/CardPaymentForm';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
 import { formatPrice } from '../../utils';
-import { catalogoApi, pedidosApi, type PedidoInput } from '../../api';
+import { catalogoApi, pedidosApi, direccionesApi, type PedidoInput } from '../../api';
 import { useAsync } from '../../api/hooks';
 
 const schema = z.object({
@@ -16,6 +16,7 @@ const schema = z.object({
   email: z.string().email('Email inválido'),
   telefono: z.string().optional(),
   direccion: z.string().min(5, 'Ingresa la dirección completa'),
+  comuna: z.string().min(2, 'Ingresa la comuna'),
   ciudad: z.string().min(2, 'Requerido'),
   region: z.string().min(2, 'Selecciona una región'),
   notas: z.string().optional(),
@@ -36,15 +37,35 @@ export default function Checkout() {
   const { data: editorCfg } = useAsync(() => catalogoApi.editor(), []);
   const regiones = editorCfg?.regiones ?? [];
 
-  const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const [tipoDireccion, setTipoDireccion] = useState<'perfil' | 'otra'>(
+    user?.direccion ? 'perfil' : 'otra'
+  );
+  const [guardarDireccion, setGuardarDireccion] = useState(false);
+
+  const { register, handleSubmit, getValues, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       nombre: user?.nombre ?? '',
       email: user?.email ?? '',
+      telefono: user?.telefono ?? '',
+      direccion: user?.direccion ?? '',
+      comuna: user?.comuna ?? '',
+      ciudad: user?.ciudad ?? '',
+      region: user?.region ?? 'Región Metropolitana',
     },
   });
 
-  const hasDesignItems = items.some((i) => i.tipo === 'diseno');
+  useEffect(() => {
+    if (user && tipoDireccion === 'perfil') {
+      setValue('nombre', user.nombre || '');
+      setValue('email', user.email || '');
+      setValue('telefono', user.telefono || '');
+      setValue('direccion', user.direccion || '');
+      setValue('comuna', user.comuna || '');
+      setValue('ciudad', user.ciudad || '');
+      setValue('region', user.region || 'Región Metropolitana');
+    }
+  }, [user, tipoDireccion, setValue]);
 
   if (items.length === 0) {
     return (
@@ -57,13 +78,32 @@ export default function Checkout() {
     );
   }
 
+  async function handleGuardarDireccionSiAplica(data: FormData) {
+    if (guardarDireccion && user && tipoDireccion === 'otra') {
+      try {
+        await direccionesApi.crear({
+          nombre_destinatario: data.nombre,
+          direccion: data.direccion,
+          comuna: data.comuna,
+          ciudad: data.ciudad,
+          region: data.region,
+        });
+      } catch {
+        // Ignore error
+      }
+    }
+  }
+
   async function onSubmit(data: FormData) {
     setSubmitError(null);
+    await handleGuardarDireccionSiAplica(data);
+
     const payload: PedidoInput = {
       nombre: data.nombre,
       email: data.email,
       telefono: data.telefono,
       direccion: data.direccion,
+      comuna: data.comuna,
       ciudad: data.ciudad,
       region: data.region,
       notas: data.notas,
@@ -89,7 +129,6 @@ export default function Checkout() {
       const pedido = await pedidosApi.crear(payload);
       clearCart();
 
-      // Si se seleccionó Mercado Pago y retornó URL de pago, redirigir al checkout pro
       if (metodoPago === 'mercadopago' && pedido.payment_url) {
         window.location.href = pedido.payment_url;
       } else {
@@ -104,7 +143,6 @@ export default function Checkout() {
     <div className="container py-5" style={{ maxWidth: '64rem' }}>
       <h1 className="font-italiana text-text mb-4" style={{ fontSize: '2.25rem' }}>Checkout</h1>
 
-      {/* Stepper */}
       <div className="d-flex align-items-center mb-5">
         {STEPS.map((s, i) => (
           <div key={s} className="d-flex align-items-center">
@@ -122,105 +160,174 @@ export default function Checkout() {
       </div>
 
       <div className="row g-4">
-        {/* Form */}
-        <div className="col-12 col-lg-8 d-flex flex-column gap-4">
-          {/* Step 1 — Cart review */}
-          {step >= 1 && (
+        <div className="col-12 col-lg-8">
+          {/* Step 1 — Cart Review */}
+          {step === 1 && (
             <div className="bg-card border border-border rounded p-4">
-              <div className="d-flex align-items-center justify-content-between mb-3">
-                <h2 className="font-montserrat fw-semibold text-text mb-0">Resumen del pedido</h2>
-                {step > 1 && (
-                  <button onClick={() => setStep(1)} className="btn btn-link p-0 font-montserrat text-primary text-decoration-none" style={{ fontSize: '0.75rem' }}>
-                    Editar
-                  </button>
-                )}
-              </div>
-              <ul className="list-unstyled d-flex flex-column gap-3 mb-0">
-                {items.map((item) => (
-                  <li key={item.id} className="d-flex gap-3">
-                    <img src={item.imagen} alt={item.nombre} className="object-fit-cover rounded bg-elevated flex-shrink-0" style={{ width: '56px', height: '72px' }} />
-                    <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                      <p className="font-montserrat fw-medium text-text text-truncate mb-0" style={{ fontSize: '0.875rem' }}>{item.nombre}</p>
-                      <p className="font-montserrat text-muted mb-0" style={{ fontSize: '0.75rem' }}>
-                        {item.tipo === 'catalogo' ? `${item.talla} · ${item.color}` : `${item.prenda} · T${item.talla}`}
-                        {' '}&times; {item.cantidad}
-                      </p>
+              <h2 className="font-montserrat fw-semibold text-text mb-4" style={{ fontSize: '1rem' }}>Revisa tu pedido</h2>
+              <div className="d-flex flex-column gap-3 mb-4">
+                {items.map((it) => (
+                  <div key={it.id} className="d-flex align-items-center justify-content-between py-2 border-bottom border-border">
+                    <div className="d-flex align-items-center gap-3">
+                      {it.imagen && (
+                        <img src={it.imagen} alt={it.nombre} className="rounded object-fit-cover" style={{ width: '3.5rem', height: '3.5rem' }} />
+                      )}
+                      <div>
+                        <p className="font-montserrat fw-semibold text-text mb-1" style={{ fontSize: '0.875rem' }}>{it.nombre}</p>
+                        <p className="font-montserrat text-muted mb-0" style={{ fontSize: '0.75rem' }}>
+                          {it.talla ? `Talla: ${it.talla}` : ''} {'color' in it && it.color ? `· Color: ${it.color}` : ''} · Cantidad: {it.cantidad}
+                        </p>
+                      </div>
                     </div>
-                    <p className="font-montserrat fw-bold text-primary flex-shrink-0 mb-0" style={{ fontSize: '0.875rem' }}>
-                      {item.precio ? formatPrice(item.precio * item.cantidad) : 'A cotizar'}
-                    </p>
-                  </li>
+                    <span className="font-montserrat fw-bold text-text">
+                      {it.precio ? formatPrice(it.precio * it.cantidad) : 'A cotizar'}
+                    </span>
+                  </div>
                 ))}
-              </ul>
-              {hasDesignItems && (
-                <div className="mt-3 p-3 bg-elevated rounded border border-primary-20">
-                  <p className="font-montserrat text-muted mb-0" style={{ fontSize: '0.75rem' }}>
-                    Los precios de tus diseños personalizados serán confirmados por nuestro equipo antes de procesar el cobro. Te notificaremos por email.
-                  </p>
-                </div>
-              )}
-              {step === 1 && (
-                <button onClick={() => setStep(2)} className="btn btn-primary w-100 mt-4 py-2">
-                  Continuar con el envío
-                </button>
-              )}
+              </div>
+              <button onClick={() => setStep(2)} className="btn btn-primary w-100 py-2">
+                Continuar con el envío
+              </button>
             </div>
           )}
 
-          {/* Step 2 — Shipping */}
-          {step >= 2 && (
+          {/* Step 2 — Shipping Details */}
+          {step === 2 && (
             <div className="bg-card border border-border rounded p-4">
-              <div className="d-flex align-items-center justify-content-between mb-4">
-                <h2 className="font-montserrat fw-semibold text-text mb-0">Datos de entrega</h2>
-                {step > 2 && (
-                  <button onClick={() => setStep(2)} className="btn btn-link p-0 font-montserrat text-primary text-decoration-none" style={{ fontSize: '0.75rem' }}>
-                    Editar
-                  </button>
-                )}
-              </div>
-              <form className="d-flex flex-column gap-4">
+              <h2 className="font-montserrat fw-semibold text-text mb-4" style={{ fontSize: '1rem' }}>Dirección de despacho</h2>
+
+              {user?.direccion && (
+                <div className="mb-4 d-flex flex-column gap-2 font-montserrat">
+                  <label
+                    className={`p-3 rounded-3 border d-flex align-items-start gap-3 transition-all ${
+                      tipoDireccion === 'perfil' ? 'border-primary bg-elevated' : 'border-border bg-card'
+                    }`}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <input
+                      type="radio"
+                      name="tipo_dir"
+                      checked={tipoDireccion === 'perfil'}
+                      onChange={() => setTipoDireccion('perfil')}
+                      className="mt-1"
+                    />
+                    <div>
+                      <div className="d-flex align-items-center gap-2">
+                        <MapPin size={16} className="text-primary" />
+                        <strong className="text-text small">Usar mi dirección registrada de perfil</strong>
+                      </div>
+                      <p className="text-muted small mb-0 mt-1">
+                        {user.direccion}, {user.comuna ? `${user.comuna}, ` : ''}{user.ciudad} ({user.region})
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`p-3 rounded-3 border d-flex align-items-start gap-3 transition-all ${
+                      tipoDireccion === 'otra' ? 'border-primary bg-elevated' : 'border-border bg-card'
+                    }`}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <input
+                      type="radio"
+                      name="tipo_dir"
+                      checked={tipoDireccion === 'otra'}
+                      onChange={() => {
+                        setTipoDireccion('otra');
+                        setValue('direccion', '');
+                        setValue('comuna', '');
+                        setValue('ciudad', '');
+                      }}
+                      className="mt-1"
+                    />
+                    <div>
+                      <div className="d-flex align-items-center gap-2">
+                        <Plus size={16} className="text-primary" />
+                        <strong className="text-text small">Entregar en una dirección distinta</strong>
+                      </div>
+                      <p className="text-muted small mb-0 mt-1">
+                        Ingresa una dirección de entrega diferente para este pedido.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              <form className="d-flex flex-column gap-4 font-montserrat">
                 <div className="row g-3">
                   <div className="col-12 col-sm-6">
-                    <label className="form-label font-montserrat fw-semibold text-text" style={{ fontSize: '0.875rem' }}>Nombre completo *</label>
-                    <input {...register('nombre')} className="form-control bg-elevated font-montserrat" />
-                    {errors.nombre && <p className="font-montserrat text-danger mt-1 mb-0" style={{ fontSize: '0.75rem' }}>{errors.nombre.message}</p>}
+                    <label className="form-label fw-semibold text-text small">Nombre completo *</label>
+                    <input {...register('nombre')} className="form-control bg-elevated" />
+                    {errors.nombre && <p className="text-danger mt-1 mb-0 small">{errors.nombre.message}</p>}
                   </div>
                   <div className="col-12 col-sm-6">
-                    <label className="form-label font-montserrat fw-semibold text-text" style={{ fontSize: '0.875rem' }}>Email *</label>
-                    <input type="email" {...register('email')} className="form-control bg-elevated font-montserrat" />
-                    {errors.email && <p className="font-montserrat text-danger mt-1 mb-0" style={{ fontSize: '0.75rem' }}>{errors.email.message}</p>}
+                    <label className="form-label fw-semibold text-text small">Email *</label>
+                    <input type="email" {...register('email')} className="form-control bg-elevated" />
+                    {errors.email && <p className="text-danger mt-1 mb-0 small">{errors.email.message}</p>}
                   </div>
                 </div>
+
                 <div>
-                  <label className="form-label font-montserrat fw-semibold text-text" style={{ fontSize: '0.875rem' }}>Teléfono</label>
-                  <input {...register('telefono')} placeholder="+56 9 XXXX XXXX" className="form-control bg-elevated font-montserrat" />
+                  <label className="form-label fw-semibold text-text small">Teléfono / WhatsApp *</label>
+                  <input {...register('telefono')} placeholder="+56 9 XXXX XXXX" className="form-control bg-elevated" />
                 </div>
+
                 <div>
-                  <label className="form-label font-montserrat fw-semibold text-text" style={{ fontSize: '0.875rem' }}>Dirección *</label>
-                  <input {...register('direccion')} placeholder="Calle, número, depto/casa" className="form-control bg-elevated font-montserrat" />
-                  {errors.direccion && <p className="font-montserrat text-danger mt-1 mb-0" style={{ fontSize: '0.75rem' }}>{errors.direccion.message}</p>}
+                  <label className="form-label fw-semibold text-text small">Dirección *</label>
+                  <input {...register('direccion')} placeholder="Calle, número, depto/casa" className="form-control bg-elevated" />
+                  {errors.direccion && <p className="text-danger mt-1 mb-0 small">{errors.direccion.message}</p>}
                 </div>
+
                 <div className="row g-3">
                   <div className="col-12 col-sm-6">
-                    <label className="form-label font-montserrat fw-semibold text-text" style={{ fontSize: '0.875rem' }}>Ciudad *</label>
-                    <input {...register('ciudad')} className="form-control bg-elevated font-montserrat" />
-                    {errors.ciudad && <p className="font-montserrat text-danger mt-1 mb-0" style={{ fontSize: '0.75rem' }}>{errors.ciudad.message}</p>}
+                    <label className="form-label fw-semibold text-text small">Comuna *</label>
+                    <input {...register('comuna')} placeholder="Ej: Providencia / Las Condes" className="form-control bg-elevated" />
+                    {errors.comuna && <p className="text-danger mt-1 mb-0 small">{errors.comuna.message}</p>}
                   </div>
                   <div className="col-12 col-sm-6">
-                    <label className="form-label font-montserrat fw-semibold text-text" style={{ fontSize: '0.875rem' }}>Región *</label>
-                    <select {...register('region')} className="form-select bg-elevated font-montserrat">
+                    <label className="form-label fw-semibold text-text small">Ciudad *</label>
+                    <input {...register('ciudad')} placeholder="Ej: Santiago / Valparaíso" className="form-control bg-elevated" />
+                    {errors.ciudad && <p className="text-danger mt-1 mb-0 small">{errors.ciudad.message}</p>}
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-semibold text-text small">Región *</label>
+                    <select {...register('region')} className="form-select bg-elevated">
                       <option value="">Selecciona...</option>
                       {regiones.map((r) => <option key={r} value={r}>{r}</option>)}
                     </select>
-                    {errors.region && <p className="font-montserrat text-danger mt-1 mb-0" style={{ fontSize: '0.75rem' }}>{errors.region.message}</p>}
+                    {errors.region && <p className="text-danger mt-1 mb-0 small">{errors.region.message}</p>}
                   </div>
                 </div>
+
+                {user && tipoDireccion === 'otra' && (
+                  <div className="form-check p-3 bg-elevated rounded-3 border border-border">
+                    <input
+                      type="checkbox"
+                      id="guardarDirCheck"
+                      checked={guardarDireccion}
+                      onChange={(e) => setGuardarDireccion(e.target.checked)}
+                      className="form-check-input ms-0 me-2"
+                    />
+                    <label htmlFor="guardarDirCheck" className="form-check-label text-text small fw-semibold">
+                      ¿Deseas guardar esta dirección para futuras compras en tu cuenta?
+                    </label>
+                  </div>
+                )}
+
                 <div>
-                  <label className="form-label font-montserrat fw-semibold text-text" style={{ fontSize: '0.875rem' }}>Notas del pedido</label>
-                  <textarea {...register('notas')} rows={2} placeholder="Instrucciones especiales de entrega..." className="form-control bg-elevated font-montserrat" style={{ resize: 'none' }} />
+                  <label className="form-label fw-semibold text-text small">Notas del pedido (Opcional)</label>
+                  <textarea {...register('notas')} rows={2} placeholder="Instrucciones especiales de entrega..." className="form-control bg-elevated" style={{ resize: 'none' }} />
                 </div>
+
                 {step === 2 && (
-                  <button type="button" onClick={() => setStep(3)} className="btn btn-primary w-100 py-2">
+                  <button
+                    type="button"
+                    onClick={handleSubmit(async (data) => {
+                      await handleGuardarDireccionSiAplica(data);
+                      setStep(3);
+                    })}
+                    className="btn btn-primary w-100 py-2 fw-bold"
+                  >
                     Continuar al pago
                   </button>
                 )}
@@ -336,6 +443,7 @@ export default function Checkout() {
                         email: formData.email,
                         telefono: formData.telefono,
                         direccion: formData.direccion,
+                        comuna: formData.comuna,
                         ciudad: formData.ciudad,
                         region: formData.region,
                         notas: formData.notas,

@@ -11,7 +11,7 @@ export interface SEOProps {
 }
 
 const DEFAULT_TITLE = 'RC Estampa — Ropa Urbana & Drinkware Estampado | RC Estampa Chile';
-const DEFAULT_DESC = 'RC Estampa de estampado escénico en Santiago de Chile. DTF Textil Ultra HD, serigrafía y sublimación en poleras, polerones y drinkware personalizado con despacho nacional.';
+const DEFAULT_DESC = 'RC Estampa de estampado textil y grabado láser en Santiago de Chile. DTF Textil Ultra HD, serigrafía y sublimación en poleras, polerones y drinkware personalizado con despacho nacional.';
 const DEFAULT_IMAGE = '/Logo_RCEstampa.png';
 
 export function useSEO({

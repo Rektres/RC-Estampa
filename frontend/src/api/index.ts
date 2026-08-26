@@ -1,7 +1,7 @@
 import { api } from './client';
 import type {
   Producto, ProductoVajilla, FotoCliente, User,
-  ProductoInput, Categoria, Favorito,
+  ProductoInput, Categoria, Favorito, DireccionEnvio,
 } from '../types';
 
 export interface Paginated<T> {
@@ -45,6 +45,7 @@ export interface PedidoInput {
   email: string;
   telefono?: string;
   direccion: string;
+  comuna?: string;
   ciudad: string;
   region: string;
   notas?: string;
@@ -89,6 +90,7 @@ export interface RegisterInput {
   telefono?: string;
   rut?: string;
   direccion?: string;
+  comuna?: string;
   ciudad?: string;
   region?: string;
 }
@@ -104,6 +106,11 @@ export const authApi = {
     api.post<AuthResponse>('/auth/token/', { email, password }).then((r) => r.data),
   me: () => api.get<User>('/auth/me/').then((r) => r.data),
   updateMe: (data: Partial<User>) => api.patch<User>('/auth/me/', data).then((r) => r.data),
+};
+
+export const direccionesApi = {
+  listar: () => api.get<DireccionEnvio[]>('/auth/direcciones/').then((r) => r.data),
+  crear: (data: Partial<DireccionEnvio>) => api.post<DireccionEnvio>('/auth/direcciones/', data).then((r) => r.data),
 };
 
 export const favoritosApi = {

@@ -52,7 +52,7 @@ export default function Destacados() {
           <div>
             <div className="eyebrow-badge mb-2">
               <span className="glyph">★</span>
-              <span>CATÁLOGO TÉCNICO ESCÉNICO</span>
+              <span>CATÁLOGO DE PRODUCTOS</span>
             </div>
             <h2 className="font-italiana fs-1 text-text mb-1">Colección Destacada</h2>
             <p className="font-montserrat small text-muted mb-0">

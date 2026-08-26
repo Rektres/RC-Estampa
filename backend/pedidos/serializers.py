@@ -22,7 +22,7 @@ class PedidoSerializer(serializers.ModelSerializer):
         model = Pedido
         fields = (
             'id', 'numero', 'nombre', 'email', 'telefono', 'direccion',
-            'ciudad', 'region', 'notas', 'total', 'estado', 'metodo_pago',
+            'comuna', 'ciudad', 'region', 'notas', 'total', 'estado', 'metodo_pago',
             'transaccion_id', 'url_pago', 'payment_url', 'pagado_en', 'creado_en', 'items',
         )
         read_only_fields = ('id', 'numero', 'estado', 'transaccion_id', 'url_pago', 'payment_url', 'pagado_en', 'creado_en')

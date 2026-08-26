@@ -25,14 +25,14 @@ export default function HeroEscenico() {
             <div className="mb-3">
               <div className="eyebrow-badge">
                 <span className="glyph">★</span>
-                <span>ATELIER DE ESTAMPADO ESCÉNICO & ALTA MODA</span>
+                <span>TALLER DE GRABADO LÁSER & ESTAMPADO TEXTIL</span>
               </div>
             </div>
 
             {/* Titular Monumental */}
             <h1 className="hero-giant-title mb-4">
               ESTAMPA TU VISIÓN <br />
-              <span className="stroke-text">CON CALIDAD ESCÉNICA</span> <br />
+              <span className="stroke-text">CON MÁXIMA DURABILIDAD</span> <br />
               <span className="gold-gradient-text">& EXCELENCIA TEXTIL.</span>
             </h1>
 
@@ -118,7 +118,7 @@ export default function HeroEscenico() {
                 <div className="position-relative rounded-3 overflow-hidden mb-3" style={{ height: '340px' }}>
                   <img
                     src="https://images.pexels.com/photos/8532616/pexels-photo-8532616.jpeg?auto=compress&cs=tinysrgb&w=800"
-                    alt="Polera Oversize Escénica de alta gama"
+                    alt="Polera Oversize Premium"
                     className="w-100 h-100 object-fit-cover stage-card-img"
                   />
                   <div
@@ -127,7 +127,7 @@ export default function HeroEscenico() {
                     <div className="eyebrow-badge mb-1" style={{ fontSize: '0.6rem', padding: '0.15rem 0.5rem' }}>
                       LÍNEA URBANA PREMIUM
                     </div>
-                    <h3 className="font-italiana text-text fs-4 mb-0">Polera Oversize Escénica</h3>
+                    <h3 className="font-italiana text-text fs-4 mb-0">Polera Oversize Premium</h3>
                   </div>
                 </div>
 

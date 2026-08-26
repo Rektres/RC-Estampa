@@ -46,7 +46,7 @@ export default function ManifiestoEscenico() {
             </div>
 
             <h2 className="font-italiana text-text fs-1 mb-4 lh-sm">
-              La estampería como lenguaje de identidad, arte y presencia escénica.
+              La estampería como lenguaje de identidad, arte y calidad duradera.
             </h2>
 
             <p className="font-montserrat text-muted lead mb-4" style={{ fontSize: '0.98rem', lineHeight: '1.8' }}>

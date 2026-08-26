@@ -29,7 +29,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="font-montserrat small text-muted lh-base mb-4">
-              Alta estampería textil y drinkware con estándares escénicos. Fusión de técnicas contemporáneas y acabados duraderos para marcas, eventos y creadores.
+              Alta estampería textil y drinkware con los más altos estándares de calidad. Fusión de técnicas contemporáneas y acabados duraderos para marcas, eventos y creadores.
             </p>
             <div className="d-flex gap-3">
               <a
@@ -92,7 +92,7 @@ export default function Footer() {
               className="font-montserrat fw-semibold small text-uppercase text-primary mb-4 d-flex align-items-center gap-2"
               style={{ letterSpacing: '0.08em' }}
             >
-              <ShieldCheck size={14} /> Garantía Escénica
+              <ShieldCheck size={14} /> Garantía de Calidad
             </h4>
             <ul className="list-unstyled d-flex flex-column gap-2 mb-0 font-montserrat small text-muted">
               <li>• DTF Textil Ultra HD y Serigrafía</li>
@@ -151,7 +151,7 @@ export default function Footer() {
               className="font-montserrat text-muted small text-decoration-none hover-lift"
               style={{ fontSize: '0.75rem' }}
             >
-              Términos & Privacidad (Ley N° 21.719)
+              Términos & Privacidad
             </Link>
           </div>
           <div className="d-flex align-items-center gap-2 text-ghost font-montserrat" style={{ fontSize: '0.78rem' }}>

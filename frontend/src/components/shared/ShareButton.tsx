@@ -10,7 +10,7 @@ interface Props {
 
 export default function ShareButton({
   title = 'RC Estampa RC Estampa',
-  text = 'Mira esta prenda de estampado escénico en RC Estampa',
+  text = 'Mira esta prenda de alta calidad en RC Estampa',
   url,
   className = '',
 }: Props) {

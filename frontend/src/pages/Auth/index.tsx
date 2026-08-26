@@ -18,12 +18,13 @@ const registerSchema = z.object({
   telefono: z.string().min(8, 'Ingresa un teléfono o WhatsApp válido'),
   rut: z.string().min(8, 'Ingresa un RUT válido (ej: 12345678-9)'),
   direccion: z.string().min(3, 'Ingresa tu dirección de despacho'),
-  ciudad: z.string().min(2, 'Ingresa tu ciudad o comuna'),
+  comuna: z.string().min(2, 'Ingresa tu comuna'),
+  ciudad: z.string().min(2, 'Ingresa tu ciudad'),
   region: z.string().min(2, 'Selecciona o ingresa tu región'),
   password: z.string().min(6, 'Mínimo 6 caracteres'),
   confirm: z.string(),
   terminos: z.boolean().refine((v) => v === true, {
-    message: 'Debes aceptar los términos y política de privacidad',
+    message: 'Debes aceptar los términos y condiciones',
   }),
 }).refine((d) => d.password === d.confirm, {
   message: 'Las contraseñas no coinciden',
@@ -72,6 +73,7 @@ export default function Auth() {
         telefono: data.telefono,
         rut: data.rut,
         direccion: data.direccion,
+        comuna: data.comuna,
         ciudad: data.ciudad,
         region: data.region,
       });
@@ -315,11 +317,23 @@ export default function Auth() {
                 </div>
 
                 <div className="col-12 col-sm-6">
-                  <label className="form-label font-montserrat fw-semibold text-text small">Ciudad / Comuna *</label>
+                  <label className="form-label font-montserrat fw-semibold text-text small">Comuna *</label>
+                  <input
+                    {...registerForm.register('comuna')}
+                    className="form-control bg-elevated font-montserrat"
+                    placeholder="Ej: Providencia / Las Condes / Maipú"
+                  />
+                  {registerForm.formState.errors.comuna && (
+                    <p className="font-montserrat text-danger mt-1 mb-0 small">{registerForm.formState.errors.comuna.message}</p>
+                  )}
+                </div>
+
+                <div className="col-12 col-sm-6">
+                  <label className="form-label font-montserrat fw-semibold text-text small">Ciudad *</label>
                   <input
                     {...registerForm.register('ciudad')}
                     className="form-control bg-elevated font-montserrat"
-                    placeholder="Santiago / Providencia / Viña del Mar"
+                    placeholder="Ej: Santiago / Viña del Mar / Concepción"
                   />
                   {registerForm.formState.errors.ciudad && (
                     <p className="font-montserrat text-danger mt-1 mb-0 small">{registerForm.formState.errors.ciudad.message}</p>
@@ -386,8 +400,7 @@ export default function Auth() {
                   Acepto los{' '}
                   <Link to="/terminos-y-privacidad" target="_blank" className="text-primary text-decoration-none">
                     Términos, Condiciones y Política de Privacidad de Datos
-                  </Link>{' '}
-                  conforme a la ley chilena N° 21.719.
+                  </Link>
                 </label>
                 {registerForm.formState.errors.terminos && (
                   <p className="font-montserrat text-danger mt-1 mb-0 small">{registerForm.formState.errors.terminos.message}</p>

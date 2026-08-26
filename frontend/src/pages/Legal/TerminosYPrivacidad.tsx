@@ -43,7 +43,7 @@ export default function TerminosYPrivacidad() {
         <section>
           <div className="d-flex align-items-center gap-2 mb-3">
             <ShieldCheck size={22} className="text-primary" />
-            <h2 className="font-montserrat fw-bold text-text fs-5 mb-0">2. Principios y Finalidades del Tratamiento de Datos (Ley N° 21.719)</h2>
+            <h2 className="font-montserrat fw-bold text-text fs-5 mb-0">2. Principios y Finalidades del Tratamiento de Datos</h2>
           </div>
           <p className="text-muted">
             En estricto cumplimiento del principio de <strong>licitud, lealtad, proporcionalidad y seguridad</strong>, los datos personales recabados (nombre, RUT, correo electrónico, teléfono y dirección de despacho) son utilizados exclusivamente para:

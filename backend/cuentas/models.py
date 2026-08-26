@@ -42,6 +42,7 @@ class User(AbstractUser):
     telefono = models.CharField(max_length=30, blank=True)
     rut = models.CharField(max_length=20, blank=True)
     direccion = models.CharField(max_length=255, blank=True)
+    comuna = models.CharField(max_length=100, blank=True)
     ciudad = models.CharField(max_length=100, blank=True)
     region = models.CharField(max_length=100, blank=True)
     codigo_verificacion = models.CharField(max_length=6, blank=True)
@@ -61,13 +62,14 @@ class DireccionEnvio(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='direcciones')
     nombre_destinatario = models.CharField(max_length=150)
     direccion = models.CharField(max_length=255)
+    comuna = models.CharField(max_length=100, blank=True)
     ciudad = models.CharField(max_length=100)
     region = models.CharField(max_length=100)
     codigo_postal = models.CharField(max_length=20, blank=True)
     es_principal = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'{self.nombre_destinatario} - {self.ciudad}'
+        return f'{self.nombre_destinatario} - {self.comuna}, {self.ciudad}'
 
 
 class Favorito(models.Model):

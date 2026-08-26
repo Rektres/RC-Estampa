@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import DireccionEnvio, Favorito
-from catalogo.serializers import ProductoListaSerializer, ProductoVajillaSerializer
+from catalogo.serializers import ProductoSerializer, ProductoVajillaSerializer
 
 User = get_user_model()
 
@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'nombre', 'rol', 'telefono', 'rut',
-            'direccion', 'ciudad', 'region', 'email_verificado'
+            'direccion', 'comuna', 'ciudad', 'region', 'email_verificado'
         )
         read_only_fields = ('id', 'email', 'rol', 'email_verificado')
 
@@ -25,7 +25,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'nombre', 'password', 'telefono',
-            'rut', 'direccion', 'ciudad', 'region'
+            'rut', 'direccion', 'comuna', 'ciudad', 'region'
         )
 
     def create(self, validated_data):
@@ -36,6 +36,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             telefono=validated_data.get('telefono', ''),
             rut=validated_data.get('rut', ''),
             direccion=validated_data.get('direccion', ''),
+            comuna=validated_data.get('comuna', ''),
             ciudad=validated_data.get('ciudad', ''),
             region=validated_data.get('region', ''),
         )
@@ -55,16 +56,17 @@ class DireccionEnvioSerializer(serializers.ModelSerializer):
     class Meta:
         model = DireccionEnvio
         fields = (
-            'id', 'nombre_destinatario', 'direccion', 'ciudad',
-            'region', 'codigo_postal', 'es_principal',
+            'id', 'nombre_destinatario', 'direccion', 'comuna',
+            'ciudad', 'region', 'codigo_postal', 'es_principal',
         )
 
 
 class FavoritoSerializer(serializers.ModelSerializer):
-    producto_detalle = ProductoListaSerializer(source='producto', read_only=True)
+    producto_detalle = ProductoSerializer(source='producto', read_only=True)
     drinkware_detalle = ProductoVajillaSerializer(source='drinkware', read_only=True)
 
     class Meta:
         model = Favorito
         fields = ('id', 'producto', 'drinkware', 'producto_detalle', 'drinkware_detalle', 'creado_en')
+
 

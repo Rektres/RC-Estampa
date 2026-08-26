@@ -32,6 +32,7 @@ class Pedido(models.Model):
     email = models.EmailField()
     telefono = models.CharField(max_length=30, blank=True)
     direccion = models.CharField(max_length=255)
+    comuna = models.CharField(max_length=100, blank=True)
     ciudad = models.CharField(max_length=100)
     region = models.CharField(max_length=100)
     notas = models.TextField(blank=True)

@@ -121,9 +121,21 @@ export interface User {
   telefono?: string;
   rut?: string;
   direccion?: string;
+  comuna?: string;
   ciudad?: string;
   region?: string;
   email_verificado?: boolean;
+}
+
+export interface DireccionEnvio {
+  id: number;
+  nombre_destinatario: string;
+  direccion: string;
+  comuna?: string;
+  ciudad: string;
+  region: string;
+  codigo_postal?: string;
+  es_principal?: boolean;
 }
 
 export interface Favorito {
@@ -168,14 +180,4 @@ export interface ProductoInput {
   categoria: number;
   variantes: VarianteInput[];
   imagenes: ImagenInput[];
-}
-
-export interface DireccionEnvio {
-  id?: number;
-  nombre_destinatario: string;
-  direccion: string;
-  ciudad: string;
-  region: string;
-  codigo_postal?: string;
-  es_principal?: boolean;
 }
