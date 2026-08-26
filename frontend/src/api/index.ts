@@ -63,6 +63,18 @@ export interface Pedido extends PedidoInput {
   url_pago?: string;
   transaccion_id?: string;
   pagado_en?: string;
+  payment_method_id?: string;
+  payment_type_id?: string;
+  card_last_four?: string;
+  card_first_six?: string;
+  cardholder_name?: string;
+  cardholder_identification?: string;
+  authorization_code?: string;
+  cuotas?: number;
+  monto_neto?: number;
+  comision_mp?: number;
+  estado_detalle?: string;
+  ip_cliente?: string;
   creado_en: string;
 }
 

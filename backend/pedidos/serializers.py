@@ -23,9 +23,19 @@ class PedidoSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'numero', 'nombre', 'email', 'telefono', 'direccion',
             'comuna', 'ciudad', 'region', 'notas', 'total', 'estado', 'metodo_pago',
-            'transaccion_id', 'url_pago', 'payment_url', 'pagado_en', 'creado_en', 'items',
+            'transaccion_id', 'url_pago', 'payment_url', 'pagado_en',
+            'payment_method_id', 'payment_type_id', 'card_last_four', 'card_first_six',
+            'cardholder_name', 'cardholder_identification', 'authorization_code',
+            'cuotas', 'monto_neto', 'comision_mp', 'estado_detalle',
+            'ip_cliente', 'creado_en', 'items',
         )
-        read_only_fields = ('id', 'numero', 'estado', 'transaccion_id', 'url_pago', 'payment_url', 'pagado_en', 'creado_en')
+        read_only_fields = (
+            'id', 'numero', 'estado', 'transaccion_id', 'url_pago', 'payment_url',
+            'pagado_en', 'payment_method_id', 'payment_type_id', 'card_last_four',
+            'card_first_six', 'cardholder_name', 'cardholder_identification',
+            'authorization_code', 'cuotas', 'monto_neto', 'comision_mp',
+            'estado_detalle', 'ip_cliente', 'creado_en',
+        )
 
     def create(self, validated_data):
         items = validated_data.pop('items', [])

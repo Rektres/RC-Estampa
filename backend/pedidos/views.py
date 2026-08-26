@@ -81,13 +81,18 @@ def mercadopago_webhook(request):
                 if external_ref:
                     pedido = Pedido.objects.filter(numero=external_ref).first()
                     if pedido:
+                        from .services.mercadopago_api import descontar_stock_y_notificar, poblar_datos_auditoria_pedido
+
                         pedido.transaccion_id = str(payment_id)
                         pedido.datos_pago_raw = payment_info
+
+                        poblar_datos_auditoria_pedido(pedido, res=payment_info)
 
                         if payment_status == 'approved':
                             pedido.estado = 'pagado'
                             if not pedido.pagado_en:
                                 pedido.pagado_en = timezone.now()
+                            descontar_stock_y_notificar(pedido)
                         elif payment_status in ('rejected', 'cancelled'):
                             if pedido.estado == 'pendiente':
                                 pedido.estado = 'cancelado'
@@ -130,6 +135,10 @@ def procesar_pago_tarjeta(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Extraer IP y User Agent del comprador
+        ip_cliente = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip() or request.META.get('REMOTE_ADDR')
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+
         # 1. Obtener o crear el pedido
         pedido = None
         if pedido_numero:
@@ -161,6 +170,8 @@ def procesar_pago_tarjeta(request):
             doc_number=doc_number,
             is_test_card=is_test_card,
             card_last_digits=card_last_digits,
+            ip_cliente=ip_cliente,
+            user_agent=user_agent,
         )
 
         resultado['pedido'] = PedidoSerializer(pedido).data

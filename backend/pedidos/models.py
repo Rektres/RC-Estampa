@@ -42,6 +42,26 @@ class Pedido(models.Model):
     transaccion_id = models.CharField(max_length=100, blank=True)
     url_pago = models.TextField(blank=True)
     pagado_en = models.DateTimeField(null=True, blank=True)
+
+    # Auditoría de Pasarela / Tarjeta (PCI-DSS compliant)
+    payment_method_id = models.CharField(max_length=50, blank=True)
+    payment_type_id = models.CharField(max_length=50, blank=True)
+    card_last_four = models.CharField(max_length=4, blank=True)
+    card_first_six = models.CharField(max_length=6, blank=True)
+    cardholder_name = models.CharField(max_length=150, blank=True)
+    cardholder_identification = models.CharField(max_length=30, blank=True)
+    authorization_code = models.CharField(max_length=100, blank=True)
+    cuotas = models.PositiveSmallIntegerField(default=1)
+
+    # Datos Financieros y Liquidación (Contabilidad y SII)
+    monto_neto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    comision_mp = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    estado_detalle = models.CharField(max_length=100, blank=True)
+
+    # Auditoría de Red y Seguridad
+    ip_cliente = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+
     datos_pago_raw = models.JSONField(default=dict, blank=True)
     creado_en = models.DateTimeField(auto_now_add=True)
 

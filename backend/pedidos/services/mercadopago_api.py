@@ -67,6 +67,62 @@ def descontar_stock_y_notificar(pedido):
         logger.error(f"Error al disparar email de confirmación para pedido {pedido.numero}: {exc}")
 
 
+def poblar_datos_auditoria_pedido(
+    pedido,
+    res=None,
+    payment_method_id='',
+    payment_type_id='',
+    card_last_digits='',
+    cardholder_name='',
+    doc_number='',
+    installments=1,
+    ip_cliente=None,
+    user_agent=''
+):
+    """
+    Extrae y sincroniza todos los campos estándar de auditoría, tarjeta y liquidación contable.
+    """
+    res = res or {}
+    card_data = res.get('card', {}) or {}
+    cardholder_data = card_data.get('cardholder', {}) or {}
+    id_data = cardholder_data.get('identification', {}) or {}
+    tx_details = res.get('transaction_details', {}) or {}
+    fee_details = res.get('fee_details', []) or []
+
+    # 1. Medio de pago y tarjeta
+    pedido.payment_method_id = str(res.get('payment_method_id') or payment_method_id or pedido.payment_method_id or '')
+    pedido.payment_type_id = str(res.get('payment_type_id') or payment_type_id or pedido.payment_type_id or '')
+    pedido.card_last_four = str(card_data.get('last_four_digits') or card_last_digits or pedido.card_last_four or '')[-4:]
+    pedido.card_first_six = str(card_data.get('first_six_digits') or pedido.card_first_six or '')[:6]
+    pedido.cardholder_name = str(cardholder_data.get('name') or cardholder_name or pedido.cardholder_name or '')
+    pedido.cardholder_identification = str(id_data.get('number') or doc_number or pedido.cardholder_identification or '')
+    pedido.authorization_code = str(res.get('authorization_code') or pedido.authorization_code or '')
+
+    try:
+        pedido.cuotas = int(res.get('installments') or installments or pedido.cuotas or 1)
+    except (ValueError, TypeError):
+        pedido.cuotas = 1
+
+    # 2. Financieros y estado
+    pedido.estado_detalle = str(res.get('status_detail') or pedido.estado_detalle or '')
+    neto = tx_details.get('net_received_amount')
+    if neto is not None:
+        try:
+            pedido.monto_neto = float(neto)
+        except (ValueError, TypeError):
+            pass
+
+    if fee_details:
+        total_fee = sum(float(f.get('amount', 0)) for f in fee_details if isinstance(f, dict))
+        pedido.comision_mp = total_fee
+
+    # 3. Auditoría de red
+    if ip_cliente:
+        pedido.ip_cliente = ip_cliente
+    if user_agent:
+        pedido.user_agent = user_agent
+
+
 def procesar_pago_directo_mercadopago(
     pedido,
     token,
@@ -78,6 +134,8 @@ def procesar_pago_directo_mercadopago(
     doc_number='',
     is_test_card=False,
     card_last_digits='',
+    ip_cliente=None,
+    user_agent='',
 ):
     """
     Procesa un pago directo con tarjeta usando el token generado en el frontend.
@@ -85,6 +143,17 @@ def procesar_pago_directo_mercadopago(
     # 1. Manejo directo de tarjetas de prueba simuladas
     if is_test_card or card_last_digits in ('4242', '5555', '0216', '0224', '1111'):
         if card_last_digits == '0216':
+            poblar_datos_auditoria_pedido(
+                pedido,
+                payment_method_id=payment_method_id,
+                card_last_digits=card_last_digits,
+                doc_number=doc_number,
+                installments=installments,
+                ip_cliente=ip_cliente,
+                user_agent=user_agent
+            )
+            pedido.estado_detalle = 'cc_rejected_insufficient_amount'
+            pedido.save()
             return {
                 'success': False,
                 'status': 'rejected',
@@ -93,6 +162,17 @@ def procesar_pago_directo_mercadopago(
                 'message': 'Fondos o cupo insuficiente en la tarjeta de prueba.',
             }
         if card_last_digits == '0224':
+            poblar_datos_auditoria_pedido(
+                pedido,
+                payment_method_id=payment_method_id,
+                card_last_digits=card_last_digits,
+                doc_number=doc_number,
+                installments=installments,
+                ip_cliente=ip_cliente,
+                user_agent=user_agent
+            )
+            pedido.estado_detalle = 'cc_rejected_bad_filled_security_code'
+            pedido.save()
             return {
                 'success': False,
                 'status': 'rejected',
@@ -114,6 +194,20 @@ def procesar_pago_directo_mercadopago(
         }
         pedido.estado = 'pagado'
         pedido.pagado_en = timezone.now()
+        poblar_datos_auditoria_pedido(
+            pedido,
+            payment_method_id=payment_method_id,
+            payment_type_id='credit_card',
+            card_last_digits=card_last_digits,
+            doc_number=doc_number,
+            installments=installments,
+            ip_cliente=ip_cliente,
+            user_agent=user_agent
+        )
+        pedido.estado_detalle = 'accredited'
+        pedido.authorization_code = 'AUTH_SIM_001'
+        pedido.monto_neto = float(pedido.total) * 0.965  # Simulación de neto aprox
+        pedido.comision_mp = float(pedido.total) * 0.035
         pedido.save()
 
         # Descontar stock y enviar correo de confirmación
@@ -195,6 +289,16 @@ def procesar_pago_directo_mercadopago(
             pedido.datos_pago_raw = res
             pedido.estado = 'pagado'
             pedido.pagado_en = timezone.now()
+            poblar_datos_auditoria_pedido(
+                pedido,
+                res=res,
+                payment_method_id=payment_method_id,
+                card_last_digits=card_last_digits,
+                doc_number=doc_number,
+                installments=installments,
+                ip_cliente=ip_cliente,
+                user_agent=user_agent
+            )
             pedido.save()
             descontar_stock_y_notificar(pedido)
             return {
@@ -209,6 +313,16 @@ def procesar_pago_directo_mercadopago(
             pedido.transaccion_id = str(payment_id) if payment_id else ''
             pedido.datos_pago_raw = res
             pedido.estado = 'pendiente'
+            poblar_datos_auditoria_pedido(
+                pedido,
+                res=res,
+                payment_method_id=payment_method_id,
+                card_last_digits=card_last_digits,
+                doc_number=doc_number,
+                installments=installments,
+                ip_cliente=ip_cliente,
+                user_agent=user_agent
+            )
             pedido.save()
             return {
                 'success': True,
@@ -228,6 +342,20 @@ def procesar_pago_directo_mercadopago(
             pedido.datos_pago_raw = {"simulated": True, "token": str(token), "mp_response": res}
             pedido.estado = 'pagado'
             pedido.pagado_en = timezone.now()
+            poblar_datos_auditoria_pedido(
+                pedido,
+                payment_method_id=payment_method_id,
+                payment_type_id='credit_card',
+                card_last_digits=card_last_digits,
+                doc_number=doc_number,
+                installments=installments,
+                ip_cliente=ip_cliente,
+                user_agent=user_agent
+            )
+            pedido.estado_detalle = 'accredited'
+            pedido.authorization_code = 'AUTH_SIM_002'
+            pedido.monto_neto = float(pedido.total) * 0.965
+            pedido.comision_mp = float(pedido.total) * 0.035
             pedido.save()
             descontar_stock_y_notificar(pedido)
             return {
@@ -241,6 +369,16 @@ def procesar_pago_directo_mercadopago(
         # Rechazo real
         pedido.metodo_pago = 'mercadopago'
         pedido.datos_pago_raw = res
+        poblar_datos_auditoria_pedido(
+            pedido,
+            res=res,
+            payment_method_id=payment_method_id,
+            card_last_digits=card_last_digits,
+            doc_number=doc_number,
+            installments=installments,
+            ip_cliente=ip_cliente,
+            user_agent=user_agent
+        )
         pedido.save()
 
         mensaje_final = STATUS_DETAIL_MESSAGES.get(
