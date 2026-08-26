@@ -27,7 +27,10 @@ function detectarMarca(numeroLimpio: string): { id: string; nombre: string; colo
   return { id: 'other', nombre: 'Tarjeta', color: '#d4af37' };
 }
 
-const MP_PUBLIC_KEY = 'APP_USR-589acd0e-882e-4ec8-bffa-f476df183bf0';
+const MP_PUBLIC_KEY =
+  (import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY as string) ||
+  'APP_USR-d772619e-8468-4a8f-b247-55997cf45c13';
+
 
 export default function CardPaymentForm({
   totalAmount,
