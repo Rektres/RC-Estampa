@@ -117,122 +117,124 @@ export default function Panel() {
 
       {error && <div className="alert alert-danger py-2 font-montserrat" style={{ fontSize: '0.875rem' }}>{error}</div>}
 
-      {tab === 'estadisticas' ? (
-        <Estadisticas />
-      ) : tab === 'categorias' ? (
-        <Categorias />
-      ) : (
-        <>
-          {/* Filtros */}
-          <div className="d-flex flex-wrap gap-2 mb-3">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar por nombre..."
-              className="form-control bg-elevated font-montserrat"
-              style={{ maxWidth: '18rem' }}
-            />
-            <select
-              value={catFilter}
-              onChange={(e) => setCatFilter(e.target.value)}
-              className="form-select bg-elevated font-montserrat w-auto"
-            >
-              <option value="">Todas las categorías</option>
-              {categoriasEnUso.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-
-          {loading ? (
-            <p className="font-montserrat text-muted">Cargando...</p>
-          ) : (
-            <div className="table-responsive">
-              <Table hover className="align-middle font-montserrat" style={{ fontSize: '0.875rem' }}>
-                <thead>
-                  <tr className="text-muted text-uppercase" style={{ fontSize: '0.75rem' }}>
-                    <th></th>
-                    <th>Producto</th>
-                    <th>Categoría</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Estado</th>
-                    <th className="text-end">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((p) => {
-                    const stockTotal = p.variantes.reduce((s, v) => s + v.stock, 0);
-                    return (
-                      <tr key={p.id} style={p.activo ? undefined : { opacity: 0.5 }}>
-                        <td style={{ width: '3.5rem' }}>
-                          <img
-                            src={p.imagenes[0]?.imagen}
-                            alt=""
-                            className="rounded object-fit-cover"
-                            style={{ width: '3rem', height: '3rem' }}
-                          />
-                        </td>
-                        <td>
-                          <span className="text-text fw-medium">{p.nombre}</span>
-                          <div className="d-flex gap-1 mt-1">
-                            <LineaBadge linea={p.linea} size="xs" />
-                            {p.destacado && <span className="badge bg-primary-20 text-primary">Destacado</span>}
-                            {p.nuevo && <span className="badge bg-drinkware-20 text-drinkware">Nuevo</span>}
-                          </div>
-                        </td>
-                        <td className="text-muted">{p.categoria.nombre}</td>
-                        <td>
-                          <span className="text-primary fw-semibold">{formatPrice(p.precio_oferta ?? p.precio)}</span>
-                          {p.precio_oferta && (
-                            <div className="text-ghost text-decoration-line-through" style={{ fontSize: '0.75rem' }}>
-                              {formatPrice(p.precio)}
-                            </div>
-                          )}
-                        </td>
-                        <td className="text-muted">{stockTotal}</td>
-                        <td>
-                          {p.activo
-                            ? <span className="badge bg-drinkware-20 text-drinkware">Activo</span>
-                            : <span className="badge bg-elevated text-muted border border-border">Deshabilitado</span>}
-                        </td>
-                        <td className="text-end text-nowrap">
-                          <Link
-                            to={`/panel/${tipoRuta}/${p.id}`}
-                            className="btn btn-link p-1 text-muted"
-                            title="Editar"
-                          >
-                            <Pencil size={16} />
-                          </Link>
-                          <button
-                            onClick={() => toggleActivo(p)}
-                            disabled={busy}
-                            className="btn btn-link p-1 text-muted"
-                            title={p.activo ? 'Deshabilitar' : 'Habilitar'}
-                          >
-                            {p.activo ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
-                          <button
-                            onClick={() => setToDelete(p)}
-                            disabled={busy}
-                            className="btn btn-link p-1 text-danger"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {filtered.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="text-center text-muted py-4">Sin productos.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
+      <div key={tab} className="animate-tab-fade">
+        {tab === 'estadisticas' ? (
+          <Estadisticas />
+        ) : tab === 'categorias' ? (
+          <Categorias />
+        ) : (
+          <>
+            {/* Filtros */}
+            <div className="d-flex flex-wrap gap-2 mb-3">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Buscar por nombre..."
+                className="form-control bg-elevated font-montserrat"
+                style={{ maxWidth: '18rem' }}
+              />
+              <select
+                value={catFilter}
+                onChange={(e) => setCatFilter(e.target.value)}
+                className="form-select bg-elevated font-montserrat w-auto"
+              >
+                <option value="">Todas las categorías</option>
+                {categoriasEnUso.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
-          )}
-        </>
-      )}
+
+            {loading ? (
+              <p className="font-montserrat text-muted">Cargando...</p>
+            ) : (
+              <div className="table-responsive">
+                <Table hover className="align-middle font-montserrat" style={{ fontSize: '0.875rem' }}>
+                  <thead>
+                    <tr className="text-muted text-uppercase" style={{ fontSize: '0.75rem' }}>
+                      <th></th>
+                      <th>Producto</th>
+                      <th>Categoría</th>
+                      <th>Precio</th>
+                      <th>Stock</th>
+                      <th>Estado</th>
+                      <th className="text-end">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((p) => {
+                      const stockTotal = p.variantes.reduce((s, v) => s + v.stock, 0);
+                      return (
+                        <tr key={p.id} style={p.activo ? undefined : { opacity: 0.5 }}>
+                          <td style={{ width: '3.5rem' }}>
+                            <img
+                              src={p.imagenes[0]?.imagen}
+                              alt=""
+                              className="rounded object-fit-cover"
+                              style={{ width: '3rem', height: '3rem' }}
+                            />
+                          </td>
+                          <td>
+                            <span className="text-text fw-medium">{p.nombre}</span>
+                            <div className="d-flex gap-1 mt-1">
+                              <LineaBadge linea={p.linea} size="xs" />
+                              {p.destacado && <span className="badge bg-primary-20 text-primary">Destacado</span>}
+                              {p.nuevo && <span className="badge bg-drinkware-20 text-drinkware">Nuevo</span>}
+                            </div>
+                          </td>
+                          <td className="text-muted">{p.categoria.nombre}</td>
+                          <td>
+                            <span className="text-primary fw-semibold">{formatPrice(p.precio_oferta ?? p.precio)}</span>
+                            {p.precio_oferta && (
+                              <div className="text-ghost text-decoration-line-through" style={{ fontSize: '0.75rem' }}>
+                                {formatPrice(p.precio)}
+                              </div>
+                            )}
+                          </td>
+                          <td className="text-muted">{stockTotal}</td>
+                          <td>
+                            {p.activo
+                              ? <span className="badge bg-drinkware-20 text-drinkware">Activo</span>
+                              : <span className="badge bg-elevated text-muted border border-border">Deshabilitado</span>}
+                          </td>
+                          <td className="text-end text-nowrap">
+                            <Link
+                              to={`/panel/${tipoRuta}/${p.id}`}
+                              className="btn btn-link p-1 text-muted"
+                              title="Editar"
+                            >
+                              <Pencil size={16} />
+                            </Link>
+                            <button
+                              onClick={() => toggleActivo(p)}
+                              disabled={busy}
+                              className="btn btn-link p-1 text-muted"
+                              title={p.activo ? 'Deshabilitar' : 'Habilitar'}
+                            >
+                              {p.activo ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                            <button
+                              onClick={() => setToDelete(p)}
+                              disabled={busy}
+                              className="btn btn-link p-1 text-danger"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {filtered.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="text-center text-muted py-4">Sin productos.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Confirmación de borrado */}
       <Modal show={!!toDelete} onHide={() => setToDelete(null)} centered>

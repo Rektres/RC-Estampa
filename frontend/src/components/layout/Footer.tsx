@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Facebook, MessageCircle, ShieldCheck, Sparkles, Clock, MapPin } from 'lucide-react';
+import { Instagram, Facebook, MessageCircle, Compass, Clock, MapPin } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -58,21 +58,23 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Columna 2: Catálogo & Líneas */}
+          {/* Columna 2: Mapa del Sitio */}
           <div className="col-12 col-sm-6 col-lg-3">
             <h4
               className="font-montserrat fw-semibold small text-uppercase text-primary mb-4 d-flex align-items-center gap-2"
               style={{ letterSpacing: '0.08em' }}
             >
-              <Sparkles size={14} /> Colecciones
+              <Compass size={15} /> Mapa del Sitio
             </h4>
             <ul className="list-unstyled d-flex flex-column gap-2 mb-0">
               {[
-                { to: '/catalogo?linea=urbana', label: 'Línea Urbana (Streetwear)' },
-                { to: '/catalogo?linea=formal', label: 'Línea Formal & Premium' },
-                { to: '/drinkware', label: 'Drinkware & Accesorios' },
-                { to: '/disenar', label: 'Editor de Canvas en Vivo' },
-                { to: '/personalizado', label: 'Cotización para Empresas' },
+                { to: '/', label: 'Inicio' },
+                { to: '/catalogo', label: 'Catálogo Textil' },
+                { to: '/drinkware', label: 'Línea Drinkware & Vasos' },
+                { to: '/disenar', label: 'Editor Canvas en Vivo' },
+                { to: '/personalizado', label: 'Cotizaciones Empresa' },
+                { to: '/perfil', label: 'Mi Cuenta & Pedidos' },
+                { to: '/terminos-y-privacidad', label: 'Términos & Privacidad' },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
@@ -128,25 +130,18 @@ export default function Footer() {
         <div
           className="border-top border-border pt-4 mt-5 d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3"
         >
-          <div className="d-flex flex-column flex-sm-row align-items-center gap-3">
-            <p className="font-montserrat text-ghost mb-0 text-center text-sm-start" style={{ fontSize: '0.78rem' }}>
-              © {new Date().getFullYear()} RC Estampa SpA. Todos los derechos reservados.
-            </p>
-            <Link
-              to="/terminos-y-privacidad"
-              className="font-montserrat text-muted small text-decoration-none hover-lift"
-              style={{ fontSize: '0.75rem' }}
-            >
-              Términos & Privacidad
-            </Link>
-          </div>
-          <div className="d-flex align-items-center gap-2 text-ghost font-montserrat" style={{ fontSize: '0.78rem' }}>
-            <span className="live-dot live-dot-gold" style={{ width: '6px', height: '6px' }} />
-            <span>Taller Operativo en Línea</span>
-          </div>
+          <p className="font-montserrat text-ghost mb-0 text-center text-sm-start" style={{ fontSize: '0.78rem' }}>
+            © {new Date().getFullYear()} RC Estampa SpA. Todos los derechos reservados.
+          </p>
+          <Link
+            to="/terminos-y-privacidad"
+            className="font-montserrat text-muted small text-decoration-none hover-lift"
+            style={{ fontSize: '0.75rem' }}
+          >
+            Términos & Privacidad
+          </Link>
         </div>
       </div>
     </footer>
   );
 }
-

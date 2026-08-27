@@ -38,6 +38,7 @@ class PedidoViewSet(
 
     @action(detail=True, methods=['patch', 'post'], permission_classes=[permissions.IsAuthenticated])
     def cambiar_estado(self, request, numero=None):
+        from config.emails import enviar_email_cambio_estado
         user = request.user
         if getattr(user, 'rol', '') != 'admin' and not user.is_staff and not user.is_superuser:
             return Response(
@@ -47,16 +48,32 @@ class PedidoViewSet(
 
         pedido = self.get_object()
         nuevo_estado = request.data.get('estado')
+        nota = request.data.get('nota', '').strip()
         if not nuevo_estado or nuevo_estado not in dict(Pedido.ESTADOS):
             return Response(
                 {"detail": f"Estado inválido. Opciones: {list(dict(Pedido.ESTADOS).keys())}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        estado_anterior = pedido.estado
         pedido.estado = nuevo_estado
         if nuevo_estado == 'pagado' and not pedido.pagado_en:
             pedido.pagado_en = timezone.now()
-        pedido.save(update_fields=['estado', 'pagado_en'])
+
+        # Registrar en el historial de estados
+        historial = list(pedido.historial_estados or [])
+        historial.append({
+            'estado_anterior': estado_anterior,
+            'estado_nuevo': nuevo_estado,
+            'fecha': timezone.now().isoformat(),
+            'autor': getattr(user, 'nombre', '') or user.email,
+            'nota': nota,
+        })
+        pedido.historial_estados = historial
+        pedido.save(update_fields=['estado', 'pagado_en', 'historial_estados'])
+
+        # Enviar notificación por correo al cliente
+        enviar_email_cambio_estado(pedido, nuevo_estado, nota=nota)
 
         return Response(PedidoSerializer(pedido).data, status=status.HTTP_200_OK)
 
@@ -271,7 +288,7 @@ class PanelEstadisticasView(generics.GenericAPIView):
             'cancelado': qs.filter(estado='cancelado').count(),
         }
 
-        # 2. Top Productos Más Vendidos
+        # 2. Top Productos Más Vendidos (Ordenado por Monto Total Recaudado y Unidades)
         items_pagados = ItemPedido.objects.filter(pedido__in=pedidos_pagados)
         top_prods_raw = (
             items_pagados.values('nombre', 'tipo', 'imagen')
@@ -279,7 +296,7 @@ class PanelEstadisticasView(generics.GenericAPIView):
                 unidades_vendidas=models.Sum('cantidad'),
                 ingresos_totales=models.Sum(models.F('precio') * models.F('cantidad')),
             )
-            .order_by('-unidades_vendidas')[:10]
+            .order_by('-ingresos_totales', '-unidades_vendidas')[:20]
         )
 
         top_productos = []
@@ -368,6 +385,7 @@ class PanelEstadisticasView(generics.GenericAPIView):
                 'card_first_six': ped.card_first_six,
                 'authorization_code': ped.authorization_code,
                 'ip_cliente': ped.ip_cliente,
+                'historial_estados': ped.historial_estados or [],
                 'pagado_en': ped.pagado_en,
                 'creado_en': ped.creado_en,
             })

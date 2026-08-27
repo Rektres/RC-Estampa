@@ -175,8 +175,8 @@ export const pedidosApi = {
       }
       return [];
     }),
-  cambiarEstado: (numero: string, estado: string) =>
-    api.patch<Pedido>(`/pedidos/${numero}/cambiar_estado/`, { estado }).then((r) => r.data),
+  cambiarEstado: (numero: string, estado: string, nota?: string) =>
+    api.patch<Pedido>(`/pedidos/${numero}/cambiar_estado/`, { estado, nota }).then((r) => r.data),
   procesarPago: (data: ProcesarPagoInput) =>
     api.post<ProcesarPagoResponse>('/pagos/procesar/', data).then((r) => r.data),
 };

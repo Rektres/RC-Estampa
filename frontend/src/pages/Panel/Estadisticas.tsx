@@ -20,6 +20,10 @@ import {
   AlertCircle,
   ChevronDown,
   Plus,
+  History,
+  Phone,
+  Mail,
+  Send,
 } from 'lucide-react';
 import { panelApi, pedidosApi, type EstadisticasData } from '../../api';
 import { useAsync } from '../../api/hooks';
@@ -51,6 +55,9 @@ export default function Estadisticas() {
   const [isExporting, setIsExporting] = useState(false);
   const [updatingNumero, setUpdatingNumero] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<any | null>(null);
+  const [historyTx, setHistoryTx] = useState<any | null>(null);
+  const [notaCambio, setNotaCambio] = useState('');
+  const [modalNuevoEstado, setModalNuevoEstado] = useState('');
 
   // Estados para Top Productos
   const [topProdsLimit, setTopProdsLimit] = useState(5);
@@ -63,11 +70,11 @@ export default function Estadisticas() {
 
   const kpis = data?.kpis;
 
-  // Filtrado y ordenamiento de Top Productos (Mayor a Menor)
+  // Filtrado y ordenamiento de Top Productos (Mayor a Menor por Monto y Unidades)
   const topProductosFiltrados = useMemo(() => {
     if (!data?.top_productos) return [];
     const list = [...data.top_productos].sort(
-      (a, b) => b.unidades_vendidas - a.unidades_vendidas || b.ingresos_totales - a.ingresos_totales
+      (a, b) => b.ingresos_totales - a.ingresos_totales || b.unidades_vendidas - a.unidades_vendidas
     );
     if (!topProdsSearch.trim()) return list;
     const q = topProdsSearch.toLowerCase().trim();
@@ -91,6 +98,7 @@ export default function Estadisticas() {
         tx.numero.toLowerCase().includes(q) ||
         tx.nombre.toLowerCase().includes(q) ||
         tx.email.toLowerCase().includes(q) ||
+        (tx.telefono && tx.telefono.toLowerCase().includes(q)) ||
         (tx.payment_method_id && tx.payment_method_id.toLowerCase().includes(q)) ||
         (tx.card_last_four && tx.card_last_four.includes(q));
       return matchEstado && matchBusqueda;
@@ -108,13 +116,27 @@ export default function Estadisticas() {
     }
   }
 
-  async function handleCambiarEstado(numero: string, nuevoEstado: string) {
+  async function handleCambiarEstado(numero: string, nuevoEstado: string, nota: string = '') {
     setUpdatingNumero(numero);
     try {
-      await pedidosApi.cambiarEstado(numero, nuevoEstado);
+      await pedidosApi.cambiarEstado(numero, nuevoEstado, nota);
       setReload((n) => n + 1);
       if (selectedTx && selectedTx.numero === numero) {
         setSelectedTx({ ...selectedTx, estado: nuevoEstado });
+      }
+      if (historyTx && historyTx.numero === numero) {
+        const nuevoHistorial = [
+          ...(historyTx.historial_estados || []),
+          {
+            estado_anterior: historyTx.estado,
+            estado_nuevo: nuevoEstado,
+            fecha: new Date().toISOString(),
+            autor: 'Administrador',
+            nota: nota,
+          },
+        ];
+        setHistoryTx({ ...historyTx, estado: nuevoEstado, historial_estados: nuevoHistorial });
+        setNotaCambio('');
       }
     } catch (err: any) {
       alert(err.response?.data?.detail || 'No se pudo actualizar el estado.');
@@ -124,7 +146,7 @@ export default function Estadisticas() {
   }
 
   return (
-    <div className="d-flex flex-column gap-4">
+    <div className="d-flex flex-column gap-4 animate-tab-fade">
       {/* Header & Filtro de Período & Botón Excel */}
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3 rounded-4 bg-surface border border-border">
         <div>
@@ -333,9 +355,9 @@ export default function Estadisticas() {
             </div>
           </div>
 
-          {/* Fila 3: Top Productos & Ventas por Línea */}
+          {/* Fila 3: Top Productos (Orden por Monto & Unidades) & Ventas por Línea */}
           <div className="row g-3">
-            {/* Top Productos Ranking con Búsqueda y Paginación 'Cargar Más' */}
+            {/* Top Productos Ranking */}
             <div className="col-12 col-lg-7">
               <div className="p-4 rounded-4 bg-surface border border-border h-100 d-flex flex-column justify-content-between">
                 <div>
@@ -344,8 +366,8 @@ export default function Estadisticas() {
                       <Sparkles size={18} className="text-primary" />
                       <h3 className="fs-6 fw-bold font-montserrat text-text mb-0">Top Productos Más Vendidos</h3>
                     </div>
-                    <span className="badge bg-elevated text-muted border border-border font-montserrat">
-                      Orden: Mayor a Menor
+                    <span className="badge bg-elevated text-text border border-border font-montserrat" style={{ fontSize: '0.72rem' }}>
+                      Por Monto Total ($) & Unidades
                     </span>
                   </div>
 
@@ -378,8 +400,8 @@ export default function Estadisticas() {
                   ) : (
                     <div className="d-flex flex-column gap-2">
                       {topProductosVisibles.map((prod, idx) => {
-                        const maxUnits = topProductosFiltrados[0]?.unidades_vendidas || 1;
-                        const pct = Math.round((prod.unidades_vendidas / maxUnits) * 100);
+                        const maxRevenue = topProductosFiltrados[0]?.ingresos_totales || 1;
+                        const pct = Math.round((prod.ingresos_totales / maxRevenue) * 100);
                         return (
                           <div key={idx} className="p-2 rounded-3 bg-elevated border border-border hover-lift">
                             <div className="d-flex align-items-center justify-content-between mb-1">
@@ -388,7 +410,7 @@ export default function Estadisticas() {
                                   #{idx + 1}
                                 </span>
                                 <span className="font-montserrat fw-semibold text-text small">{prod.nombre}</span>
-                                <span className="badge bg-dark text-muted text-uppercase" style={{ fontSize: '0.65rem' }}>
+                                <span className="badge bg-surface text-muted border border-border text-uppercase" style={{ fontSize: '0.65rem' }}>
                                   {prod.tipo}
                                 </span>
                               </div>
@@ -397,7 +419,7 @@ export default function Estadisticas() {
                                 <span className="font-montserrat text-muted small">({prod.unidades_vendidas} un.)</span>
                               </div>
                             </div>
-                            <div className="progress bg-dark" style={{ height: '5px' }}>
+                            <div className="progress bg-surface border border-border" style={{ height: '6px' }}>
                               <div
                                 className="progress-bar bg-primary"
                                 role="progressbar"
@@ -476,13 +498,13 @@ export default function Estadisticas() {
             </div>
           </div>
 
-          {/* Fila 4: Búsqueda y Gestión de Pedidos en Vivo (TODOS LOS ESTADOS) */}
+          {/* Fila 4: Búsqueda y Gestión de Pedidos en Vivo con Contacto e Historial */}
           <div className="p-4 rounded-4 bg-surface border border-border">
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-              <div className="d-flex align-items-center gap-2">
+              <div className="d-flex align-items-center gap-2 flex-wrap">
                 <Clock size={18} className="text-primary" />
                 <h3 className="fs-6 fw-bold font-montserrat text-text mb-0">Gestión de Pedidos & Trazabilidad</h3>
-                <span className="badge bg-elevated text-primary border border-border ms-1 font-montserrat fw-bold">
+                <span className="badge bg-elevated text-primary border border-border font-montserrat fw-bold">
                   {transaccionesFiltradas.length} órdenes visibles
                 </span>
                 {estadoFiltro && (
@@ -499,7 +521,7 @@ export default function Estadisticas() {
                   type="text"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar por N° pedido, cliente, email..."
+                  placeholder="Buscar por N° pedido, cliente, teléfono, email..."
                   className="form-control form-control-sm bg-elevated text-text border-border ps-5 font-montserrat"
                   style={{ borderRadius: '8px' }}
                 />
@@ -531,7 +553,7 @@ export default function Estadisticas() {
                       <th className="text-end font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Comisión</th>
                       <th className="text-end font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Neto</th>
                       <th className="text-center font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Estado (Modificar)</th>
-                      <th className="text-center font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Acción</th>
+                      <th className="text-center font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -542,7 +564,16 @@ export default function Estadisticas() {
                         </td>
                         <td>
                           <div className="font-montserrat fw-semibold text-text small">{tx.nombre}</div>
-                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>{tx.email}</div>
+                          <div className="text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.75rem' }}>
+                            <Mail size={12} className="text-primary flex-shrink-0" />
+                            <span>{tx.email}</span>
+                          </div>
+                          {tx.telefono && (
+                            <div className="text-primary fw-semibold d-flex align-items-center gap-1 mt-1" style={{ fontSize: '0.72rem' }}>
+                              <Phone size={11} />
+                              <span>{tx.telefono}</span>
+                            </div>
+                          )}
                           {tx.comuna && (
                             <div className="text-muted" style={{ fontSize: '0.7rem' }}>📍 {tx.comuna}, {tx.region}</div>
                           )}
@@ -583,15 +614,29 @@ export default function Estadisticas() {
                         </td>
 
                         <td className="text-center">
-                          <button
-                            onClick={() => setSelectedTx(tx)}
-                            className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 py-1 px-2 font-montserrat"
-                            style={{ fontSize: '0.75rem' }}
-                            title="Ver trazabilidad y auditoría"
-                          >
-                            <Eye size={13} />
-                            <span>Trazabilidad</span>
-                          </button>
+                          <div className="d-inline-flex gap-1">
+                            <button
+                              onClick={() => setSelectedTx(tx)}
+                              className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 py-1 px-2 font-montserrat"
+                              style={{ fontSize: '0.75rem' }}
+                              title="Ver trazabilidad visual"
+                            >
+                              <Eye size={13} />
+                              <span className="d-none d-md-inline">Trazabilidad</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setHistoryTx(tx);
+                                setModalNuevoEstado(tx.estado);
+                              }}
+                              className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 py-1 px-2 font-montserrat"
+                              style={{ fontSize: '0.75rem' }}
+                              title="Ver historial de cambios de estado y notas"
+                            >
+                              <History size={13} />
+                              <span className="d-none d-md-inline">Historial</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -603,7 +648,7 @@ export default function Estadisticas() {
         </>
       )}
 
-      {/* Modal de Trazabilidad y Detalle de Pedido */}
+      {/* Modal 1: Trazabilidad y Detalle de Pedido */}
       {selectedTx && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
@@ -611,7 +656,7 @@ export default function Estadisticas() {
           onClick={() => setSelectedTx(null)}
         >
           <div
-            className="bg-surface border border-border rounded-4 p-4 shadow-lg w-100"
+            className="bg-surface border border-border rounded-4 p-4 shadow-lg w-100 animate-tab-fade"
             style={{ maxWidth: '44rem', maxHeight: '90vh', overflowY: 'auto' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -620,9 +665,13 @@ export default function Estadisticas() {
                 <h4 className="font-montserrat fw-bold text-text fs-5 mb-0">
                   Trazabilidad del Pedido: <span className="text-primary">{selectedTx.numero}</span>
                 </h4>
-                <p className="font-montserrat text-muted small mb-0">
-                  Cliente: {selectedTx.nombre} ({selectedTx.email})
-                </p>
+                <div className="font-montserrat text-muted small mt-1 d-flex flex-wrap align-items-center gap-3">
+                  <span><strong>Cliente:</strong> {selectedTx.nombre}</span>
+                  <span><Mail size={12} className="text-primary me-1" />{selectedTx.email}</span>
+                  {selectedTx.telefono && (
+                    <span className="text-primary fw-semibold"><Phone size={12} className="me-1" />{selectedTx.telefono}</span>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => setSelectedTx(null)}
@@ -632,7 +681,7 @@ export default function Estadisticas() {
               </button>
             </div>
 
-            {/* Timeline Interactivo Corregido Geométricamente */}
+            {/* Timeline Interactivo */}
             <div className="py-3 mb-4 bg-elevated rounded-3 p-3 border border-border">
               <h6 className="font-montserrat fw-bold text-text small mb-3">Línea de Tiempo de Fabricación y Entrega:</h6>
               <PedidoTimeline
@@ -647,7 +696,7 @@ export default function Estadisticas() {
               <div>
                 <span className="font-montserrat fw-bold text-text small d-block">Modificar Estado Actual:</span>
                 <span className="font-montserrat text-muted" style={{ fontSize: '0.75rem' }}>
-                  El cambio se reflejará inmediatamente en la cuenta del cliente.
+                  El cambio notificará al cliente por correo y actualizará su portal.
                 </span>
               </div>
               <select
@@ -663,15 +712,15 @@ export default function Estadisticas() {
               </select>
             </div>
 
-            {/* Datos de Despacho y Contacto */}
+            {/* Datos de Despacho y Contacto Completo */}
             {selectedTx.direccion && (
               <div className="p-3 bg-elevated rounded-3 border border-border mb-3 font-montserrat small">
-                <span className="fw-bold text-text d-block mb-1">📍 Datos de Envío:</span>
+                <span className="fw-bold text-text d-block mb-1">📍 Datos de Envío & Contacto:</span>
                 <div className="text-muted">
                   {selectedTx.direccion}, {selectedTx.comuna}, {selectedTx.ciudad} ({selectedTx.region})
                 </div>
                 {selectedTx.telefono && (
-                  <div className="text-muted mt-1">📞 Teléfono: {selectedTx.telefono}</div>
+                  <div className="text-primary mt-1 fw-semibold">📞 Teléfono de Despacho: {selectedTx.telefono}</div>
                 )}
               </div>
             )}
@@ -698,8 +747,158 @@ export default function Estadisticas() {
               </div>
             </div>
 
-            <div className="d-flex justify-content-end mt-3">
+            <div className="d-flex justify-content-between align-items-center mt-3">
+              <button
+                onClick={() => {
+                  setHistoryTx(selectedTx);
+                  setModalNuevoEstado(selectedTx.estado);
+                  setSelectedTx(null);
+                }}
+                className="btn btn-outline-secondary btn-sm font-montserrat d-flex align-items-center gap-1"
+              >
+                <History size={14} />
+                <span>Ver Historial Detallado</span>
+              </button>
               <button onClick={() => setSelectedTx(null)} className="btn btn-secondary btn-sm font-montserrat px-4">
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2: Historial Detallado de Cambios de Estado & Notificación */}
+      {historyTx && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)', zIndex: 1070, backdropFilter: 'blur(6px)' }}
+          onClick={() => setHistoryTx(null)}
+        >
+          <div
+            className="bg-surface border border-border rounded-4 p-4 shadow-lg w-100 animate-tab-fade"
+            style={{ maxWidth: '44rem', maxHeight: '90vh', overflowY: 'auto' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="d-flex align-items-center justify-content-between border-bottom border-border pb-3 mb-3">
+              <div>
+                <div className="d-flex align-items-center gap-2">
+                  <History size={20} className="text-primary" />
+                  <h4 className="font-montserrat fw-bold text-text fs-5 mb-0">
+                    Historial de Cambios: <span className="text-primary">{historyTx.numero}</span>
+                  </h4>
+                </div>
+                <p className="font-montserrat text-muted small mb-0 mt-1">
+                  Cliente: {historyTx.nombre} | 📧 {historyTx.email} {historyTx.telefono ? `| 📞 ${historyTx.telefono}` : ''}
+                </p>
+              </div>
+              <button
+                onClick={() => setHistoryTx(null)}
+                className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Listado de Eventos del Historial */}
+            <div className="mb-4">
+              <h6 className="font-montserrat fw-bold text-text small mb-3">Registro Cronológico de Eventos:</h6>
+              {(!historyTx.historial_estados || historyTx.historial_estados.length === 0) ? (
+                <div className="p-3 bg-elevated rounded-3 border border-border font-montserrat small text-muted">
+                  <div className="d-flex align-items-center justify-content-between">
+                    <span className="fw-semibold text-text">Creación Inicial del Pedido</span>
+                    <span className="badge bg-secondary text-white text-uppercase">{historyTx.estado}</span>
+                  </div>
+                  <div className="mt-1" style={{ fontSize: '0.75rem' }}>
+                    Fecha: {new Date(historyTx.creado_en).toLocaleString('es-CL')} | Autor: Sistema RC Estampa
+                  </div>
+                </div>
+              ) : (
+                <div className="d-flex flex-column gap-2">
+                  {/* Evento inicial de creación */}
+                  <div className="p-3 bg-elevated rounded-3 border border-border font-montserrat small">
+                    <div className="d-flex align-items-center justify-content-between mb-1">
+                      <span className="fw-semibold text-text">1. Creación de Orden</span>
+                      <span className="badge bg-secondary text-white text-uppercase">Inicio</span>
+                    </div>
+                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                      Fecha: {new Date(historyTx.creado_en).toLocaleString('es-CL')} | Autor: Cliente ({historyTx.nombre})
+                    </div>
+                  </div>
+
+                  {/* Eventos registrados */}
+                  {historyTx.historial_estados.map((h: any, idx: number) => {
+                    const estObj = ESTADOS_DISPONIBLES.find((e) => e.key === h.estado_nuevo);
+                    return (
+                      <div key={idx} className="p-3 bg-elevated rounded-3 border border-border font-montserrat small hover-lift">
+                        <div className="d-flex align-items-center justify-content-between mb-1">
+                          <span className="fw-bold text-text">
+                            {idx + 2}. Cambio a: <span className={`text-${estObj?.color || 'primary'} text-uppercase`}>{estObj?.label || h.estado_nuevo}</span>
+                          </span>
+                          <span className={`badge bg-${estObj?.color || 'primary'} text-black fw-bold text-uppercase`}>
+                            {h.estado_nuevo}
+                          </span>
+                        </div>
+                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                          📅 {new Date(h.fecha).toLocaleString('es-CL')} | 👤 Modificado por: <strong>{h.autor || 'Admin'}</strong>
+                        </div>
+                        {h.nota && (
+                          <div className="p-2 mt-2 bg-surface rounded-2 border border-border text-primary" style={{ fontSize: '0.78rem' }}>
+                            💬 <strong>Observación:</strong> {h.nota}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Formulario de Transición de Estado con Nota y Disparo de Correo */}
+            <div className="p-3 bg-elevated rounded-3 border border-border mb-3 font-montserrat">
+              <h6 className="fw-bold text-text small mb-2 d-flex align-items-center gap-2">
+                <Send size={14} className="text-primary" />
+                Registrar Nuevo Cambio & Notificar al Cliente:
+              </h6>
+              <div className="row g-2 align-items-center mb-2">
+                <div className="col-12 col-sm-6">
+                  <label className="small text-muted mb-1 d-block" style={{ fontSize: '0.75rem' }}>Nuevo Estado:</label>
+                  <select
+                    value={modalNuevoEstado}
+                    onChange={(e) => setModalNuevoEstado(e.target.value)}
+                    className="form-select form-select-sm bg-surface text-text border-primary fw-bold"
+                  >
+                    {ESTADOS_DISPONIBLES.map((est) => (
+                      <option key={est.key} value={est.key}>
+                        {est.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <label className="small text-muted mb-1 d-block" style={{ fontSize: '0.75rem' }}>Observación / Nota para el Cliente:</label>
+                  <input
+                    type="text"
+                    value={notaCambio}
+                    onChange={(e) => setNotaCambio(e.target.value)}
+                    placeholder="Ej. Despachado por Blue Express N° 12345"
+                    className="form-control form-control-sm bg-surface text-text border-border"
+                  />
+                </div>
+              </div>
+              <div className="d-flex justify-content-end mt-3">
+                <button
+                  onClick={() => handleCambiarEstado(historyTx.numero, modalNuevoEstado, notaCambio)}
+                  disabled={updatingNumero === historyTx.numero || modalNuevoEstado === historyTx.estado}
+                  className="btn btn-sm btn-primary font-montserrat fw-bold d-flex align-items-center gap-1"
+                >
+                  <Send size={13} />
+                  <span>{updatingNumero === historyTx.numero ? 'Guardando...' : 'Aplicar Estado & Enviar Correo'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="d-flex justify-content-end">
+              <button onClick={() => setHistoryTx(null)} className="btn btn-secondary btn-sm font-montserrat px-4">
                 Cerrar
               </button>
             </div>

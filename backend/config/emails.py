@@ -202,3 +202,100 @@ def enviar_email_codigo_verificacion(user, codigo):
     except Exception as exc:
         logger.error(f"Error al enviar código de verificación a {user.email}: {exc}")
         return False
+
+
+def enviar_email_cambio_estado(pedido, nuevo_estado, nota=""):
+    """
+    Envía correo HTML al cliente cuando su pedido cambia de estado
+    (ej. Pago Aprobado -> En Confección -> Despachado -> Entregado).
+    """
+    try:
+        destinatario = pedido.email
+        if not destinatario:
+            return False
+
+        ESTADOS_MAP = {
+            'pendiente': ('Pendiente de Pago', 'Tu orden fue generada y está a la espera de pago.'),
+            'pagado': ('Pago Aprobado', 'Tu pago ha sido validado correctamente y tu orden ingresó a la cola de producción.'),
+            'en_proceso': ('En Taller / Confección', 'Tus piezas están siendo personalizadas con técnicas DTF textil / grabado láser.'),
+            'enviado': ('Despachado', 'Tu pedido está en camino a tu domicilio con courier asignado.'),
+            'entregado': ('Entregado', 'Tu pedido ha sido entregado a conformidad. ¡Esperamos que disfrutes tu compra!'),
+            'cancelado': ('Cancelado / Anulado', 'Tu orden ha sido anulada o cancelada.'),
+        }
+
+        titulo_estado, desc_estado = ESTADOS_MAP.get(
+            nuevo_estado, (nuevo_estado.upper(), 'Tu pedido ha sido actualizado.')
+        )
+
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+        url_seguimiento = f"{frontend_url}/mi-cuenta?tab=pedidos"
+
+        asunto = f"Actualización de tu Pedido {pedido.numero}: {titulo_estado} — RC Estampa"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #0d0d0f; color: #e5e5e8; margin: 0; padding: 20px; }}
+                .container {{ max-width: 560px; margin: 0 auto; background-color: #16161a; border-radius: 12px; border: 1px solid #2a2a30; padding: 32px; }}
+                .header {{ text-align: center; margin-bottom: 24px; border-bottom: 1px solid #2a2a30; padding-bottom: 16px; }}
+                .logo-text {{ font-size: 24px; font-weight: bold; color: #d4af37; letter-spacing: 2px; text-transform: uppercase; margin: 0; }}
+                .tagline {{ font-size: 10px; color: #a0a0a8; letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; }}
+                .badge-status {{ display: inline-block; background-color: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid #d4af37; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; margin: 16px 0; }}
+                .box-info {{ background-color: #1f1f26; border-radius: 8px; padding: 18px; margin: 20px 0; border: 1px solid #2e2e38; }}
+                .btn {{ display: inline-block; background: #d4af37; color: #0d0d0f; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; margin-top: 18px; }}
+                .footer {{ text-align: center; color: #6e6e78; font-size: 12px; margin-top: 28px; border-top: 1px solid #2a2a30; padding-top: 16px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="logo-text">RC ESTAMPA</div>
+                    <div class="tagline">Grabados & Estampados</div>
+                </div>
+
+                <div style="text-align: center;">
+                    <span class="badge-status">&#9679; {titulo_estado.upper()}</span>
+                    <h2 style="color: #ffffff; margin-top: 8px; font-size: 20px;">Hola {pedido.nombre}, tenemos novedades</h2>
+                    <p style="color: #a0a0a8; font-size: 14px; line-height: 1.6;">
+                        El estado de tu orden <strong>{pedido.numero}</strong> ha cambiado:
+                    </p>
+                </div>
+
+                <div class="box-info">
+                    <p style="margin: 0; font-size: 14px; color: #ffffff; font-weight: 600;">
+                        {desc_estado}
+                    </p>
+                    {f'<p style="margin-top: 10px; font-size: 13px; color: #d4af37;"><strong>Nota de Taller:</strong> {nota}</p>' if nota else ''}
+                    <p style="margin: 10px 0 0 0; font-size: 12px; color: #888894;">
+                        Dirección de entrega: {pedido.direccion}, {pedido.ciudad} ({pedido.region})
+                    </p>
+                </div>
+
+                <div style="text-align: center;">
+                    <a href="{url_seguimiento}" class="btn">Ver Línea de Tiempo en Vivo</a>
+                </div>
+
+                <div class="footer">
+                    <p style="margin: 0;">RC Estampa SpA — Asistencia WhatsApp: +56 9 4483 0378</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = strip_tags(html_content)
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'RC Estampa <contacto@rcestampa.cl>')
+
+        msg = EmailMultiAlternatives(asunto, text_content, from_email, [destinatario])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send(fail_silently=False)
+        logger.info(f"Email de cambio de estado ({nuevo_estado}) enviado exitosamente a {destinatario} para pedido {pedido.numero}")
+        return True
+
+    except Exception as exc:
+        logger.error(f"Error al enviar email de cambio de estado para pedido {pedido.numero}: {exc}")
+        return False
+

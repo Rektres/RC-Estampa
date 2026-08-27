@@ -62,6 +62,9 @@ class Pedido(models.Model):
     ip_cliente = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
 
+    # Historial de Auditoría de Cambios de Estado
+    historial_estados = models.JSONField(default=list, blank=True)
+
     datos_pago_raw = models.JSONField(default=dict, blank=True)
     creado_en = models.DateTimeField(auto_now_add=True)
 
