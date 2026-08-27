@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   TrendingUp,
   DollarSign,
@@ -19,11 +19,20 @@ import {
   X,
   AlertCircle,
   ChevronDown,
+  ChevronUp,
   Plus,
   History,
   Phone,
   Mail,
   Send,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  CheckSquare,
+  Square,
+  ChevronLeft,
+  ChevronRight,
+  ListFilter,
 } from 'lucide-react';
 import { panelApi, pedidosApi, type EstadisticasData } from '../../api';
 import { useAsync } from '../../api/hooks';
@@ -39,19 +48,32 @@ const PERIODOS = [
 ];
 
 const ESTADOS_DISPONIBLES = [
-  { key: 'pagado', label: 'Pagado', color: 'success' },
-  { key: 'en_proceso', label: 'En Proceso', color: 'warning' },
-  { key: 'enviado', label: 'Enviado', color: 'info' },
-  { key: 'entregado', label: 'Entregado', color: 'primary' },
-  { key: 'pendiente', label: 'Pendiente', color: 'secondary' },
-  { key: 'cancelado', label: 'Cancelado', color: 'danger' },
+  { key: 'pagado', label: 'Pagado', color: 'success', border: '#22c55e' },
+  { key: 'en_proceso', label: 'En Proceso', color: 'warning', border: '#eab308' },
+  { key: 'enviado', label: 'Enviado', color: 'info', border: '#06b6d4' },
+  { key: 'entregado', label: 'Entregado', color: 'primary', border: '#c9a84c' },
+  { key: 'pendiente', label: 'Pendiente', color: 'secondary', border: '#64748b' },
+  { key: 'cancelado', label: 'Cancelado', color: 'danger', border: '#ef4444' },
 ];
 
 export default function Estadisticas() {
   const [periodo, setPeriodo] = useState('todo');
   const [reload, setReload] = useState(0);
   const [busqueda, setBusqueda] = useState('');
-  const [estadoFiltro, setEstadoFiltro] = useState<string | null>(null);
+  
+  // Multi-filtro por estado
+  const [estadosFiltro, setEstadosFiltro] = useState<string[]>([]);
+  
+  // Paginación y Modos de Carga
+  const [modoCarga, setModoCarga] = useState<'paginacion' | 'lazy'>('paginacion');
+  const [filasPorPagina, setFilasPorPagina] = useState<number>(10);
+  const [paginaActual, setPaginaActual] = useState<number>(1);
+  const [lazyLimit, setLazyLimit] = useState<number>(15);
+
+  // Ordenamiento de Columnas
+  const [sortColumn, setSortColumn] = useState<string>('creado_en');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
   const [isExporting, setIsExporting] = useState(false);
   const [updatingNumero, setUpdatingNumero] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<any | null>(null);
@@ -70,6 +92,46 @@ export default function Estadisticas() {
 
   const kpis = data?.kpis;
 
+  // Auto-centrado al abrir cualquier modal
+  useEffect(() => {
+    if (selectedTx || historyTx) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [selectedTx, historyTx]);
+
+  // Toggle de multi-filtro por estado
+  const toggleEstadoFiltro = (estadoKey: string) => {
+    setEstadosFiltro((prev) => {
+      if (prev.includes(estadoKey)) {
+        return prev.filter((k) => k !== estadoKey);
+      } else {
+        return [...prev, estadoKey];
+      }
+    });
+    setPaginaActual(1);
+  };
+
+  const seleccionarTodosLosEstados = () => {
+    setEstadosFiltro(ESTADOS_DISPONIBLES.map((e) => e.key));
+    setPaginaActual(1);
+  };
+
+  const limpiarFiltrosDeEstado = () => {
+    setEstadosFiltro([]);
+    setPaginaActual(1);
+  };
+
+  // Toggle ordenamiento de columnas
+  const handleSort = (col: string) => {
+    if (sortColumn === col) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(col);
+      setSortDirection('asc');
+    }
+    setPaginaActual(1);
+  };
+
   // Filtrado y ordenamiento de Top Productos (Mayor a Menor por Monto y Unidades)
   const topProductosFiltrados = useMemo(() => {
     if (!data?.top_productos) return [];
@@ -87,11 +149,13 @@ export default function Estadisticas() {
     return topProductosFiltrados.slice(0, topProdsLimit);
   }, [topProductosFiltrados, topProdsLimit]);
 
-  // Filtrado reactivo de todos los pedidos
+  // Filtrado y ordenamiento reactivo de todos los pedidos
   const transaccionesFiltradas = useMemo(() => {
     if (!data?.ultimas_transacciones) return [];
-    return data.ultimas_transacciones.filter((tx) => {
-      const matchEstado = !estadoFiltro || tx.estado === estadoFiltro;
+    
+    // 1. Filtrar por estados múltiples y texto de búsqueda
+    const filtered = data.ultimas_transacciones.filter((tx) => {
+      const matchEstado = estadosFiltro.length === 0 || estadosFiltro.includes(tx.estado);
       const q = busqueda.toLowerCase().trim();
       const matchBusqueda =
         !q ||
@@ -103,7 +167,41 @@ export default function Estadisticas() {
         (tx.card_last_four && tx.card_last_four.includes(q));
       return matchEstado && matchBusqueda;
     });
-  }, [data?.ultimas_transacciones, estadoFiltro, busqueda]);
+
+    // 2. Ordenar según la columna seleccionada
+    return filtered.sort((a, b) => {
+      let valA: any = a[sortColumn];
+      let valB: any = b[sortColumn];
+
+      if (sortColumn === 'neto') {
+        valA = a.monto_neto ?? (a.total - (a.comision_mp || 0));
+        valB = b.monto_neto ?? (b.total - (b.comision_mp || 0));
+      }
+
+      if (valA === undefined || valA === null) valA = '';
+      if (valB === undefined || valB === null) valB = '';
+
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        return sortDirection === 'asc' ? valA - valB : valB - valA;
+      }
+
+      const strA = String(valA).toLowerCase();
+      const strB = String(valB).toLowerCase();
+      if (strA < strB) return sortDirection === 'asc' ? -1 : 1;
+      if (strA > strB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data?.ultimas_transacciones, estadosFiltro, busqueda, sortColumn, sortDirection]);
+
+  // Paginación o Lazy Load
+  const totalPaginas = Math.ceil(transaccionesFiltradas.length / (filasPorPagina || 10)) || 1;
+  const transaccionesPaginadas = useMemo(() => {
+    if (modoCarga === 'lazy') {
+      return transaccionesFiltradas.slice(0, lazyLimit);
+    }
+    const inicio = (paginaActual - 1) * filasPorPagina;
+    return transaccionesFiltradas.slice(inicio, inicio + filasPorPagina);
+  }, [transaccionesFiltradas, modoCarga, paginaActual, filasPorPagina, lazyLimit]);
 
   async function handleExportExcel() {
     setIsExporting(true);
@@ -121,21 +219,28 @@ export default function Estadisticas() {
     try {
       await pedidosApi.cambiarEstado(numero, nuevoEstado, nota);
       setReload((n) => n + 1);
+      
+      const nuevoEvento = {
+        estado_anterior: selectedTx?.estado || historyTx?.estado || 'pendiente',
+        estado_nuevo: nuevoEstado,
+        fecha: new Date().toISOString(),
+        autor: 'Administrador',
+        nota: nota,
+      };
+
       if (selectedTx && selectedTx.numero === numero) {
-        setSelectedTx({ ...selectedTx, estado: nuevoEstado });
+        setSelectedTx({
+          ...selectedTx,
+          estado: nuevoEstado,
+          historial_estados: [...(selectedTx.historial_estados || []), nuevoEvento],
+        });
       }
       if (historyTx && historyTx.numero === numero) {
-        const nuevoHistorial = [
-          ...(historyTx.historial_estados || []),
-          {
-            estado_anterior: historyTx.estado,
-            estado_nuevo: nuevoEstado,
-            fecha: new Date().toISOString(),
-            autor: 'Administrador',
-            nota: nota,
-          },
-        ];
-        setHistoryTx({ ...historyTx, estado: nuevoEstado, historial_estados: nuevoHistorial });
+        setHistoryTx({
+          ...historyTx,
+          estado: nuevoEstado,
+          historial_estados: [...(historyTx.historial_estados || []), nuevoEvento],
+        });
         setNotaCambio('');
       }
     } catch (err: any) {
@@ -144,6 +249,33 @@ export default function Estadisticas() {
       setUpdatingNumero(null);
     }
   }
+
+  // Helper para renderizar badges de estado de alto contraste
+  const renderEstadoBadge = (estadoKey: string) => {
+    const est = ESTADOS_DISPONIBLES.find((e) => e.key === estadoKey);
+    const color = est ? est.color : 'secondary';
+    const label = est ? est.label : estadoKey;
+    return (
+      <span
+        className={`badge bg-${color} bg-opacity-20 text-${color} border border-${color} text-uppercase px-2 py-1`}
+        style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}
+      >
+        {label}
+      </span>
+    );
+  };
+
+  // Helper para íconos de ordenamiento en columnas
+  const renderSortIndicator = (col: string) => {
+    if (sortColumn !== col) {
+      return <ArrowUpDown size={12} className="text-muted opacity-50 ms-1" />;
+    }
+    return sortDirection === 'asc' ? (
+      <ArrowUp size={12} className="text-primary ms-1" />
+    ) : (
+      <ArrowDown size={12} className="text-primary ms-1" />
+    );
+  };
 
   return (
     <div className="d-flex flex-column gap-4 animate-tab-fade">
@@ -165,7 +297,7 @@ export default function Estadisticas() {
             {PERIODOS.map((p) => (
               <button
                 key={p.key}
-                onClick={() => setPeriodo(p.key)}
+                onClick={() => { setPeriodo(p.key); setPaginaActual(1); }}
                 className={`btn btn-sm border-0 font-montserrat ${
                   periodo === p.key
                     ? 'btn-primary text-black fw-bold shadow-sm'
@@ -302,39 +434,50 @@ export default function Estadisticas() {
             </div>
           </div>
 
-          {/* Fila 2: Embudo Dinámico e Interactivo de Pedidos */}
+          {/* Fila 2: Embudo Dinámico con Multi-Filtro por Estado */}
           <div className="p-4 rounded-4 bg-surface border border-border">
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
               <div className="d-flex align-items-center gap-2">
                 <PackageCheck size={18} className="text-primary" />
                 <h3 className="fs-6 fw-bold font-montserrat text-text mb-0">
-                  Embudo de Gestión de Pedidos por Estado
+                  Embudo de Gestión de Pedidos por Estado (Filtro Múltiple)
                 </h3>
               </div>
-              {estadoFiltro ? (
-                <button
-                  onClick={() => setEstadoFiltro(null)}
-                  className="btn btn-sm btn-outline-warning d-flex align-items-center gap-1 font-montserrat fw-semibold"
-                  style={{ fontSize: '0.75rem' }}
-                >
-                  <X size={13} />
-                  <span>Quitar filtro: {estadoFiltro.toUpperCase()} (Ver Todos)</span>
-                </button>
-              ) : (
-                <span className="font-montserrat small text-muted" style={{ fontSize: '0.75rem' }}>
-                  Haz clic en un estado para filtrar las órdenes abajo
-                </span>
-              )}
+              <div className="d-flex align-items-center gap-2">
+                {estadosFiltro.length > 0 ? (
+                  <>
+                    <button
+                      onClick={limpiarFiltrosDeEstado}
+                      className="btn btn-sm btn-outline-warning d-flex align-items-center gap-1 font-montserrat fw-semibold"
+                      style={{ fontSize: '0.75rem' }}
+                    >
+                      <X size={13} />
+                      <span>Limpiar filtros ({estadosFiltro.length} activos)</span>
+                    </button>
+                    <button
+                      onClick={seleccionarTodosLosEstados}
+                      className="btn btn-sm btn-outline-secondary font-montserrat"
+                      style={{ fontSize: '0.75rem' }}
+                    >
+                      Seleccionar Todos
+                    </button>
+                  </>
+                ) : (
+                  <span className="font-montserrat small text-muted" style={{ fontSize: '0.75rem' }}>
+                    💡 Puedes seleccionar más de un estado simultáneamente
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="row g-2">
               {ESTADOS_DISPONIBLES.map((est) => {
                 const count = kpis.conteo_estados[est.key] || 0;
-                const isSelected = estadoFiltro === est.key;
+                const isSelected = estadosFiltro.includes(est.key);
                 return (
                   <div key={est.key} className="col-6 col-sm-4 col-md-2">
                     <div
-                      onClick={() => setEstadoFiltro(isSelected ? null : est.key)}
+                      onClick={() => toggleEstadoFiltro(est.key)}
                       className={`p-3 rounded-3 text-center border cursor-pointer transition-all ${
                         isSelected
                           ? 'bg-elevated border-primary shadow-sm'
@@ -342,11 +485,19 @@ export default function Estadisticas() {
                       }`}
                       style={{
                         cursor: 'pointer',
-                        transform: isSelected ? 'scale(1.02)' : 'none',
+                        transform: isSelected ? 'scale(1.03)' : 'none',
                         borderWidth: isSelected ? '2px' : '1px',
+                        borderColor: isSelected ? 'var(--brand-primary)' : undefined,
                       }}
                     >
-                      <span className="small text-muted d-block mb-1 font-montserrat">{est.label}</span>
+                      <div className="d-flex align-items-center justify-content-center gap-1 mb-1">
+                        {isSelected ? (
+                          <CheckSquare size={13} className="text-primary" />
+                        ) : (
+                          <Square size={13} className="text-muted" />
+                        )}
+                        <span className="small text-muted font-montserrat fw-semibold">{est.label}</span>
+                      </div>
                       <span className={`fs-5 fw-bold font-montserrat text-${est.color}`}>{count}</span>
                     </div>
                   </div>
@@ -498,66 +649,194 @@ export default function Estadisticas() {
             </div>
           </div>
 
-          {/* Fila 4: Búsqueda y Gestión de Pedidos en Vivo con Contacto e Historial */}
+          {/* Fila 4: Búsqueda, Ordenamiento, Paginación y Gestión de Pedidos */}
           <div className="p-4 rounded-4 bg-surface border border-border">
+            {/* Barra de Controles Superiores */}
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
               <div className="d-flex align-items-center gap-2 flex-wrap">
                 <Clock size={18} className="text-primary" />
                 <h3 className="fs-6 fw-bold font-montserrat text-text mb-0">Gestión de Pedidos & Trazabilidad</h3>
                 <span className="badge bg-elevated text-primary border border-border font-montserrat fw-bold">
-                  {transaccionesFiltradas.length} órdenes visibles
+                  {transaccionesFiltradas.length} órdenes encontradas
                 </span>
-                {estadoFiltro && (
+                {estadosFiltro.length > 0 && (
                   <span className="badge bg-primary text-black font-montserrat fw-bold">
-                    Filtro: {estadoFiltro.toUpperCase()}
+                    Filtros: {estadosFiltro.join(', ').toUpperCase()}
                   </span>
                 )}
               </div>
 
-              {/* Input Buscador */}
-              <div className="position-relative" style={{ minWidth: '260px', maxWidth: '380px' }}>
-                <Search size={15} className="position-absolute text-muted" style={{ left: '12px', top: '10px' }} />
-                <input
-                  type="text"
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar por N° pedido, cliente, teléfono, email..."
-                  className="form-control form-control-sm bg-elevated text-text border-border ps-5 font-montserrat"
-                  style={{ borderRadius: '8px' }}
-                />
-                {busqueda && (
+              {/* Controles de Búsqueda y Modo de Carga */}
+              <div className="d-flex align-items-center gap-2 flex-wrap">
+                {/* Selector de Modo: Paginación vs Lazy Load */}
+                <div className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
                   <button
-                    onClick={() => setBusqueda('')}
-                    className="btn btn-sm p-0 position-absolute text-muted border-0 bg-transparent"
-                    style={{ right: '10px', top: '7px' }}
+                    onClick={() => setModoCarga('paginacion')}
+                    className={`btn btn-sm border-0 font-montserrat ${
+                      modoCarga === 'paginacion' ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
+                    }`}
+                    style={{ fontSize: '0.75rem' }}
                   >
-                    <X size={14} />
+                    Paginado
                   </button>
+                  <button
+                    onClick={() => setModoCarga('lazy')}
+                    className={`btn btn-sm border-0 font-montserrat ${
+                      modoCarga === 'lazy' ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
+                    }`}
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    Lazy Load
+                  </button>
+                </div>
+
+                {/* Filas por Página (Modo Paginación) */}
+                {modoCarga === 'paginacion' && (
+                  <select
+                    value={filasPorPagina}
+                    onChange={(e) => { setFilasPorPagina(Number(e.target.value)); setPaginaActual(1); }}
+                    className="form-select form-select-sm bg-elevated text-text border-border font-montserrat w-auto"
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <option value={5}>5 filas</option>
+                    <option value={10}>10 filas</option>
+                    <option value={25}>25 filas</option>
+                    <option value={50}>50 filas</option>
+                    <option value={100}>100 filas</option>
+                  </select>
                 )}
+
+                {/* Input Buscador */}
+                <div className="position-relative" style={{ minWidth: '240px', maxWidth: '340px' }}>
+                  <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '9px' }} />
+                  <input
+                    type="text"
+                    value={busqueda}
+                    onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
+                    placeholder="Buscar pedido, cliente, fono..."
+                    className="form-control form-control-sm bg-elevated text-text border-border ps-5 font-montserrat"
+                    style={{ borderRadius: '8px', fontSize: '0.8rem' }}
+                  />
+                  {busqueda && (
+                    <button
+                      onClick={() => setBusqueda('')}
+                      className="btn btn-sm p-0 position-absolute text-muted border-0 bg-transparent"
+                      style={{ right: '8px', top: '6px' }}
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
             {transaccionesFiltradas.length === 0 ? (
               <div className="text-center py-5 text-muted small font-montserrat">
-                No se encontraron pedidos con los filtros aplicados ({estadoFiltro ? `Estado: ${estadoFiltro}` : 'General'}).
+                No se encontraron pedidos con los filtros aplicados ({estadosFiltro.length > 0 ? `Estados: ${estadosFiltro.join(', ')}` : 'General'}).
               </div>
             ) : (
               <div className="table-responsive">
                 <table className="table table-hover align-middle mb-0" style={{ background: 'transparent' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--card-border-gold)' }}>
-                      <th className="font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>N° Pedido</th>
-                      <th className="font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Cliente & Contacto</th>
-                      <th className="font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Medio / Tarjeta</th>
-                      <th className="text-end font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Bruto</th>
-                      <th className="text-end font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Comisión</th>
-                      <th className="text-end font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Neto</th>
-                      <th className="text-center font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Estado (Modificar)</th>
-                      <th className="text-center font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Acciones</th>
+                      {/* N° Pedido Sortable */}
+                      <th
+                        onClick={() => handleSort('numero')}
+                        className="font-montserrat fw-bold text-text small py-3 cursor-pointer user-select-none"
+                        style={{ cursor: 'pointer', letterSpacing: '0.04em' }}
+                        title="Ordenar por N° Pedido"
+                      >
+                        <div className="d-flex align-items-center">
+                          <span>N° Pedido</span>
+                          {renderSortIndicator('numero')}
+                        </div>
+                      </th>
+
+                      {/* Cliente Sortable */}
+                      <th
+                        onClick={() => handleSort('nombre')}
+                        className="font-montserrat fw-bold text-text small py-3 cursor-pointer user-select-none"
+                        style={{ cursor: 'pointer', letterSpacing: '0.04em' }}
+                        title="Ordenar por Nombre de Cliente"
+                      >
+                        <div className="d-flex align-items-center">
+                          <span>Cliente & Contacto</span>
+                          {renderSortIndicator('nombre')}
+                        </div>
+                      </th>
+
+                      {/* Medio Sortable */}
+                      <th
+                        onClick={() => handleSort('payment_method_id')}
+                        className="font-montserrat fw-bold text-text small py-3 cursor-pointer user-select-none"
+                        style={{ cursor: 'pointer', letterSpacing: '0.04em' }}
+                        title="Ordenar por Medio de Pago"
+                      >
+                        <div className="d-flex align-items-center">
+                          <span>Medio / Tarjeta</span>
+                          {renderSortIndicator('payment_method_id')}
+                        </div>
+                      </th>
+
+                      {/* Bruto Sortable */}
+                      <th
+                        onClick={() => handleSort('total')}
+                        className="text-end font-montserrat fw-bold text-text small py-3 cursor-pointer user-select-none"
+                        style={{ cursor: 'pointer', letterSpacing: '0.04em' }}
+                        title="Ordenar por Total Bruto"
+                      >
+                        <div className="d-flex align-items-center justify-content-end">
+                          <span>Bruto</span>
+                          {renderSortIndicator('total')}
+                        </div>
+                      </th>
+
+                      {/* Comisión Sortable */}
+                      <th
+                        onClick={() => handleSort('comision_mp')}
+                        className="text-end font-montserrat fw-bold text-text small py-3 cursor-pointer user-select-none"
+                        style={{ cursor: 'pointer', letterSpacing: '0.04em' }}
+                        title="Ordenar por Comisión MP"
+                      >
+                        <div className="d-flex align-items-center justify-content-end">
+                          <span>Comisión</span>
+                          {renderSortIndicator('comision_mp')}
+                        </div>
+                      </th>
+
+                      {/* Neto Sortable */}
+                      <th
+                        onClick={() => handleSort('neto')}
+                        className="text-end font-montserrat fw-bold text-text small py-3 cursor-pointer user-select-none"
+                        style={{ cursor: 'pointer', letterSpacing: '0.04em' }}
+                        title="Ordenar por Ingreso Neto"
+                      >
+                        <div className="d-flex align-items-center justify-content-end">
+                          <span>Neto</span>
+                          {renderSortIndicator('neto')}
+                        </div>
+                      </th>
+
+                      {/* Estado Sortable */}
+                      <th
+                        onClick={() => handleSort('estado')}
+                        className="text-center font-montserrat fw-bold text-text small py-3 cursor-pointer user-select-none"
+                        style={{ cursor: 'pointer', letterSpacing: '0.04em' }}
+                        title="Ordenar por Estado"
+                      >
+                        <div className="d-flex align-items-center justify-content-center">
+                          <span>Estado</span>
+                          {renderSortIndicator('estado')}
+                        </div>
+                      </th>
+
+                      <th className="text-center font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>
+                        Acciones
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {transaccionesFiltradas.map((tx) => (
+                    {transaccionesPaginadas.map((tx) => (
                       <tr key={tx.numero} className="border-bottom border-border">
                         <td className="font-montserrat fw-bold text-primary small">
                           {tx.numero}
@@ -626,8 +905,9 @@ export default function Estadisticas() {
                             </button>
                             <button
                               onClick={() => {
-                                setHistoryTx(tx);
-                                setModalNuevoEstado(tx.estado);
+                                const freshTx = data?.ultimas_transacciones?.find((t) => t.numero === tx.numero) || tx;
+                                setHistoryTx(freshTx);
+                                setModalNuevoEstado(freshTx.estado);
                               }}
                               className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 py-1 px-2 font-montserrat"
                               style={{ fontSize: '0.75rem' }}
@@ -642,6 +922,55 @@ export default function Estadisticas() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* Controles Inferiores de Paginación / Lazy Load */}
+            {transaccionesFiltradas.length > 0 && (
+              <div className="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 pt-3 mt-3 border-top border-border font-montserrat small">
+                {modoCarga === 'paginacion' ? (
+                  <>
+                    <span className="text-muted" style={{ fontSize: '0.78rem' }}>
+                      Mostrando {((paginaActual - 1) * filasPorPagina) + 1} — {Math.min(paginaActual * filasPorPagina, transaccionesFiltradas.length)} de {transaccionesFiltradas.length} órdenes
+                    </span>
+                    <div className="d-flex align-items-center gap-1">
+                      <button
+                        onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+                        disabled={paginaActual <= 1}
+                        className="btn btn-sm btn-outline-secondary px-2 py-1"
+                        title="Página Anterior"
+                      >
+                        <ChevronLeft size={15} />
+                      </button>
+                      <span className="px-2 text-text fw-semibold" style={{ fontSize: '0.8rem' }}>
+                        Página {paginaActual} de {totalPaginas}
+                      </span>
+                      <button
+                        onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+                        disabled={paginaActual >= totalPaginas}
+                        className="btn btn-sm btn-outline-secondary px-2 py-1"
+                        title="Página Siguiente"
+                      >
+                        <ChevronRight size={15} />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-muted" style={{ fontSize: '0.78rem' }}>
+                      Mostrando {Math.min(lazyLimit, transaccionesFiltradas.length)} de {transaccionesFiltradas.length} órdenes cargadas
+                    </span>
+                    {lazyLimit < transaccionesFiltradas.length && (
+                      <button
+                        onClick={() => setLazyLimit((prev) => prev + 15)}
+                        className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 font-montserrat"
+                      >
+                        <Plus size={13} />
+                        <span>Cargar más pedidos ({transaccionesFiltradas.length - lazyLimit} restantes)</span>
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -750,8 +1079,9 @@ export default function Estadisticas() {
             <div className="d-flex justify-content-between align-items-center mt-3">
               <button
                 onClick={() => {
-                  setHistoryTx(selectedTx);
-                  setModalNuevoEstado(selectedTx.estado);
+                  const freshTx = data?.ultimas_transacciones?.find((t) => t.numero === selectedTx.numero) || selectedTx;
+                  setHistoryTx(freshTx);
+                  setModalNuevoEstado(freshTx.estado);
                   setSelectedTx(null);
                 }}
                 className="btn btn-outline-secondary btn-sm font-montserrat d-flex align-items-center gap-1"
@@ -806,7 +1136,7 @@ export default function Estadisticas() {
                 <div className="p-3 bg-elevated rounded-3 border border-border font-montserrat small text-muted">
                   <div className="d-flex align-items-center justify-content-between">
                     <span className="fw-semibold text-text">Creación Inicial del Pedido</span>
-                    <span className="badge bg-secondary text-white text-uppercase">{historyTx.estado}</span>
+                    {renderEstadoBadge(historyTx.estado)}
                   </div>
                   <div className="mt-1" style={{ fontSize: '0.75rem' }}>
                     Fecha: {new Date(historyTx.creado_en).toLocaleString('es-CL')} | Autor: Sistema RC Estampa
@@ -818,28 +1148,33 @@ export default function Estadisticas() {
                   <div className="p-3 bg-elevated rounded-3 border border-border font-montserrat small">
                     <div className="d-flex align-items-center justify-content-between mb-1">
                       <span className="fw-semibold text-text">1. Creación de Orden</span>
-                      <span className="badge bg-secondary text-white text-uppercase">Inicio</span>
+                      <span className="badge bg-secondary bg-opacity-20 text-secondary border border-secondary text-uppercase">Inicio</span>
                     </div>
                     <div className="text-muted" style={{ fontSize: '0.75rem' }}>
                       Fecha: {new Date(historyTx.creado_en).toLocaleString('es-CL')} | Autor: Cliente ({historyTx.nombre})
                     </div>
                   </div>
 
-                  {/* Eventos registrados */}
+                  {/* Eventos registrados con badges claros en Dark/Light */}
                   {historyTx.historial_estados.map((h: any, idx: number) => {
-                    const estObj = ESTADOS_DISPONIBLES.find((e) => e.key === h.estado_nuevo);
                     return (
                       <div key={idx} className="p-3 bg-elevated rounded-3 border border-border font-montserrat small hover-lift">
                         <div className="d-flex align-items-center justify-content-between mb-1">
                           <span className="fw-bold text-text">
-                            {idx + 2}. Cambio a: <span className={`text-${estObj?.color || 'primary'} text-uppercase`}>{estObj?.label || h.estado_nuevo}</span>
+                            {idx + 2}. Cambio de Estado:
                           </span>
-                          <span className={`badge bg-${estObj?.color || 'primary'} text-black fw-bold text-uppercase`}>
-                            {h.estado_nuevo}
-                          </span>
+                          <div className="d-flex align-items-center gap-1">
+                            {h.estado_anterior && (
+                              <>
+                                {renderEstadoBadge(h.estado_anterior)}
+                                <span className="text-muted">→</span>
+                              </>
+                            )}
+                            {renderEstadoBadge(h.estado_nuevo)}
+                          </div>
                         </div>
                         <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                          📅 {new Date(h.fecha).toLocaleString('es-CL')} | 👤 Modificado por: <strong>{h.autor || 'Admin'}</strong>
+                          📅 {new Date(h.fecha).toLocaleString('es-CL')} | 👤 Modificado por: <strong className="text-text">{h.autor || 'Admin'}</strong>
                         </div>
                         {h.nota && (
                           <div className="p-2 mt-2 bg-surface rounded-2 border border-border text-primary" style={{ fontSize: '0.78rem' }}>
