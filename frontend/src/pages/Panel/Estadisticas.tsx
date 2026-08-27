@@ -19,6 +19,7 @@ import {
   X,
   AlertCircle,
   ChevronDown,
+  Plus,
 } from 'lucide-react';
 import { panelApi, pedidosApi, type EstadisticasData } from '../../api';
 import { useAsync } from '../../api/hooks';
@@ -51,6 +52,10 @@ export default function Estadisticas() {
   const [updatingNumero, setUpdatingNumero] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<any | null>(null);
 
+  // Estados para Top Productos
+  const [topProdsLimit, setTopProdsLimit] = useState(5);
+  const [topProdsSearch, setTopProdsSearch] = useState('');
+
   const { data, loading, error } = useAsync<EstadisticasData>(
     () => panelApi.estadisticas(periodo),
     [periodo, reload]
@@ -58,7 +63,24 @@ export default function Estadisticas() {
 
   const kpis = data?.kpis;
 
-  // Filtrado reactivo de transacciones
+  // Filtrado y ordenamiento de Top Productos (Mayor a Menor)
+  const topProductosFiltrados = useMemo(() => {
+    if (!data?.top_productos) return [];
+    const list = [...data.top_productos].sort(
+      (a, b) => b.unidades_vendidas - a.unidades_vendidas || b.ingresos_totales - a.ingresos_totales
+    );
+    if (!topProdsSearch.trim()) return list;
+    const q = topProdsSearch.toLowerCase().trim();
+    return list.filter(
+      (p) => p.nombre.toLowerCase().includes(q) || (p.tipo && p.tipo.toLowerCase().includes(q))
+    );
+  }, [data?.top_productos, topProdsSearch]);
+
+  const topProductosVisibles = useMemo(() => {
+    return topProductosFiltrados.slice(0, topProdsLimit);
+  }, [topProductosFiltrados, topProdsLimit]);
+
+  // Filtrado reactivo de todos los pedidos
   const transaccionesFiltradas = useMemo(() => {
     if (!data?.ultimas_transacciones) return [];
     return data.ultimas_transacciones.filter((tx) => {
@@ -110,7 +132,7 @@ export default function Estadisticas() {
             <TrendingUp size={20} className="text-primary" />
             <h2 className="fs-5 fw-bold font-montserrat text-text mb-0">Métricas & Gestión Integral de Ventas</h2>
           </div>
-          <p className="small text-muted mb-0 mt-1">
+          <p className="small text-muted mb-0 mt-1 font-montserrat">
             Auditoría en tiempo real de ingresos brutos, netos, comisiones y trazabilidad operativa de pedidos.
           </p>
         </div>
@@ -155,13 +177,13 @@ export default function Estadisticas() {
             title="Actualizar datos en vivo"
           >
             <RefreshCw size={14} className={loading ? 'spin' : ''} />
-            <span className="d-none d-sm-inline">Actualizar</span>
+            <span className="d-none d-sm-inline font-montserrat">Actualizar</span>
           </button>
         </div>
       </div>
 
       {loading && !data ? (
-        <div className="text-center py-5 text-muted">
+        <div className="text-center py-5 text-muted font-montserrat">
           <div className="spinner-border spinner-border-sm text-primary me-2" />
           Cargando estadísticas de ventas...
         </div>
@@ -179,7 +201,7 @@ export default function Estadisticas() {
           <div className="row g-3">
             {/* Total Ventas Bruto */}
             <div className="col-12 col-sm-6 col-lg-3">
-              <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden">
+              <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden hover-lift">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <span className="font-montserrat small text-muted text-uppercase fw-semibold" style={{ fontSize: '0.72rem', letterSpacing: '0.08em' }}>
                     Ventas Totales Brutas
@@ -199,7 +221,7 @@ export default function Estadisticas() {
 
             {/* Ingreso Neto Líquido */}
             <div className="col-12 col-sm-6 col-lg-3">
-              <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden">
+              <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden hover-lift">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <span className="font-montserrat small text-muted text-uppercase fw-semibold" style={{ fontSize: '0.72rem', letterSpacing: '0.08em' }}>
                     Ingreso Neto Líquido
@@ -219,7 +241,7 @@ export default function Estadisticas() {
 
             {/* Comisiones Mercado Pago */}
             <div className="col-12 col-sm-6 col-lg-3">
-              <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden">
+              <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden hover-lift">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <span className="font-montserrat small text-muted text-uppercase fw-semibold" style={{ fontSize: '0.72rem', letterSpacing: '0.08em' }}>
                     Comisiones Retenidas (MP)
@@ -239,7 +261,7 @@ export default function Estadisticas() {
 
             {/* Ticket Promedio */}
             <div className="col-12 col-sm-6 col-lg-3">
-              <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden">
+              <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden hover-lift">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <span className="font-montserrat small text-muted text-uppercase fw-semibold" style={{ fontSize: '0.72rem', letterSpacing: '0.08em' }}>
                     Ticket Promedio & Conv.
@@ -270,15 +292,15 @@ export default function Estadisticas() {
               {estadoFiltro ? (
                 <button
                   onClick={() => setEstadoFiltro(null)}
-                  className="btn btn-sm btn-outline-warning d-flex align-items-center gap-1 font-montserrat"
+                  className="btn btn-sm btn-outline-warning d-flex align-items-center gap-1 font-montserrat fw-semibold"
                   style={{ fontSize: '0.75rem' }}
                 >
-                  <X size={12} />
-                  <span>Quitar filtro: {estadoFiltro.toUpperCase()}</span>
+                  <X size={13} />
+                  <span>Quitar filtro: {estadoFiltro.toUpperCase()} (Ver Todos)</span>
                 </button>
               ) : (
                 <span className="font-montserrat small text-muted" style={{ fontSize: '0.75rem' }}>
-                  Haz clic en un estado para filtrar la tabla
+                  Haz clic en un estado para filtrar las órdenes abajo
                 </span>
               )}
             </div>
@@ -313,54 +335,96 @@ export default function Estadisticas() {
 
           {/* Fila 3: Top Productos & Ventas por Línea */}
           <div className="row g-3">
-            {/* Top Productos Ranking */}
+            {/* Top Productos Ranking con Búsqueda y Paginación 'Cargar Más' */}
             <div className="col-12 col-lg-7">
-              <div className="p-4 rounded-4 bg-surface border border-border h-100">
-                <div className="d-flex align-items-center justify-content-between mb-3">
-                  <div className="d-flex align-items-center gap-2">
-                    <Sparkles size={18} className="text-primary" />
-                    <h3 className="fs-6 fw-bold font-montserrat text-text mb-0">Top Productos Más Vendidos</h3>
+              <div className="p-4 rounded-4 bg-surface border border-border h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div className="d-flex align-items-center gap-2">
+                      <Sparkles size={18} className="text-primary" />
+                      <h3 className="fs-6 fw-bold font-montserrat text-text mb-0">Top Productos Más Vendidos</h3>
+                    </div>
+                    <span className="badge bg-elevated text-muted border border-border font-montserrat">
+                      Orden: Mayor a Menor
+                    </span>
                   </div>
-                  <span className="badge bg-elevated text-muted border border-border">Por Unidades</span>
+
+                  {/* Input Búsqueda en Top Productos */}
+                  <div className="position-relative mb-3">
+                    <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '9px' }} />
+                    <input
+                      type="text"
+                      value={topProdsSearch}
+                      onChange={(e) => setTopProdsSearch(e.target.value)}
+                      placeholder="Filtrar producto por nombre o tipo..."
+                      className="form-control form-control-sm bg-elevated text-text border-border ps-5 font-montserrat"
+                      style={{ borderRadius: '6px', fontSize: '0.8rem' }}
+                    />
+                    {topProdsSearch && (
+                      <button
+                        onClick={() => setTopProdsSearch('')}
+                        className="btn btn-sm p-0 position-absolute text-muted border-0 bg-transparent"
+                        style={{ right: '8px', top: '6px' }}
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+
+                  {topProductosVisibles.length === 0 ? (
+                    <div className="text-center py-4 text-muted small font-montserrat">
+                      No hay productos que coincidan con la búsqueda.
+                    </div>
+                  ) : (
+                    <div className="d-flex flex-column gap-2">
+                      {topProductosVisibles.map((prod, idx) => {
+                        const maxUnits = topProductosFiltrados[0]?.unidades_vendidas || 1;
+                        const pct = Math.round((prod.unidades_vendidas / maxUnits) * 100);
+                        return (
+                          <div key={idx} className="p-2 rounded-3 bg-elevated border border-border hover-lift">
+                            <div className="d-flex align-items-center justify-content-between mb-1">
+                              <div className="d-flex align-items-center gap-2">
+                                <span className="badge bg-primary text-black fw-bold" style={{ fontSize: '0.7rem' }}>
+                                  #{idx + 1}
+                                </span>
+                                <span className="font-montserrat fw-semibold text-text small">{prod.nombre}</span>
+                                <span className="badge bg-dark text-muted text-uppercase" style={{ fontSize: '0.65rem' }}>
+                                  {prod.tipo}
+                                </span>
+                              </div>
+                              <div className="text-end">
+                                <span className="font-montserrat fw-bold text-primary small me-2">{formatPrice(prod.ingresos_totales)}</span>
+                                <span className="font-montserrat text-muted small">({prod.unidades_vendidas} un.)</span>
+                              </div>
+                            </div>
+                            <div className="progress bg-dark" style={{ height: '5px' }}>
+                              <div
+                                className="progress-bar bg-primary"
+                                role="progressbar"
+                                style={{ width: `${pct}%` }}
+                                aria-valuenow={pct}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
-                {data.top_productos.length === 0 ? (
-                  <div className="text-center py-4 text-muted small">No hay datos de ventas en este período.</div>
-                ) : (
-                  <div className="d-flex flex-column gap-3">
-                    {data.top_productos.map((prod, idx) => {
-                      const maxUnits = data.top_productos[0]?.unidades_vendidas || 1;
-                      const pct = Math.round((prod.unidades_vendidas / maxUnits) * 100);
-                      return (
-                        <div key={idx} className="p-2 rounded-3 bg-elevated border border-border">
-                          <div className="d-flex align-items-center justify-content-between mb-1">
-                            <div className="d-flex align-items-center gap-2">
-                              <span className="badge bg-primary text-dark fw-bold" style={{ fontSize: '0.7rem' }}>
-                                #{idx + 1}
-                              </span>
-                              <span className="font-montserrat fw-semibold text-text small">{prod.nombre}</span>
-                              <span className="badge bg-dark text-muted text-uppercase" style={{ fontSize: '0.65rem' }}>
-                                {prod.tipo}
-                              </span>
-                            </div>
-                            <div className="text-end">
-                              <span className="font-montserrat fw-bold text-primary small me-2">{formatPrice(prod.ingresos_totales)}</span>
-                              <span className="font-montserrat text-muted small">({prod.unidades_vendidas} un.)</span>
-                            </div>
-                          </div>
-                          <div className="progress bg-dark" style={{ height: '5px' }}>
-                            <div
-                              className="progress-bar bg-primary"
-                              role="progressbar"
-                              style={{ width: `${pct}%` }}
-                              aria-valuenow={pct}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
+                {/* Botón Cargar Más */}
+                {topProductosFiltrados.length > topProdsLimit && (
+                  <div className="text-center mt-3 pt-2 border-top border-border">
+                    <button
+                      onClick={() => setTopProdsLimit((prev) => prev + 5)}
+                      className="btn btn-sm btn-outline-secondary font-montserrat d-inline-flex align-items-center gap-1"
+                      style={{ fontSize: '0.78rem' }}
+                    >
+                      <Plus size={13} />
+                      <span>Cargar más productos ({topProductosFiltrados.length - topProdsLimit} restantes)</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -368,27 +432,29 @@ export default function Estadisticas() {
 
             {/* Ventas por Línea & Canales */}
             <div className="col-12 col-lg-5">
-              <div className="p-4 rounded-4 bg-surface border border-border h-100">
-                <div className="d-flex align-items-center gap-2 mb-3">
-                  <Layers size={18} className="text-primary" />
-                  <h3 className="fs-6 fw-bold font-montserrat text-text mb-0">Ventas por Línea de Producto</h3>
-                </div>
-
-                {data.ventas_por_linea.length === 0 ? (
-                  <div className="text-center py-4 text-muted small">Sin ventas registradas.</div>
-                ) : (
-                  <div className="d-flex flex-column gap-2 mb-4">
-                    {data.ventas_por_linea.map((l, idx) => (
-                      <div key={idx} className="p-3 rounded-3 bg-elevated border border-border d-flex align-items-center justify-content-between">
-                        <div>
-                          <span className="font-montserrat fw-bold text-text small d-block">{l.linea}</span>
-                          <span className="font-montserrat text-muted" style={{ fontSize: '0.75rem' }}>{l.unidades} unidades vendidas</span>
-                        </div>
-                        <span className="font-montserrat fw-bold text-primary">{formatPrice(l.ingresos)}</span>
-                      </div>
-                    ))}
+              <div className="p-4 rounded-4 bg-surface border border-border h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div className="d-flex align-items-center gap-2 mb-3">
+                    <Layers size={18} className="text-primary" />
+                    <h3 className="fs-6 fw-bold font-montserrat text-text mb-0">Ventas por Línea de Producto</h3>
                   </div>
-                )}
+
+                  {data.ventas_por_linea.length === 0 ? (
+                    <div className="text-center py-4 text-muted small font-montserrat">Sin ventas registradas.</div>
+                  ) : (
+                    <div className="d-flex flex-column gap-2 mb-4">
+                      {data.ventas_por_linea.map((l, idx) => (
+                        <div key={idx} className="p-3 rounded-3 bg-elevated border border-border d-flex align-items-center justify-content-between hover-lift">
+                          <div>
+                            <span className="font-montserrat fw-bold text-text small d-block">{l.linea}</span>
+                            <span className="font-montserrat text-muted" style={{ fontSize: '0.75rem' }}>{l.unidades} unidades vendidas</span>
+                          </div>
+                          <span className="font-montserrat fw-bold text-primary">{formatPrice(l.ingresos)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* Medios de Pago */}
                 <div className="pt-3 border-top border-border">
@@ -410,15 +476,20 @@ export default function Estadisticas() {
             </div>
           </div>
 
-          {/* Fila 4: Búsqueda y Gestión de Pedidos en Vivo */}
+          {/* Fila 4: Búsqueda y Gestión de Pedidos en Vivo (TODOS LOS ESTADOS) */}
           <div className="p-4 rounded-4 bg-surface border border-border">
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
               <div className="d-flex align-items-center gap-2">
                 <Clock size={18} className="text-primary" />
-                <h3 className="fs-6 fw-bold font-montserrat text-text mb-0">Gestión de Pedidos & Auditoría</h3>
-                <span className="badge bg-elevated text-muted border border-border ms-1">
-                  {transaccionesFiltradas.length} órdenes
+                <h3 className="fs-6 fw-bold font-montserrat text-text mb-0">Gestión de Pedidos & Trazabilidad</h3>
+                <span className="badge bg-elevated text-primary border border-border ms-1 font-montserrat fw-bold">
+                  {transaccionesFiltradas.length} órdenes visibles
                 </span>
+                {estadoFiltro && (
+                  <span className="badge bg-primary text-black font-montserrat fw-bold">
+                    Filtro: {estadoFiltro.toUpperCase()}
+                  </span>
+                )}
               </div>
 
               {/* Input Buscador */}
@@ -446,34 +517,37 @@ export default function Estadisticas() {
 
             {transaccionesFiltradas.length === 0 ? (
               <div className="text-center py-5 text-muted small font-montserrat">
-                No se encontraron pedidos con los filtros aplicados.
+                No se encontraron pedidos con los filtros aplicados ({estadoFiltro ? `Estado: ${estadoFiltro}` : 'General'}).
               </div>
             ) : (
               <div className="table-responsive">
-                <table className="table table-dark table-hover align-middle mb-0" style={{ background: 'transparent' }}>
+                <table className="table table-hover align-middle mb-0" style={{ background: 'transparent' }}>
                   <thead>
-                    <tr className="text-muted small border-bottom border-border">
-                      <th style={{ background: 'transparent' }}>N° Pedido</th>
-                      <th style={{ background: 'transparent' }}>Cliente</th>
-                      <th style={{ background: 'transparent' }}>Medio / Tarjeta</th>
-                      <th className="text-end" style={{ background: 'transparent' }}>Bruto</th>
-                      <th className="text-end" style={{ background: 'transparent' }}>Comisión</th>
-                      <th className="text-end" style={{ background: 'transparent' }}>Neto</th>
-                      <th className="text-center" style={{ background: 'transparent' }}>Estado (Modificar)</th>
-                      <th className="text-center" style={{ background: 'transparent' }}>Acción</th>
+                    <tr style={{ borderBottom: '2px solid var(--card-border-gold)' }}>
+                      <th className="font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>N° Pedido</th>
+                      <th className="font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Cliente & Contacto</th>
+                      <th className="font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Medio / Tarjeta</th>
+                      <th className="text-end font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Bruto</th>
+                      <th className="text-end font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Comisión</th>
+                      <th className="text-end font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Neto</th>
+                      <th className="text-center font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Estado (Modificar)</th>
+                      <th className="text-center font-montserrat fw-bold text-text small py-3" style={{ letterSpacing: '0.04em' }}>Acción</th>
                     </tr>
                   </thead>
                   <tbody>
                     {transaccionesFiltradas.map((tx) => (
                       <tr key={tx.numero} className="border-bottom border-border">
-                        <td className="font-montserrat fw-bold text-primary small" style={{ background: 'transparent' }}>
+                        <td className="font-montserrat fw-bold text-primary small">
                           {tx.numero}
                         </td>
-                        <td style={{ background: 'transparent' }}>
+                        <td>
                           <div className="font-montserrat fw-semibold text-text small">{tx.nombre}</div>
                           <div className="text-muted" style={{ fontSize: '0.75rem' }}>{tx.email}</div>
+                          {tx.comuna && (
+                            <div className="text-muted" style={{ fontSize: '0.7rem' }}>📍 {tx.comuna}, {tx.region}</div>
+                          )}
                         </td>
-                        <td style={{ background: 'transparent' }}>
+                        <td>
                           <div className="d-flex align-items-center gap-1 small text-text">
                             <span className="text-uppercase fw-semibold">{tx.payment_method_id || tx.metodo_pago}</span>
                             {tx.card_last_four && (
@@ -481,24 +555,24 @@ export default function Estadisticas() {
                             )}
                           </div>
                         </td>
-                        <td className="text-end font-montserrat fw-bold text-text small" style={{ background: 'transparent' }}>
+                        <td className="text-end font-montserrat fw-bold text-text small">
                           {formatPrice(tx.total)}
                         </td>
-                        <td className="text-end font-montserrat text-warning small" style={{ background: 'transparent' }}>
+                        <td className="text-end font-montserrat text-warning small">
                           -{formatPrice(tx.comision_mp || 0)}
                         </td>
-                        <td className="text-end font-montserrat fw-bold text-success small" style={{ background: 'transparent' }}>
+                        <td className="text-end font-montserrat fw-bold text-success small">
                           {formatPrice(tx.monto_neto ?? (tx.total - (tx.comision_mp || 0)))}
                         </td>
 
                         {/* Modificador de Estado en Vivo para Admin */}
-                        <td className="text-center" style={{ background: 'transparent' }}>
+                        <td className="text-center">
                           <select
                             value={tx.estado}
                             disabled={updatingNumero === tx.numero}
                             onChange={(e) => handleCambiarEstado(tx.numero, e.target.value)}
                             className="form-select form-select-sm bg-elevated text-text border-border font-montserrat fw-semibold d-inline-block w-auto"
-                            style={{ fontSize: '0.75rem', padding: '0.2rem 1.8rem 0.2rem 0.6rem' }}
+                            style={{ fontSize: '0.75rem', padding: '0.25rem 1.8rem 0.25rem 0.6rem' }}
                           >
                             {ESTADOS_DISPONIBLES.map((est) => (
                               <option key={est.key} value={est.key}>
@@ -508,7 +582,7 @@ export default function Estadisticas() {
                           </select>
                         </td>
 
-                        <td className="text-center" style={{ background: 'transparent' }}>
+                        <td className="text-center">
                           <button
                             onClick={() => setSelectedTx(tx)}
                             className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 py-1 px-2 font-montserrat"
@@ -538,7 +612,7 @@ export default function Estadisticas() {
         >
           <div
             className="bg-surface border border-border rounded-4 p-4 shadow-lg w-100"
-            style={{ maxWidth: '42rem', maxHeight: '90vh', overflowY: 'auto' }}
+            style={{ maxWidth: '44rem', maxHeight: '90vh', overflowY: 'auto' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="d-flex align-items-center justify-content-between border-bottom border-border pb-3 mb-3">
@@ -558,9 +632,9 @@ export default function Estadisticas() {
               </button>
             </div>
 
-            {/* Timeline Interactivo */}
-            <div className="py-2 mb-4 bg-elevated rounded-3 p-3 border border-border">
-              <h6 className="font-montserrat fw-bold text-text small mb-2">Línea de Tiempo de Fabricación y Entrega:</h6>
+            {/* Timeline Interactivo Corregido Geométricamente */}
+            <div className="py-3 mb-4 bg-elevated rounded-3 p-3 border border-border">
+              <h6 className="font-montserrat fw-bold text-text small mb-3">Línea de Tiempo de Fabricación y Entrega:</h6>
               <PedidoTimeline
                 estado={selectedTx.estado}
                 fechaCreacion={selectedTx.creado_en}
@@ -569,7 +643,7 @@ export default function Estadisticas() {
             </div>
 
             {/* Cambiar Estado Rápido en Modal */}
-            <div className="p-3 bg-elevated rounded-3 border border-border mb-3 d-flex align-items-center justify-content-between gap-3">
+            <div className="p-3 bg-elevated rounded-3 border border-border mb-3 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
               <div>
                 <span className="font-montserrat fw-bold text-text small d-block">Modificar Estado Actual:</span>
                 <span className="font-montserrat text-muted" style={{ fontSize: '0.75rem' }}>
@@ -588,6 +662,19 @@ export default function Estadisticas() {
                 ))}
               </select>
             </div>
+
+            {/* Datos de Despacho y Contacto */}
+            {selectedTx.direccion && (
+              <div className="p-3 bg-elevated rounded-3 border border-border mb-3 font-montserrat small">
+                <span className="fw-bold text-text d-block mb-1">📍 Datos de Envío:</span>
+                <div className="text-muted">
+                  {selectedTx.direccion}, {selectedTx.comuna}, {selectedTx.ciudad} ({selectedTx.region})
+                </div>
+                {selectedTx.telefono && (
+                  <div className="text-muted mt-1">📞 Teléfono: {selectedTx.telefono}</div>
+                )}
+              </div>
+            )}
 
             {/* Desglose Financiero */}
             <div className="row g-2 mb-3 font-montserrat small">

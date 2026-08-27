@@ -346,20 +346,28 @@ class PanelEstadisticasView(generics.GenericAPIView):
             for r in regiones_raw
         ]
 
-        # 6. Últimas 10 Transacciones
+        # 6. Listado de Pedidos del Período para la Tabla de Gestión (Todos los Estados)
         ultimas_transacciones = []
-        for ped in pedidos_pagados.order_by('-creado_en')[:10]:
+        for ped in qs.order_by('-creado_en')[:200]:
             ultimas_transacciones.append({
                 'numero': ped.numero,
                 'nombre': ped.nombre,
                 'email': ped.email,
+                'telefono': ped.telefono,
+                'direccion': ped.direccion,
+                'comuna': ped.comuna,
+                'ciudad': ped.ciudad,
+                'region': ped.region,
                 'total': ped.total,
-                'monto_neto': float(ped.monto_neto) if ped.monto_neto is not None else None,
+                'monto_neto': float(ped.monto_neto) if ped.monto_neto is not None else (ped.total - float(ped.comision_mp or 0)),
                 'comision_mp': float(ped.comision_mp) if ped.comision_mp else 0,
                 'estado': ped.estado,
                 'metodo_pago': ped.metodo_pago,
                 'payment_method_id': ped.payment_method_id,
                 'card_last_four': ped.card_last_four,
+                'card_first_six': ped.card_first_six,
+                'authorization_code': ped.authorization_code,
+                'ip_cliente': ped.ip_cliente,
                 'pagado_en': ped.pagado_en,
                 'creado_en': ped.creado_en,
             })

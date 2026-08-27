@@ -522,6 +522,23 @@ $rc-solid: (
     background-color: #ffffff !important;
     border-color: rgba(18, 19, 36, 0.08) !important;
   }
+
+  .table-hover > tbody > tr:hover > * {
+    background-color: rgba(184, 147, 61, 0.08) !important;
+    color: #121324 !important;
+  }
+
+  .form-control, .form-select {
+    background-color: #ffffff !important;
+    color: #121324 !important;
+    border-color: rgba(18, 19, 36, 0.15) !important;
+  }
+
+  .hover-lift:hover {
+    background-color: #ffffff !important;
+    border-color: rgba(184, 147, 61, 0.45) !important;
+    box-shadow: 0 12px 32px rgba(18, 19, 36, 0.08) !important;
+  }
 }
 
 // Botón Primario con Gradiente Escénico Luxury

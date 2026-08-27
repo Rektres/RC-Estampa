@@ -10,10 +10,9 @@ interface Props {
 
 export default function PedidoTimeline({ estado, fechaCreacion, fechaPago, className = '' }: Props) {
   const st = (estado || '').toLowerCase();
-
   const isCancelado = st === 'cancelado';
 
-  // Determinar nivel de avance (0 to 4)
+  // Nivel de avance (0 a 4)
   let activeStepIndex = 0;
   if (st === 'pagado') activeStepIndex = 1;
   else if (st === 'en_proceso') activeStepIndex = 2;
@@ -25,108 +24,133 @@ export default function PedidoTimeline({ estado, fechaCreacion, fechaPago, class
       id: 'pago',
       title: 'Pago Aprobado',
       desc: fechaPago ? 'Comprobante y pago verificado' : 'Validación y recepción de orden',
-      icon: <CheckCircle2 size={18} />,
+      icon: <CheckCircle2 size={16} />,
     },
     {
       id: 'taller',
       title: 'En Taller / Confección',
-      desc: 'Grabado láser y estampado DTF en proceso',
-      icon: <Package size={18} />,
+      desc: 'Grabado láser y DTF en proceso',
+      icon: <Package size={16} />,
     },
     {
       id: 'enviado',
       title: 'Despachado',
-      desc: 'En tránsito con courier a domicilio',
-      icon: <Truck size={18} />,
+      desc: 'En tránsito con courier',
+      icon: <Truck size={16} />,
     },
     {
       id: 'entregado',
       title: 'Entregado',
-      desc: 'Pedido entregado a conformidad',
-      icon: <Award size={18} />,
+      desc: 'Entregado a conformidad',
+      icon: <Award size={16} />,
     },
   ];
 
   if (isCancelado) {
     return (
-      <div className={`p-3 rounded-3 bg-danger-subtle border border-danger-subtle d-flex align-items-center gap-3 ${className}`}>
-        <AlertCircle size={24} className="text-danger flex-shrink-0" />
+      <div className={`p-3 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 d-flex align-items-center gap-3 ${className}`}>
+        <AlertCircle size={22} className="text-danger flex-shrink-0" />
         <div>
           <h6 className="font-montserrat fw-bold text-danger mb-0 fs-6">Pedido Cancelado</h6>
-          <p className="font-montserrat text-danger-emphasis small mb-0">Esta orden fue anulada o reembolsada.</p>
+          <p className="font-montserrat text-muted small mb-0">Esta orden fue anulada o cancelada.</p>
         </div>
       </div>
     );
   }
 
+  // Porcentaje de la barra activa entre el primer círculo (12.5%) y el último (87.5%)
+  const progressPercent = activeStepIndex <= 1 ? 0 : Math.min(100, ((activeStepIndex - 1) / 3) * 100);
+
   return (
-    <div className={`pedido-timeline-wrapper ${className}`}>
-      <div className="d-flex align-items-center justify-content-between position-relative my-3">
-        {/* Línea conectora de fondo */}
+    <div className={`pedido-timeline-container font-montserrat w-100 ${className}`}>
+      {/* Fila 1: Pistas y Círculos */}
+      <div className="position-relative d-flex align-items-center justify-content-between" style={{ height: '42px' }}>
+        {/* Línea base conectora */}
         <div
-          className="position-absolute start-0 end-0 top-50 translate-middle-y bg-secondary"
-          style={{ height: '3px', opacity: 0.2, zIndex: 1 }}
-        />
-        {/* Línea conectora activa (dorada) */}
-        <div
-          className="position-absolute start-0 top-50 translate-middle-y transition-all"
+          className="position-absolute bg-secondary bg-opacity-25"
           style={{
+            left: '12.5%',
+            right: '12.5%',
+            top: '50%',
             height: '3px',
-            backgroundColor: 'var(--brand-primary)',
-            width: `${Math.max(0, Math.min(100, (activeStepIndex - 1) * 33.33))}%`,
-            zIndex: 2,
-            transition: 'width 0.4s ease',
+            transform: 'translateY(-50%)',
+            zIndex: 1,
           }}
         />
 
+        {/* Línea dorada de progreso activo */}
+        <div
+          className="position-absolute transition-all"
+          style={{
+            left: '12.5%',
+            width: `calc(75% * ${progressPercent / 100})`,
+            top: '50%',
+            height: '3px',
+            backgroundColor: 'var(--brand-primary)',
+            transform: 'translateY(-50%)',
+            zIndex: 2,
+            transition: 'width 0.4s ease-in-out',
+          }}
+        />
+
+        {/* 4 Círculos de Etapa */}
         {steps.map((step, idx) => {
-          const stepNumber = idx + 1;
-          const isCompleted = activeStepIndex > stepNumber;
-          const isCurrent = activeStepIndex === stepNumber;
-          const isPending = activeStepIndex < stepNumber;
+          const stepNum = idx + 1;
+          const isDone = activeStepIndex > stepNum;
+          const isCurrent = activeStepIndex === stepNum;
+          const isPending = activeStepIndex < stepNum;
 
           return (
             <div
               key={step.id}
-              className="d-flex flex-column align-items-center text-center position-relative"
-              style={{ zIndex: 3, width: '25%' }}
+              className="d-flex align-items-center justify-content-center"
+              style={{ width: '25%', zIndex: 3 }}
             >
-              {/* Círculo indicador de estado */}
               <div
                 className={`rounded-circle d-flex align-items-center justify-content-center transition-all ${
                   isCurrent
-                    ? 'bg-primary text-dark shadow-sm border border-2 border-white'
-                    : isCompleted
-                    ? 'bg-primary text-dark'
+                    ? 'bg-primary text-black fw-bold shadow-lg border border-2 border-white'
+                    : isDone
+                    ? 'bg-primary text-black'
                     : 'bg-elevated text-muted border border-border'
                 }`}
                 style={{
-                  width: isCurrent ? '2.5rem' : '2.1rem',
-                  height: isCurrent ? '2.5rem' : '2.1rem',
-                  boxShadow: isCurrent ? '0 0 16px rgba(201, 168, 76, 0.55)' : 'none',
-                  transition: 'all 0.3s ease',
+                  width: isCurrent ? '2.4rem' : '2.1rem',
+                  height: isCurrent ? '2.4rem' : '2.1rem',
+                  boxShadow: isCurrent ? '0 0 16px rgba(201, 168, 76, 0.6)' : 'none',
+                  transition: 'all 0.25s ease',
                 }}
               >
                 {step.icon}
               </div>
+            </div>
+          );
+        })}
+      </div>
 
-              {/* Título y descripción */}
-              <div className="mt-2 px-1">
-                <span
-                  className={`font-montserrat d-block fw-semibold lh-sm ${
-                    isCurrent ? 'text-primary' : isCompleted ? 'text-text' : 'text-muted'
-                  }`}
-                  style={{ fontSize: '0.78rem' }}
-                >
-                  {step.title}
-                </span>
-                <span
-                  className="font-montserrat text-muted d-none d-md-block mt-1 lh-xs"
-                  style={{ fontSize: '0.68rem' }}
-                >
-                  {step.desc}
-                </span>
-              </div>
+      {/* Fila 2: Títulos y Descripciones Alineadas */}
+      <div className="row g-1 text-center mt-2">
+        {steps.map((step, idx) => {
+          const stepNum = idx + 1;
+          const isDone = activeStepIndex > stepNum;
+          const isCurrent = activeStepIndex === stepNum;
+
+          return (
+            <div key={step.id} className="col-3 px-1">
+              <span
+                className={`d-block fw-semibold lh-sm ${
+                  isCurrent ? 'text-primary' : isDone ? 'text-text' : 'text-muted'
+                }`}
+                style={{ fontSize: '0.76rem' }}
+              >
+                {step.title}
+              </span>
+              <span
+                className="text-muted d-none d-sm-block mt-1 lh-xs"
+                style={{ fontSize: '0.66rem' }}
+              >
+                {step.desc}
+              </span>
             </div>
           );
         })}

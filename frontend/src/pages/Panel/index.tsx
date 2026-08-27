@@ -97,7 +97,12 @@ export default function Panel() {
           return (
             <button
               key={t.key}
-              onClick={() => { setTab(t.key); setQ(''); setCatFilter(''); }}
+              onClick={() => {
+                setTab(t.key);
+                setQ('');
+                setCatFilter('');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className={`font-montserrat fw-semibold px-3 py-2 bg-transparent border-0 border-bottom border-2 d-inline-flex align-items-center gap-2 text-nowrap ${
                 tab === t.key ? 'text-primary border-primary' : 'text-muted'
               }`}

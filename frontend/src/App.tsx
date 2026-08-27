@@ -1,6 +1,15 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Landing from './pages/Landing';
+
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname, search]);
+  return null;
+}
 import Catalogo from './pages/Catalogo';
 import Drinkware from './pages/Drinkware';
 import ProductoDetalle from './pages/ProductoDetalle';
@@ -21,6 +30,7 @@ import PanelProductoForm from './pages/Panel/ProductoForm';
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Landing />} />
