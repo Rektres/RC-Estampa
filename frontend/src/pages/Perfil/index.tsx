@@ -9,6 +9,7 @@ import { authApi, pedidosApi, favoritosApi, type Pedido } from '../../api';
 import type { Favorito } from '../../types';
 import { formatPrice } from '../../utils';
 import { useSEO } from '../../hooks/useSEO';
+import PedidoTimeline from '../../components/shared/PedidoTimeline';
 
 export default function Perfil() {
   useSEO({ title: 'Mi Cuenta — Historial & Seguimiento | RC Estampa' });
@@ -222,48 +223,12 @@ export default function Perfil() {
                   </div>
 
                   {/* LÍNEA DE SEGUIMIENTO EN VIVO */}
-                  <div className="py-4 font-montserrat">
-                    <div className="position-relative mb-3">
-                      <div className="progress" style={{ height: '4px', backgroundColor: 'var(--color-elevated)' }}>
-                        <div
-                          className="progress-bar bg-primary"
-                          style={{ width: `${((currentStep - 1) / (trackingSteps.length - 1)) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="row text-center g-2">
-                      {trackingSteps.map((step, idx) => {
-                        const stepNum = idx + 1;
-                        const isDone = stepNum <= currentStep;
-                        const isCurrent = stepNum === currentStep;
-
-                        return (
-                          <div key={idx} className="col">
-                            <div className="d-flex flex-column align-items-center">
-                              <div
-                                className={`rounded-circle d-flex align-items-center justify-content-center mb-1 ${
-                                  isCurrent
-                                    ? 'bg-primary text-black fw-bold shadow'
-                                    : isDone
-                                    ? 'bg-success-subtle text-success'
-                                    : 'bg-elevated text-muted'
-                                }`}
-                                style={{ width: '1.8rem', height: '1.8rem', fontSize: '0.75rem' }}
-                              >
-                                {isDone ? '✓' : stepNum}
-                              </div>
-                              <span className={`small fw-semibold ${isCurrent ? 'text-primary' : isDone ? 'text-text' : 'text-muted'}`} style={{ fontSize: '0.75rem' }}>
-                                {step.title}
-                              </span>
-                              <span className="d-none d-md-block text-ghost" style={{ fontSize: '0.68rem' }}>
-                                {step.desc}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  <div className="py-2 font-montserrat">
+                    <PedidoTimeline
+                      estado={pedido.estado}
+                      fechaCreacion={pedido.creado_en}
+                      fechaPago={pedido.pagado_en}
+                    />
                   </div>
 
                   {/* DETALLE EXPANDIBLE */}

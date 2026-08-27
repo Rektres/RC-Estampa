@@ -166,7 +166,17 @@ export interface ProcesarPagoResponse {
 export const pedidosApi = {
   crear: (data: PedidoInput) => api.post<Pedido>('/pedidos/', data).then((r) => r.data),
   obtener: (numero: string) => api.get<Pedido>(`/pedidos/${numero}/`).then((r) => r.data),
-  misPedidos: () => api.get<Pedido[]>('/pedidos/').then((r) => r.data),
+  misPedidos: () =>
+    api.get<Pedido[] | { results: Pedido[] }>('/pedidos/').then((r) => {
+      const data = r.data;
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray((data as { results: Pedido[] }).results)) {
+        return (data as { results: Pedido[] }).results;
+      }
+      return [];
+    }),
+  cambiarEstado: (numero: string, estado: string) =>
+    api.patch<Pedido>(`/pedidos/${numero}/cambiar_estado/`, { estado }).then((r) => r.data),
   procesarPago: (data: ProcesarPagoInput) =>
     api.post<ProcesarPagoResponse>('/pagos/procesar/', data).then((r) => r.data),
 };
@@ -188,14 +198,19 @@ export const carritoApi = {
   put: (items: unknown[]) => api.put('/carrito/', { items }).then((r) => r.data),
 };
 
-function crudPanel<T>(recurso: 'productos' | 'drinkware') {
+function crudPanel<T>(recurso: string) {
   return {
-    list: (params: Record<string, unknown> = {}) =>
-      api.get<Paginated<T>>(`/panel/${recurso}/`, { params: { ...PAGE_ALL, ...params } })
-        .then((r) => r.data.results),
-    get: (id: number) => api.get<T>(`/panel/${recurso}/${id}/`).then((r) => r.data),
-    create: (data: ProductoInput) => api.post<T>(`/panel/${recurso}/`, data).then((r) => r.data),
-    update: (id: number, data: ProductoInput) =>
+    list: () =>
+      api.get<T[] | { results: T[] }>(`/panel/${recurso}/`).then((r) => {
+        const data = r.data;
+        if (Array.isArray(data)) return data;
+        if (data && Array.isArray((data as { results: T[] }).results)) {
+          return (data as { results: T[] }).results;
+        }
+        return [];
+      }),
+    create: (data: Partial<T>) => api.post<T>(`/panel/${recurso}/`, data).then((r) => r.data),
+    update: (id: number, data: Partial<T>) =>
       api.put<T>(`/panel/${recurso}/${id}/`, data).then((r) => r.data),
     setActivo: (id: number, activo: boolean) =>
       api.patch<T>(`/panel/${recurso}/${id}/`, { activo }).then((r) => r.data),
@@ -271,4 +286,21 @@ export const panelApi = {
   },
   estadisticas: (periodo: string = 'todo') =>
     api.get<EstadisticasData>('/panel/estadisticas/', { params: { periodo } }).then((r) => r.data),
+  exportarExcel: async (periodo: string = 'todo') => {
+    const response = await api.get('/panel/exportar-excel/', {
+      params: { periodo },
+      responseType: 'blob',
+    });
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `RC_Estampa_Ventas_${periodo}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  },
 };

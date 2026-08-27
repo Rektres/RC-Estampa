@@ -39,10 +39,10 @@ $enable-negative-margins: true;
   --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
   --card-shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.65);
 
-  // Capa 4: Texto y Contraste
-  --text-main: #f0ede8;
-  --text-muted: #9a9a9a;
-  --text-ghost: #5a5a68;
+  // Capa 4: Texto y Contraste (Tonos Light de Alto Contraste)
+  --text-main: #FFFFFF;
+  --text-muted: #E2E8F0;
+  --text-ghost: #94A3B8;
 
   // Compatibilidad con selectores heredados
   --rc-surface: var(--surface-base);
@@ -70,14 +70,14 @@ $enable-negative-margins: true;
   --surface-card: #0f1026;
   --surface-alt: #161836;
 
-  --card-border: rgba(255, 255, 255, 0.08);
-  --card-border-gold: rgba(201, 168, 76, 0.25);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-border-gold: rgba(201, 168, 76, 0.35);
   --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
   --card-shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.65);
 
-  --text-main: #f0ede8;
-  --text-muted: #9a9a9a;
-  --text-ghost: #5a5a68;
+  --text-main: #FFFFFF;
+  --text-muted: #E2E8F0;
+  --text-ghost: #94A3B8;
 
   --stage-card-overlay-bg: linear-gradient(to top, rgba(7, 8, 20, 0.94) 0%, rgba(7, 8, 20, 0.45) 50%, transparent 100%);
   --platform-path-overlay-bg: linear-gradient(180deg, rgba(7, 8, 20, 0.82) 0%, rgba(7, 8, 20, 0.96) 100%);
@@ -97,7 +97,8 @@ $enable-negative-margins: true;
   --bs-modal-bg: var(--surface-card);
   --bs-offcanvas-bg: var(--surface-card);
   --bs-dropdown-bg: var(--surface-alt);
-  --bs-dropdown-link-hover-bg: var(--surface-card);
+  --bs-dropdown-link-hover-bg: rgba(201, 168, 76, 0.15);
+  --bs-dropdown-link-hover-color: var(--brand-primary);
   --bs-accordion-bg: transparent;
   --bs-accordion-active-bg: var(--surface-alt);
 
@@ -286,12 +287,18 @@ p {
 
 // 5.2 Hover Lift
 .hover-lift {
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease, background-color 0.28s ease;
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     box-shadow: var(--card-shadow-hover) !important;
     border-color: var(--card-border-gold) !important;
   }
+}
+
+// Table Dark Hover con tono coherente al fondo
+.table-dark.table-hover > tbody > tr:hover > * {
+  background-color: rgba(201, 168, 76, 0.08) !important;
+  color: #FFFFFF !important;
 }
 
 // 5.3 Orbe Holográfico

@@ -71,7 +71,7 @@ export default function Checkout() {
       setValue('ciudad', user.ciudad || '');
       setValue('region', user.region || 'Región Metropolitana');
     }
-  }, [user, tipoDireccion, setValue]);
+  }, [user, tipoDireccion, setValue, editorCfg]);
 
   if (items.length === 0) {
     return (
@@ -298,8 +298,29 @@ export default function Checkout() {
                   <div className="col-12">
                     <label className="form-label fw-semibold text-text small">Región *</label>
                     <select {...register('region')} className="form-select bg-elevated">
-                      <option value="">Selecciona...</option>
-                      {regiones.map((r) => <option key={r} value={r}>{r}</option>)}
+                      <option value="">Selecciona una región...</option>
+                      {regiones.length > 0 ? (
+                        regiones.map((r) => <option key={r} value={r}>{r}</option>)
+                      ) : (
+                        <>
+                          <option value="Región Metropolitana">Región Metropolitana</option>
+                          <option value="Región de Valparaíso">Región de Valparaíso</option>
+                          <option value="Región del Biobío">Región del Biobío</option>
+                          <option value="Región de Antofagasta">Región de Antofagasta</option>
+                          <option value="Región de Los Lagos">Región de Los Lagos</option>
+                          <option value="Región de Coquimbo">Región de Coquimbo</option>
+                          <option value="Región del Maule">Región del Maule</option>
+                          <option value="Región de La Araucanía">Región de La Araucanía</option>
+                          <option value="Región de O'Higgins">Región de O'Higgins</option>
+                          <option value="Región de Tarapacá">Región de Tarapacá</option>
+                          <option value="Región de Los Ríos">Región de Los Ríos</option>
+                          <option value="Región de Arica y Parinacota">Región de Arica y Parinacota</option>
+                          <option value="Región de Ñuble">Región de Ñuble</option>
+                          <option value="Región de Atacama">Región de Atacama</option>
+                          <option value="Región de Aysén">Región de Aysén</option>
+                          <option value="Región de Magallanes">Región de Magallanes</option>
+                        </>
+                      )}
                     </select>
                     {errors.region && <p className="text-danger mt-1 mb-0 small">{errors.region.message}</p>}
                   </div>

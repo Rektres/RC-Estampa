@@ -13,7 +13,7 @@ export default function Footer() {
       <div className="container-xxl" style={{ paddingTop: '4.5rem', paddingBottom: '3.5rem' }}>
         <div className="row g-5">
           {/* Columna 1: Brand & Manifesto */}
-          <div className="col-12 col-md-6 col-lg-3">
+          <div className="col-12 col-lg-5">
             <div className="d-flex align-items-center gap-3 mb-3">
               <img
                 src="/Logo_RCEstampa.png"
@@ -28,7 +28,7 @@ export default function Footer() {
                 </span>
               </div>
             </div>
-            <p className="font-montserrat small text-muted lh-base mb-4">
+            <p className="font-montserrat small text-muted lh-base mb-4" style={{ maxWidth: '28rem' }}>
               Alta estampería textil y drinkware con los más altos estándares de calidad. Fusión de técnicas contemporáneas y acabados duraderos para marcas, eventos y creadores.
             </p>
             <div className="d-flex gap-3">
@@ -59,7 +59,7 @@ export default function Footer() {
           </div>
 
           {/* Columna 2: Catálogo & Líneas */}
-          <div className="col-6 col-md-6 col-lg-3">
+          <div className="col-12 col-sm-6 col-lg-3">
             <h4
               className="font-montserrat fw-semibold small text-uppercase text-primary mb-4 d-flex align-items-center gap-2"
               style={{ letterSpacing: '0.08em' }}
@@ -86,30 +86,13 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Columna 3: Taller & Estándares */}
-          <div className="col-6 col-md-6 col-lg-3">
+          {/* Columna 3: Contacto & Horarios */}
+          <div className="col-12 col-sm-6 col-lg-4">
             <h4
               className="font-montserrat fw-semibold small text-uppercase text-primary mb-4 d-flex align-items-center gap-2"
               style={{ letterSpacing: '0.08em' }}
             >
-              <ShieldCheck size={14} /> Garantía de Calidad
-            </h4>
-            <ul className="list-unstyled d-flex flex-column gap-2 mb-0 font-montserrat small text-muted">
-              <li>• DTF Textil Ultra HD y Serigrafía</li>
-              <li>• Tintas ecológicas OEKO-TEX®</li>
-              <li>• Curado térmico de máxima adherencia</li>
-              <li>• Envíos a todo Chile con seguimiento</li>
-              <li>• Asesoría directa en diseño</li>
-            </ul>
-          </div>
-
-          {/* Columna 4: Contacto & Horarios */}
-          <div className="col-12 col-md-6 col-lg-3">
-            <h4
-              className="font-montserrat fw-semibold small text-uppercase text-primary mb-4 d-flex align-items-center gap-2"
-              style={{ letterSpacing: '0.08em' }}
-            >
-              <Clock size={14} /> Atención Directa
+              <Clock size={14} /> Atención Directa & Despacho
             </h4>
             <ul className="list-unstyled d-flex flex-column gap-3 mb-0 font-montserrat small text-muted">
               <li>
@@ -120,7 +103,7 @@ export default function Footer() {
                   className="text-text text-decoration-none d-flex align-items-center gap-2 hover-lift"
                 >
                   <MessageCircle size={16} className="text-primary" />
-                  +56 9 4483 0378
+                  +56 9 4483 0378 (WhatsApp Directo)
                 </a>
               </li>
               <li className="d-flex align-items-start gap-2">

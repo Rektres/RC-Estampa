@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CarritoView,
     CotizacionViewSet,
+    ExportarVentasExcelView,
     PanelEstadisticasView,
     PedidoViewSet,
     mercadopago_webhook,
@@ -18,6 +19,7 @@ urlpatterns = [
     path('carrito/', CarritoView.as_view(), name='carrito'),
     path('pagos/procesar/', procesar_pago_tarjeta, name='procesar-pago-tarjeta'),
     path('panel/estadisticas/', PanelEstadisticasView.as_view(), name='panel-estadisticas'),
+    path('panel/exportar-excel/', ExportarVentasExcelView.as_view(), name='panel-exportar-excel'),
     path('pedidos/mercadopago/webhook/', mercadopago_webhook, name='mercadopago-webhook'),
 ] + router.urls
 

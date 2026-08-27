@@ -3,25 +3,21 @@ import { Shield, Sparkles, Sliders, Palette } from 'lucide-react';
 export default function PilaresExcelencia() {
   const pilares = [
     {
-      index: '01 / TÉCNICA & PRECISIÓN',
       icon: <Sparkles size={24} className="text-primary" />,
       title: 'Estampado de Alta Definición',
       desc: 'Utilizamos tecnología DTF Textil y serigrafía de vanguardia con tintas pigmentadas ecológicas OEKO-TEX®. Cada trazo conserva una nitidez milimétrica y una gama tonal vibrante de gran impacto visual.',
     },
     {
-      index: '02 / SOPORTES PREMIUM',
       icon: <Shield size={24} className="text-primary" />,
       title: 'Materiales Seleccionados',
       desc: 'Confecciones en algodón 100% peinado de alto gramaje, polerones de felpa pesada y drinkware de acero inoxidable con recubrimiento cerámico que garantizan confort insuperable y máxima durabilidad.',
     },
     {
-      index: '03 / LIBERTAD TOTAL',
       icon: <Palette size={24} className="text-primary" />,
       title: 'Editor de Canvas en Vivo',
       desc: 'Nuestra suite de personalización te permite visualizar tu idea en tiempo real sobre siluetas tridimensionales, ajustar tipografías, colores e importar gráficos con cotización instantánea transparente.',
     },
     {
-      index: '04 / COMPROMISO & RIGOR',
       icon: <Sliders size={24} className="text-primary" />,
       title: 'Curado Térmico & Control',
       desc: 'Cada prenda y pieza de vajilla atraviesa un proceso de termofijación controlada y rigurosa inspección manual. Respaldamos cada entrega con garantía de adherencia intacta ante ciclos de lavado.',
@@ -62,12 +58,6 @@ export default function PilaresExcelencia() {
 
               <div>
                 <div className="d-flex align-items-center justify-content-between mb-4">
-                  <span
-                    className="font-montserrat fw-bold text-primary"
-                    style={{ fontSize: '0.72rem', letterSpacing: '0.12em' }}
-                  >
-                    {p.index}
-                  </span>
                   <div className="p-2 rounded-3 bg-elevated border border-border">
                     {p.icon}
                   </div>
