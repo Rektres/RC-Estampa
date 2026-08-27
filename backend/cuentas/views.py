@@ -24,6 +24,7 @@ User = get_user_model()
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_scope = 'auth'
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -52,6 +53,7 @@ class RegisterView(generics.CreateAPIView):
 
 class VerificarCodigoView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_scope = 'auth'
 
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
@@ -103,6 +105,7 @@ class VerificarCodigoView(APIView):
 
 class ReenviarCodigoView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_scope = 'auth'
 
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
@@ -134,6 +137,7 @@ class ReenviarCodigoView(APIView):
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
+    throttle_scope = 'auth'
 
 
 class MeView(generics.RetrieveUpdateAPIView):
