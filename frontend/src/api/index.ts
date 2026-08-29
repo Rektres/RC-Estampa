@@ -91,6 +91,15 @@ export const catalogoApi = {
     api.get<Paginated<ProductoVajilla>>('/drinkware/', { params: PAGE_ALL }).then((r) => r.data.results),
   drinkwareItem: (slug: string) =>
     api.get<ProductoVajilla>(`/drinkware/${slug}/`).then((r) => r.data),
+  categorias: () =>
+    api.get<Categoria[] | { results: Categoria[] }>('/categorias/').then((r) => {
+      const data = r.data;
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray((data as { results: Categoria[] }).results)) {
+        return (data as { results: Categoria[] }).results;
+      }
+      return [];
+    }),
   fotos: () => api.get<FotoCliente[]>('/fotos-clientes/').then((r) => r.data),
   editor: () => api.get<EditorConfig>('/editor/').then((r) => r.data),
 };

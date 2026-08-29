@@ -36,12 +36,12 @@ export default function Panel() {
   );
 
   const categoriasEnUso = useMemo(
-    () => [...new Set((items ?? []).map((p) => p.categoria.nombre))].sort(),
+    () => [...new Set((items ?? []).map((p) => p.categoria?.nombre).filter(Boolean) as string[])].sort(),
     [items]
   );
 
   const filtered = (items ?? []).filter((p) => {
-    if (catFilter && p.categoria.nombre !== catFilter) return false;
+    if (catFilter && p.categoria?.nombre !== catFilter) return false;
     if (q && !p.nombre.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
   });
@@ -242,7 +242,7 @@ export default function Panel() {
                               {p.nuevo && <span className="badge bg-drinkware-20 text-drinkware">Nuevo</span>}
                             </div>
                           </td>
-                          <td className="text-muted">{p.categoria.nombre}</td>
+                          <td className="text-muted">{p.categoria?.nombre || '-'}</td>
                           <td>
                             <span className="text-primary fw-semibold">{formatPrice(p.precio_oferta ?? p.precio)}</span>
                             {p.precio_oferta && (

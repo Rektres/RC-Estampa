@@ -67,7 +67,7 @@ export default function Catalogo() {
 
   // Lista unificada de categorías dinámicas
   const listaCategorias = useMemo(() => {
-    if (categoriasData && categoriasData.length > 0) {
+    if (categoriasData && Array.isArray(categoriasData) && categoriasData.length > 0) {
       return categoriasData.map((c) => c.nombre);
     }
     return ['Poleras', 'Hoodies', 'Camisas', 'Polos', 'Chaquetas', 'Tazas', 'Termos', 'Vasos', 'Botellas'];
@@ -75,8 +75,8 @@ export default function Catalogo() {
 
   // Lista unificada y filtrado multi-coincidencia
   const filtered = useMemo(() => {
-    const listRopa = (productosRopa ?? []).map((p) => ({ ...p, tipoItem: 'ropa' as const }));
-    const listDrink = (productosDrinkware ?? []).map((d) => ({ ...d, tipoItem: 'drinkware' as const }));
+    const listRopa = (Array.isArray(productosRopa) ? productosRopa : []).map((p) => ({ ...p, tipoItem: 'ropa' as const }));
+    const listDrink = (Array.isArray(productosDrinkware) ? productosDrinkware : []).map((d) => ({ ...d, tipoItem: 'drinkware' as const }));
     let list: any[] = [...listRopa, ...listDrink];
 
     // 1. Filtro por Línea / Colección
