@@ -33,6 +33,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ListFilter,
+  Calendar,
 } from 'lucide-react';
 import { panelApi, pedidosApi, type EstadisticasData } from '../../api';
 import { useAsync } from '../../api/hooks';

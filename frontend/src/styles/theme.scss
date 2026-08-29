@@ -541,6 +541,72 @@ $rc-solid: (
   }
 }
 
+// Botones y Grupos de Botones (Limpio, elegante, sin sombras desalineadas)
+.btn {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.btn-group,
+.btn-group-sm {
+  box-shadow: none !important;
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--card-border) !important;
+  border-radius: 8px !important;
+  padding: 3px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+
+  .btn {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    margin: 0 !important;
+    transform: none !important;
+
+    &:hover:not(.btn-primary) {
+      background-color: rgba(255, 255, 255, 0.08) !important;
+      color: var(--text-main) !important;
+    }
+  }
+
+  .btn.btn-primary {
+    background: linear-gradient(135deg, #d9be6a 0%, var(--brand-primary) 100%) !important;
+    color: #070814 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    border: none !important;
+  }
+}
+
+[data-bs-theme='light'] {
+  .btn-group,
+  .btn-group-sm {
+    background-color: #f0ebe1 !important;
+    border-color: rgba(18, 19, 36, 0.12) !important;
+
+    .btn {
+      color: #585a6f;
+
+      &:hover:not(.btn-primary) {
+        background-color: rgba(18, 19, 36, 0.06) !important;
+        color: #121324 !important;
+      }
+    }
+
+    .btn.btn-primary {
+      background: linear-gradient(135deg, #dfb755 0%, #b8933d 100%) !important;
+      color: #ffffff !important;
+      box-shadow: none !important;
+      transform: none !important;
+      border: none !important;
+    }
+  }
+}
+
 // Botón Primario con Gradiente Escénico Luxury
 .btn-primary {
   --bs-btn-bg: var(--brand-primary);
@@ -551,12 +617,13 @@ $rc-solid: (
   color: #070814 !important;
   font-weight: 600;
   letter-spacing: 0.02em;
+  box-shadow: none !important;
   transition: all 0.25s ease;
 
   &:hover {
     background: linear-gradient(135deg, #e6c66e 0%, #d4af37 60%, #b89342 100%) !important;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(201, 168, 76, 0.35);
+    box-shadow: 0 4px 14px rgba(201, 168, 76, 0.3) !important;
     color: #070814 !important;
   }
 
@@ -568,6 +635,7 @@ $rc-solid: (
     &:hover {
       background: linear-gradient(135deg, #dfb755 0%, #c9a84c 60%, #a8873a 100%) !important;
       color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(184, 147, 61, 0.3) !important;
     }
   }
 }
@@ -583,6 +651,7 @@ $rc-solid: (
   color: var(--brand-primary) !important;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  box-shadow: none !important;
   font-weight: 600;
   transition: all 0.25s ease;
 
@@ -591,7 +660,7 @@ $rc-solid: (
     border-color: var(--brand-primary) !important;
     color: #070814 !important;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(201, 168, 76, 0.25);
+    box-shadow: 0 4px 14px rgba(201, 168, 76, 0.25) !important;
   }
 }
 
