@@ -362,7 +362,7 @@ export default function Catalogo() {
             <div className="row g-4">
               {paginated.map((item: any) => (
                 <div key={`${item.tipoItem}-${item.id}`} className="col-12 col-sm-6 col-xl-4">
-                  <HoverSwapCard item={item} />
+                  <HoverSwapCard producto={item} />
                 </div>
               ))}
             </div>
