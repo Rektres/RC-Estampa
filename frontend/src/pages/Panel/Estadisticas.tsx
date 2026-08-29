@@ -154,11 +154,17 @@ export default function Estadisticas() {
     return topProductosFiltrados.slice(0, topProdsLimit);
   }, [topProductosFiltrados, topProdsLimit]);
 
+  // Filtro de fechas en tabla de pedidos
+  const [filtroFecha, setFiltroFecha] = useState<'todos' | 'hoy' | '7d' | '30d' | 'este_mes' | 'personalizado'>('todos');
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+
   // Filtrado y ordenamiento reactivo de todos los pedidos
   const transaccionesFiltradas = useMemo(() => {
     if (!data?.ultimas_transacciones) return [];
+    const ahora = new Date();
     
-    // 1. Filtrar por estados múltiples y texto de búsqueda
+    // 1. Filtrar por estados múltiples, texto de búsqueda y fechas
     const filtered = data.ultimas_transacciones.filter((tx) => {
       const matchEstado = estadosFiltro.length === 0 || estadosFiltro.includes(tx.estado);
       const q = busqueda.toLowerCase().trim();
@@ -170,7 +176,30 @@ export default function Estadisticas() {
         (tx.telefono && tx.telefono.toLowerCase().includes(q)) ||
         (tx.payment_method_id && tx.payment_method_id.toLowerCase().includes(q)) ||
         (tx.card_last_four && tx.card_last_four.includes(q));
-      return matchEstado && matchBusqueda;
+
+      // Filtro de fecha
+      let matchFecha = true;
+      if (filtroFecha !== 'todos' && tx.creado_en) {
+        const f = new Date(tx.creado_en);
+        if (filtroFecha === 'hoy') {
+          matchFecha = f.toDateString() === ahora.toDateString();
+        } else if (filtroFecha === '7d') {
+          const l7 = new Date();
+          l7.setDate(ahora.getDate() - 7);
+          matchFecha = f >= l7;
+        } else if (filtroFecha === '30d') {
+          const l30 = new Date();
+          l30.setDate(ahora.getDate() - 30);
+          matchFecha = f >= l30;
+        } else if (filtroFecha === 'este_mes') {
+          matchFecha = f.getFullYear() === ahora.getFullYear() && f.getMonth() === ahora.getMonth();
+        } else if (filtroFecha === 'personalizado') {
+          if (fechaDesde) matchFecha = matchFecha && f >= new Date(fechaDesde + 'T00:00:00');
+          if (fechaHasta) matchFecha = matchFecha && f <= new Date(fechaHasta + 'T23:59:59');
+        }
+      }
+
+      return matchEstado && matchBusqueda && matchFecha;
     });
 
     // 2. Ordenar según la columna seleccionada
@@ -196,7 +225,7 @@ export default function Estadisticas() {
       if (strA > strB) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [data?.ultimas_transacciones, estadosFiltro, busqueda, sortColumn, sortDirection]);
+  }, [data?.ultimas_transacciones, estadosFiltro, busqueda, filtroFecha, fechaDesde, fechaHasta, sortColumn, sortDirection]);
 
   // Paginación o Lazy Load
   const totalPaginas = Math.ceil(transaccionesFiltradas.length / (filasPorPagina || 10)) || 1;
@@ -735,6 +764,66 @@ export default function Estadisticas() {
               </div>
             </div>
 
+            {/* Fila de Filtros de Fecha para la Tabla */}
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 p-2 bg-elevated rounded-3 border border-border font-montserrat">
+              <div className="d-flex align-items-center gap-2">
+                <Calendar size={15} className="text-primary" />
+                <span className="small text-muted fw-semibold" style={{ fontSize: '0.78rem' }}>Filtrar por Fecha:</span>
+                <div className="btn-group btn-group-sm bg-surface rounded-2 p-0 border border-border">
+                  {[
+                    { key: 'todos', label: 'Todo' },
+                    { key: 'hoy', label: 'Hoy' },
+                    { key: '7d', label: '7 días' },
+                    { key: '30d', label: '30 días' },
+                    { key: 'este_mes', label: 'Este mes' },
+                    { key: 'personalizado', label: 'Rango' },
+                  ].map((f) => (
+                    <button
+                      key={f.key}
+                      onClick={() => { setFiltroFecha(f.key as any); setPaginaActual(1); }}
+                      className={`btn btn-sm border-0 ${
+                        filtroFecha === f.key ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
+                      }`}
+                      style={{ fontSize: '0.72rem', padding: '0.2rem 0.55rem' }}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {filtroFecha === 'personalizado' && (
+                <div className="d-flex align-items-center gap-2">
+                  <input
+                    type="date"
+                    value={fechaDesde}
+                    onChange={(e) => { setFechaDesde(e.target.value); setPaginaActual(1); }}
+                    className="form-control form-control-sm bg-surface text-text border-border"
+                    style={{ fontSize: '0.72rem', width: '125px' }}
+                    title="Fecha Desde"
+                  />
+                  <span className="text-muted small">a</span>
+                  <input
+                    type="date"
+                    value={fechaHasta}
+                    onChange={(e) => { setFechaHasta(e.target.value); setPaginaActual(1); }}
+                    className="form-control form-control-sm bg-surface text-text border-border"
+                    style={{ fontSize: '0.72rem', width: '125px' }}
+                    title="Fecha Hasta"
+                  />
+                  {(fechaDesde || fechaHasta) && (
+                    <button
+                      onClick={() => { setFechaDesde(''); setFechaHasta(''); }}
+                      className="btn btn-sm btn-outline-secondary p-1"
+                      title="Limpiar fechas"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             {transaccionesFiltradas.length === 0 ? (
               <div className="text-center py-5 text-muted small font-montserrat">
                 No se encontraron pedidos con los filtros aplicados ({estadosFiltro.length > 0 ? `Estados: ${estadosFiltro.join(', ')}` : 'General'}).
@@ -744,6 +833,19 @@ export default function Estadisticas() {
                 <table className="table table-hover align-middle mb-0" style={{ background: 'transparent' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--card-border-gold)' }}>
+                      {/* Fecha & N° Pedido Sortable */}
+                      <th
+                        onClick={() => handleSort('creado_en')}
+                        className="font-montserrat fw-bold text-text small py-3 cursor-pointer user-select-none"
+                        style={{ cursor: 'pointer', letterSpacing: '0.04em' }}
+                        title="Ordenar por Fecha de Creación"
+                      >
+                        <div className="d-flex align-items-center">
+                          <span>Fecha & Hora</span>
+                          {renderSortIndicator('creado_en')}
+                        </div>
+                      </th>
+
                       {/* N° Pedido Sortable */}
                       <th
                         onClick={() => handleSort('numero')}
@@ -843,6 +945,12 @@ export default function Estadisticas() {
                   <tbody>
                     {transaccionesPaginadas.map((tx) => (
                       <tr key={tx.numero} className="border-bottom border-border">
+                        <td className="font-montserrat text-muted small text-nowrap" style={{ fontSize: '0.75rem' }}>
+                          <div>{new Date(tx.creado_en).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                          <div className="text-muted opacity-75" style={{ fontSize: '0.7rem' }}>
+                            {new Date(tx.creado_en).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </td>
                         <td className="font-montserrat fw-bold text-primary small">
                           {tx.numero}
                         </td>

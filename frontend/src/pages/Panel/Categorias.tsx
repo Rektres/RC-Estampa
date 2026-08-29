@@ -1,6 +1,21 @@
-import { useState } from 'react';
-import { Table } from 'react-bootstrap';
-import { Plus, Pencil, Trash2, X, Check } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Check,
+  FolderPlus,
+  Package,
+  Layers,
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Sparkles,
+  AlertCircle,
+} from 'lucide-react';
+import { Modal } from 'react-bootstrap';
 import { panelApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { getLinaLabel } from '../../utils';
@@ -10,21 +25,58 @@ const VACIA = { nombre: '', slug: '', linea: 'urbana' as Categoria['linea'] };
 
 export default function Categorias() {
   const [reload, setReload] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState<number | 'nueva' | null>(null);
   const [draft, setDraft] = useState(VACIA);
+  const [toDelete, setToDelete] = useState<Categoria | null>(null);
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroLinea, setFiltroLinea] = useState<string>('todas');
+  const [sortColumn, setSortColumn] = useState<string>('nombre');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { data: categorias, loading } = useAsync(() => panelApi.categorias.list(), [reload]);
-  const refresh = () => { setReload((n) => n + 1); setEditando(null); };
+
+  const refresh = () => {
+    setReload((n) => n + 1);
+    setEditando(null);
+    setModalOpen(false);
+    setDraft(VACIA);
+    setToDelete(null);
+  };
+
+  function openNueva() {
+    setEditando('nueva');
+    setDraft(VACIA);
+    setError(null);
+    setModalOpen(true);
+  }
 
   function startEdit(c: Categoria) {
     setEditando(c.id);
     setDraft({ nombre: c.nombre, slug: c.slug, linea: c.linea });
     setError(null);
+    setModalOpen(true);
   }
 
-  async function guardar() {
+  // Generar slug automático al escribir nombre si es nueva
+  function handleNombreChange(val: string) {
+    if (editando === 'nueva') {
+      const generatedSlug = val
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      setDraft({ ...draft, nombre: val, slug: generatedSlug });
+    } else {
+      setDraft({ ...draft, nombre: val });
+    }
+  }
+
+  async function guardar(e: React.FormEvent) {
+    e.preventDefault();
     if (!draft.nombre || !draft.slug) {
       setError('Nombre y slug son requeridos.');
       return;
@@ -32,125 +84,380 @@ export default function Categorias() {
     setBusy(true);
     setError(null);
     try {
-      if (editando === 'nueva') await panelApi.categorias.create(draft);
-      else if (typeof editando === 'number') await panelApi.categorias.update(editando, draft);
+      if (editando === 'nueva') {
+        await panelApi.categorias.create(draft);
+      } else if (typeof editando === 'number') {
+        await panelApi.categorias.update(editando, draft);
+      }
       refresh();
     } catch {
-      setError('No se pudo guardar (¿slug duplicado?).');
+      setError('No se pudo guardar la categoría. Comprueba que el slug no esté duplicado.');
     } finally {
       setBusy(false);
     }
   }
 
-  async function eliminar(c: Categoria) {
+  async function confirmDelete() {
+    if (!toDelete) return;
     setBusy(true);
     setError(null);
     try {
-      await panelApi.categorias.remove(c.id);
+      await panelApi.categorias.remove(toDelete.id);
       refresh();
-    } catch (e) {
-      const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(detail ?? 'No se pudo eliminar la categoría.');
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail;
+      setError(detail ?? 'No se pudo eliminar la categoría (podría tener productos asignados).');
     } finally {
       setBusy(false);
     }
   }
 
-  const celdasEdicion = (
-    <>
-      <td>
-        <input
-          value={draft.nombre}
-          onChange={(e) => setDraft({ ...draft, nombre: e.target.value })}
-          className="form-control form-control-sm bg-surface font-montserrat"
-          placeholder="Nombre"
-          autoFocus
-        />
-      </td>
-      <td>
-        <input
-          value={draft.slug}
-          onChange={(e) => setDraft({ ...draft, slug: e.target.value })}
-          className="form-control form-control-sm bg-surface font-montserrat"
-          placeholder="slug-url"
-        />
-      </td>
-      <td>
-        <select
-          value={draft.linea}
-          onChange={(e) => setDraft({ ...draft, linea: e.target.value as Categoria['linea'] })}
-          className="form-select form-select-sm bg-surface font-montserrat"
-        >
-          <option value="urbana">Urbana</option>
-          <option value="formal">Formal</option>
-          <option value="drinkware">Drinkware</option>
-        </select>
-      </td>
-      <td className="text-end text-nowrap">
-        <button onClick={guardar} disabled={busy} className="btn btn-link p-1 text-primary" title="Guardar">
-          <Check size={16} />
-        </button>
-        <button onClick={() => setEditando(null)} className="btn btn-link p-1 text-muted" title="Cancelar">
-          <X size={16} />
-        </button>
-      </td>
-    </>
-  );
+  const handleSort = (col: string) => {
+    if (sortColumn === col) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(col);
+      setSortDirection('asc');
+    }
+  };
+
+  // Filtrado y ordenamiento reactivo de categorías
+  const categoriasFiltradas = useMemo(() => {
+    if (!categorias) return [];
+    const q = busqueda.toLowerCase().trim();
+    const filtered = categorias.filter((c) => {
+      const matchBusqueda = !q || c.nombre.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q);
+      const matchLinea = filtroLinea === 'todas' || c.linea === filtroLinea;
+      return matchBusqueda && matchLinea;
+    });
+
+    return filtered.sort((a, b) => {
+      let valA: any = a[sortColumn as keyof Categoria];
+      let valB: any = b[sortColumn as keyof Categoria];
+
+      if (sortColumn === 'total_productos') {
+        valA = a.total_productos || 0;
+        valB = b.total_productos || 0;
+      }
+
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        return sortDirection === 'asc' ? valA - valB : valB - valA;
+      }
+
+      const strA = String(valA || '').toLowerCase();
+      const strB = String(valB || '').toLowerCase();
+      if (strA < strB) return sortDirection === 'asc' ? -1 : 1;
+      if (strA > strB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [categorias, busqueda, filtroLinea, sortColumn, sortDirection]);
 
   return (
-    <div>
-      <div className="d-flex justify-content-end mb-3">
+    <div className="d-flex flex-column gap-4 animate-tab-fade">
+      {/* Header & Controles de Categorías */}
+      <div className="p-4 rounded-4 bg-surface border border-border d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm">
+        <div>
+          <div className="d-flex align-items-center gap-2">
+            <Layers size={20} className="text-primary" />
+            <h2 className="fs-5 fw-bold font-montserrat text-text mb-0">Gestión Dinámica de Categorías</h2>
+          </div>
+          <p className="small text-muted mb-0 mt-1 font-montserrat">
+            Administra las categorías de catálogo para Ropa Textil, Formal y Colección Drinkware.
+          </p>
+        </div>
+
         <button
-          onClick={() => { setEditando('nueva'); setDraft(VACIA); setError(null); }}
-          className="btn btn-primary btn-sm d-inline-flex align-items-center gap-1"
+          onClick={openNueva}
+          className="btn btn-primary font-montserrat fw-bold d-flex align-items-center gap-2 px-3 py-2"
         >
-          <Plus size={14} /> Nueva categoría
+          <FolderPlus size={16} />
+          <span>Nueva Categoría</span>
         </button>
       </div>
 
-      {error && <div className="alert alert-danger py-2 font-montserrat" style={{ fontSize: '0.875rem' }}>{error}</div>}
-
-      {loading ? (
-        <p className="font-montserrat text-muted">Cargando...</p>
-      ) : (
-        <div className="table-responsive">
-          <Table hover className="align-middle font-montserrat" style={{ fontSize: '0.875rem' }}>
-            <thead>
-              <tr className="text-muted text-uppercase" style={{ fontSize: '0.75rem' }}>
-                <th>Nombre</th>
-                <th>Slug</th>
-                <th>Línea</th>
-                <th className="text-end">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {editando === 'nueva' && <tr className="bg-elevated">{celdasEdicion}</tr>}
-              {(categorias ?? []).map((c) =>
-                editando === c.id ? (
-                  <tr key={c.id} className="bg-elevated">{celdasEdicion}</tr>
-                ) : (
-                  <tr key={c.id}>
-                    <td className="text-text">{c.nombre}</td>
-                    <td className="text-muted">{c.slug}</td>
-                    <td className="text-muted">{c.linea ? getLinaLabel(c.linea) : '—'}</td>
-                    <td className="text-end text-nowrap">
-                      <button onClick={() => startEdit(c)} className="btn btn-link p-1 text-muted" title="Editar">
-                        <Pencil size={16} />
-                      </button>
-                      <button onClick={() => eliminar(c)} disabled={busy} className="btn btn-link p-1 text-danger" title="Eliminar">
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                )
-              )}
-              {(categorias ?? []).length === 0 && editando !== 'nueva' && (
-                <tr><td colSpan={4} className="text-center text-muted py-4">Sin categorías.</td></tr>
-              )}
-            </tbody>
-          </Table>
+      {error && (
+        <div className="alert alert-danger py-2 font-montserrat small mb-0" role="alert">
+          {error}
         </div>
       )}
+
+      {/* Barra de Filtros y Ordenamiento */}
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3 rounded-3 bg-surface border border-border font-montserrat">
+        <div className="d-flex align-items-center gap-2 flex-wrap">
+          {/* Buscador */}
+          <div className="position-relative" style={{ minWidth: '220px' }}>
+            <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '9px' }} />
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar categoría..."
+              className="form-control form-control-sm bg-elevated text-text border-border ps-5"
+              style={{ fontSize: '0.8rem' }}
+            />
+            {busqueda && (
+              <button
+                onClick={() => setBusqueda('')}
+                className="btn btn-sm p-0 position-absolute text-muted border-0 bg-transparent"
+                style={{ right: '8px', top: '6px' }}
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* Filtro por Línea */}
+          <div className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
+            {[
+              { key: 'todas', label: 'Todas las Líneas' },
+              { key: 'urbana', label: 'Urbana (Ropa)' },
+              { key: 'formal', label: 'Formal' },
+              { key: 'drinkware', label: 'Drinkware' },
+            ].map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setFiltroLinea(item.key)}
+                className={`btn btn-sm border-0 ${
+                  filtroLinea === item.key ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
+                }`}
+                style={{ fontSize: '0.75rem' }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Botones de Ordenamiento */}
+        <div className="d-flex align-items-center gap-2">
+          <span className="text-muted small">Ordenar por:</span>
+          <button
+            onClick={() => handleSort('nombre')}
+            className={`btn btn-sm ${sortColumn === 'nombre' ? 'btn-outline-primary fw-bold' : 'btn-outline-secondary'} py-1 px-2`}
+            style={{ fontSize: '0.75rem' }}
+          >
+            Nombre {sortColumn === 'nombre' && (sortDirection === 'asc' ? '↑' : '↓')}
+          </button>
+          <button
+            onClick={() => handleSort('total_productos')}
+            className={`btn btn-sm ${sortColumn === 'total_productos' ? 'btn-outline-primary fw-bold' : 'btn-outline-secondary'} py-1 px-2`}
+            style={{ fontSize: '0.75rem' }}
+          >
+            Productos {sortColumn === 'total_productos' && (sortDirection === 'asc' ? '↑' : '↓')}
+          </button>
+          <button
+            onClick={() => handleSort('linea')}
+            className={`btn btn-sm ${sortColumn === 'linea' ? 'btn-outline-primary fw-bold' : 'btn-outline-secondary'} py-1 px-2`}
+            style={{ fontSize: '0.75rem' }}
+          >
+            Línea {sortColumn === 'linea' && (sortDirection === 'asc' ? '↑' : '↓')}
+          </button>
+        </div>
+      </div>
+
+      {/* Grid de Cards de Categorías */}
+      {loading ? (
+        <div className="row g-3">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <div key={n} className="col-12 col-sm-6 col-md-4 col-lg-3">
+              <div className="p-4 rounded-4 bg-surface border border-border shadow-sm">
+                <div className="skeleton-shimmer mb-3" style={{ width: '70%', height: '24px' }} />
+                <div className="skeleton-shimmer mb-2" style={{ width: '40%', height: '18px' }} />
+                <div className="skeleton-shimmer" style={{ width: '50%', height: '16px' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : categoriasFiltradas.length === 0 ? (
+        <div className="p-5 text-center bg-surface border border-border rounded-4 font-montserrat">
+          <Layers size={40} className="text-muted mb-2 mx-auto" />
+          <h4 className="fs-6 text-text fw-bold">No se encontraron categorías</h4>
+          <p className="text-muted small mb-3">Prueba cambiando los filtros o crea una nueva categoría.</p>
+          <button onClick={openNueva} className="btn btn-primary btn-sm fw-bold">
+            + Crear Primera Categoría
+          </button>
+        </div>
+      ) : (
+        <div className="row g-3">
+          {categoriasFiltradas.map((c) => {
+            const count = c.total_productos || 0;
+            const esDrinkware = c.linea === 'drinkware';
+            const esFormal = c.linea === 'formal';
+
+            return (
+              <div key={c.id} className="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div className="p-4 rounded-4 bg-surface border border-border shadow-sm h-100 d-flex flex-column justify-content-between hover-lift font-montserrat position-relative">
+                  <div>
+                    <div className="d-flex align-items-center justify-content-between mb-2">
+                      <span
+                        className={`badge ${
+                          esDrinkware
+                            ? 'bg-info bg-opacity-15 text-info border border-info'
+                            : esFormal
+                            ? 'bg-secondary bg-opacity-20 text-text border border-secondary'
+                            : 'bg-primary bg-opacity-15 text-primary border border-primary'
+                        } text-uppercase px-2 py-1`}
+                        style={{ fontSize: '0.68rem', letterSpacing: '0.04em' }}
+                      >
+                        {getLinaLabel(c.linea)}
+                      </span>
+
+                      <div className="d-flex align-items-center gap-1">
+                        <button
+                          onClick={() => startEdit(c)}
+                          className="btn btn-sm btn-link p-1 text-muted hover-text-primary"
+                          title="Editar Categoría"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          onClick={() => setToDelete(c)}
+                          className="btn btn-sm btn-link p-1 text-danger"
+                          title="Eliminar Categoría"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <h3 className="fs-6 fw-bold text-text mb-1 text-truncate" title={c.nombre}>
+                      {c.nombre}
+                    </h3>
+                    <code className="text-muted small d-block mb-3" style={{ fontSize: '0.75rem' }}>
+                      /{c.slug}
+                    </code>
+                  </div>
+
+                  <div className="pt-3 border-top border-border d-flex align-items-center justify-content-between">
+                    <span className="d-flex align-items-center gap-1 text-muted small" style={{ fontSize: '0.75rem' }}>
+                      <Package size={13} className="text-primary" />
+                      <strong>{count}</strong> {count === 1 ? 'producto' : 'productos'}
+                    </span>
+                    <button
+                      onClick={() => startEdit(c)}
+                      className="btn btn-sm btn-outline-secondary py-1 px-2"
+                      style={{ fontSize: '0.72rem' }}
+                    >
+                      Configurar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal Crear / Editar Categoría */}
+      <Modal show={modalOpen} onHide={() => setModalOpen(false)} centered>
+        <Modal.Body className="p-4 bg-surface border border-border rounded-4 font-montserrat">
+          <div className="d-flex align-items-center justify-content-between pb-3 border-bottom border-border mb-3">
+            <h4 className="fs-5 fw-bold text-text mb-0">
+              {editando === 'nueva' ? 'Crear Nueva Categoría' : 'Editar Categoría'}
+            </h4>
+            <button
+              onClick={() => setModalOpen(false)}
+              className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {error && (
+            <div className="alert alert-danger py-2 small mb-3">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={guardar}>
+            <div className="mb-3">
+              <label className="form-label text-muted small fw-semibold">Nombre de la Categoría</label>
+              <input
+                type="text"
+                value={draft.nombre}
+                onChange={(e) => handleNombreChange(e.target.value)}
+                placeholder="Ej. Polerones Oversize, Tazones Cerámica"
+                className="form-control bg-elevated text-text border-border"
+                required
+                autoFocus
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label text-muted small fw-semibold">Slug URL (Identificador único)</label>
+              <input
+                type="text"
+                value={draft.slug}
+                onChange={(e) => setDraft({ ...draft, slug: e.target.value })}
+                placeholder="ej-polerones-oversize"
+                className="form-control bg-elevated text-text border-border"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="form-label text-muted small fw-semibold">Línea de Producto</label>
+              <select
+                value={draft.linea}
+                onChange={(e) => setDraft({ ...draft, linea: e.target.value as Categoria['linea'] })}
+                className="form-select bg-elevated text-text border-border"
+              >
+                <option value="urbana">Urbana (Ropa Textil Casual/Oversize)</option>
+                <option value="formal">Formal (Camisas / Chaquetas)</option>
+                <option value="drinkware">Drinkware (Vasos, Tazones, Shottings)</option>
+              </select>
+            </div>
+
+            <div className="d-flex justify-content-end gap-2 pt-2 border-top border-border">
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="btn btn-secondary btn-sm px-3"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={busy}
+                className="btn btn-primary btn-sm fw-bold px-4 d-flex align-items-center gap-1"
+              >
+                <Check size={15} />
+                <span>{busy ? 'Guardando...' : 'Guardar Categoría'}</span>
+              </button>
+            </div>
+          </form>
+        </Modal.Body>
+      </Modal>
+
+      {/* Modal Confirmación de Eliminación */}
+      <Modal show={!!toDelete} onHide={() => setToDelete(null)} centered>
+        <Modal.Body className="p-4 bg-surface border border-border rounded-4 font-montserrat">
+          <div className="d-flex align-items-center gap-2 text-danger mb-3">
+            <AlertCircle size={24} />
+            <h4 className="fs-5 fw-bold mb-0">Eliminar Categoría</h4>
+          </div>
+          <p className="text-muted small mb-4">
+            ¿Estás seguro de eliminar la categoría <strong className="text-text">{toDelete?.nombre}</strong>?
+            {toDelete?.total_productos ? (
+              <span className="text-danger d-block mt-2">
+                ⚠️ Atención: Esta categoría tiene <strong>{toDelete.total_productos} productos</strong> asociados.
+              </span>
+            ) : null}
+          </p>
+          <div className="d-flex justify-content-end gap-2">
+            <button onClick={() => setToDelete(null)} className="btn btn-secondary btn-sm px-3">
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDelete}
+              disabled={busy}
+              className="btn btn-danger btn-sm fw-bold px-4"
+            >
+              {busy ? 'Eliminando...' : 'Sí, Eliminar'}
+            </button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

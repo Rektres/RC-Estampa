@@ -28,6 +28,7 @@ export interface Categoria {
   nombre: string;
   slug: string;
   linea: Linea;
+  total_productos?: number;
 }
 
 export interface Producto {

@@ -31,8 +31,7 @@ export default function Navbar() {
 
   const links = [
     { to: '/', label: 'Inicio' },
-    { to: '/catalogo', label: 'Ropa' },
-    { to: '/drinkware', label: 'Drinkware' },
+    { to: '/catalogo', label: 'Catálogo' },
     { to: '/disenar', label: 'Diseña el tuyo', highlight: true },
     { to: '/personalizado', label: 'Cotización' },
     ...(isAdmin ? [{ to: '/panel', label: 'Panel' }] : []),

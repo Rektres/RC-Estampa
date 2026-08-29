@@ -46,6 +46,43 @@ export default function Panel() {
     return true;
   });
 
+  const [sortColumn, setSortColumn] = useState<string>('id');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (col: string) => {
+    if (sortColumn === col) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(col);
+      setSortDirection('asc');
+    }
+  };
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      let valA: any = a[sortColumn as keyof typeof a];
+      let valB: any = b[sortColumn as keyof typeof b];
+
+      if (sortColumn === 'categoria') {
+        valA = a.categoria?.nombre || '';
+        valB = b.categoria?.nombre || '';
+      } else if (sortColumn === 'stock') {
+        valA = a.variantes?.reduce((s, v) => s + v.stock, 0) || 0;
+        valB = b.variantes?.reduce((s, v) => s + v.stock, 0) || 0;
+      }
+
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        return sortDirection === 'asc' ? valA - valB : valB - valA;
+      }
+
+      const strA = String(valA || '').toLowerCase();
+      const strB = String(valB || '').toLowerCase();
+      if (strA < strB) return sortDirection === 'asc' ? -1 : 1;
+      if (strA > strB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortColumn, sortDirection]);
+
   const refresh = () => setReload((n) => n + 1);
 
   async function toggleActivo(p: Producto | ProductoVajilla) {
@@ -149,18 +186,43 @@ export default function Panel() {
               <div className="table-responsive">
                 <Table hover className="align-middle font-montserrat" style={{ fontSize: '0.875rem' }}>
                   <thead>
-                    <tr className="text-muted text-uppercase" style={{ fontSize: '0.75rem' }}>
-                      <th></th>
-                      <th>Producto</th>
-                      <th>Categoría</th>
-                      <th>Precio</th>
-                      <th>Stock</th>
-                      <th>Estado</th>
+                    <tr className="text-muted text-uppercase user-select-none" style={{ fontSize: '0.75rem' }}>
+                      <th style={{ width: '3.5rem' }}>Foto</th>
+                      <th onClick={() => handleSort('nombre')} style={{ cursor: 'pointer' }}>
+                        <div className="d-flex align-items-center gap-1">
+                          <span>Producto</span>
+                          {sortColumn === 'nombre' ? (sortDirection === 'asc' ? '↑' : '↓') : <span className="opacity-25">↕</span>}
+                        </div>
+                      </th>
+                      <th onClick={() => handleSort('categoria')} style={{ cursor: 'pointer' }}>
+                        <div className="d-flex align-items-center gap-1">
+                          <span>Categoría</span>
+                          {sortColumn === 'categoria' ? (sortDirection === 'asc' ? '↑' : '↓') : <span className="opacity-25">↕</span>}
+                        </div>
+                      </th>
+                      <th onClick={() => handleSort('precio')} style={{ cursor: 'pointer' }}>
+                        <div className="d-flex align-items-center gap-1">
+                          <span>Precio</span>
+                          {sortColumn === 'precio' ? (sortDirection === 'asc' ? '↑' : '↓') : <span className="opacity-25">↕</span>}
+                        </div>
+                      </th>
+                      <th onClick={() => handleSort('stock')} style={{ cursor: 'pointer' }}>
+                        <div className="d-flex align-items-center gap-1">
+                          <span>Stock</span>
+                          {sortColumn === 'stock' ? (sortDirection === 'asc' ? '↑' : '↓') : <span className="opacity-25">↕</span>}
+                        </div>
+                      </th>
+                      <th onClick={() => handleSort('activo')} style={{ cursor: 'pointer' }}>
+                        <div className="d-flex align-items-center gap-1">
+                          <span>Estado</span>
+                          {sortColumn === 'activo' ? (sortDirection === 'asc' ? '↑' : '↓') : <span className="opacity-25">↕</span>}
+                        </div>
+                      </th>
                       <th className="text-end">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((p) => {
+                    {sorted.map((p) => {
                       const stockTotal = p.variantes.reduce((s, v) => s + v.stock, 0);
                       return (
                         <tr key={p.id} style={p.activo ? undefined : { opacity: 0.5 }}>
@@ -223,7 +285,7 @@ export default function Panel() {
                         </tr>
                       );
                     })}
-                    {filtered.length === 0 && (
+                    {sorted.length === 0 && (
                       <tr>
                         <td colSpan={7} className="text-center text-muted py-4">Sin productos.</td>
                       </tr>

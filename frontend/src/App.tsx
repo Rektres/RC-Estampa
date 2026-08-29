@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Landing from './pages/Landing';
 
@@ -11,7 +10,6 @@ function ScrollToTop() {
   return null;
 }
 import Catalogo from './pages/Catalogo';
-import Drinkware from './pages/Drinkware';
 import ProductoDetalle from './pages/ProductoDetalle';
 import VajillaDetalle from './pages/VajillaDetalle';
 import Personalizado from './pages/Personalizado';
@@ -38,8 +36,9 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Landing />} />
           <Route path="/catalogo" element={<Catalogo />} />
+          <Route path="/ropa" element={<Navigate to="/catalogo?linea=ropa" replace />} />
           <Route path="/catalogo/:slug" element={<ProductoDetalle />} />
-          <Route path="/drinkware" element={<Drinkware />} />
+          <Route path="/drinkware" element={<Navigate to="/catalogo?linea=drinkware" replace />} />
           <Route path="/drinkware/:slug" element={<VajillaDetalle />} />
           <Route path="/personalizado" element={<Personalizado />} />
           <Route path="/disenar" element={<Disenador />} />

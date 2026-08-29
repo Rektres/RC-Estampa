@@ -93,30 +93,38 @@ export default function PanelProductoForm() {
   // Cargar valores al editar
   useEffect(() => {
     if (!existente) return;
+    const catId = typeof existente.categoria === 'object' && existente.categoria
+      ? (existente.categoria as any).id
+      : existente.categoria;
+
     reset({
-      nombre: existente.nombre,
-      slug: existente.slug,
-      descripcion: existente.descripcion,
-      precio: String(existente.precio),
+      nombre: existente.nombre || '',
+      slug: existente.slug || '',
+      descripcion: existente.descripcion || '',
+      precio: String(existente.precio || ''),
       precio_oferta: existente.precio_oferta ? String(existente.precio_oferta) : '',
-      linea: esRopa ? (existente as Producto).linea : undefined,
-      material: !esRopa ? (existente as ProductoVajilla).material : '',
+      linea: esRopa ? (existente as Producto).linea || 'urbana' : undefined,
+      material: !esRopa ? (existente as ProductoVajilla).material || '' : '',
       capacidad_ml: !esRopa && (existente as ProductoVajilla).capacidad_ml
         ? String((existente as ProductoVajilla).capacidad_ml) : '',
-      categoria: String(existente.categoria.id),
-      activo: existente.activo,
-      destacado: existente.destacado,
-      nuevo: existente.nuevo,
-      variantes: existente.variantes.map((v) => ({
-        talla: 'talla' in v ? v.talla : '',
-        color: v.color, color_hex: v.color_hex, stock: String(v.stock), sku: v.sku,
-      })),
-      imagenes: existente.imagenes.map((img) => ({
-        imagen: img.imagen,
-        es_principal: img.es_principal,
-        es_frente: img.es_frente ?? false,
-        es_reverso: img.es_reverso ?? false,
-      })),
+      categoria: catId ? String(catId) : '',
+      activo: existente.activo ?? true,
+      destacado: existente.destacado ?? false,
+      nuevo: existente.nuevo ?? false,
+      variantes: (existente.variantes && existente.variantes.length > 0)
+        ? existente.variantes.map((v) => ({
+            talla: 'talla' in v ? v.talla : '',
+            color: v.color, color_hex: v.color_hex, stock: String(v.stock), sku: v.sku,
+          }))
+        : [VARIANTE_VACIA],
+      imagenes: (existente.imagenes && existente.imagenes.length > 0)
+        ? existente.imagenes.map((img) => ({
+            imagen: img.imagen,
+            es_principal: img.es_principal,
+            es_frente: img.es_frente ?? false,
+            es_reverso: img.es_reverso ?? false,
+          }))
+        : [{ ...IMAGEN_VACIA, es_principal: true, es_frente: true }],
     });
   }, [existente, esRopa, reset]);
 

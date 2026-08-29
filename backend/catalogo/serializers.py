@@ -18,9 +18,16 @@ from .models import (
 
 
 class CategoriaSerializer(serializers.ModelSerializer):
+    total_productos = serializers.SerializerMethodField()
+
     class Meta:
         model = Categoria
-        fields = ('id', 'nombre', 'slug', 'linea')
+        fields = ('id', 'nombre', 'slug', 'linea', 'total_productos')
+
+    def get_total_productos(self, obj):
+        count_ropa = getattr(obj, 'productos', None).count() if hasattr(obj, 'productos') else 0
+        count_vajilla = getattr(obj, 'vajilla', None).count() if hasattr(obj, 'vajilla') else 0
+        return count_ropa + count_vajilla
 
 
 class VarianteProductoSerializer(serializers.ModelSerializer):

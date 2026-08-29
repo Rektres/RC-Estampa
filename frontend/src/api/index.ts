@@ -209,6 +209,7 @@ function crudPanel<T>(recurso: string) {
         }
         return [];
       }),
+    get: (id: number) => api.get<T>(`/panel/${recurso}/${id}/`).then((r) => r.data),
     create: (data: Partial<T>) => api.post<T>(`/panel/${recurso}/`, data).then((r) => r.data),
     update: (id: number, data: Partial<T>) =>
       api.put<T>(`/panel/${recurso}/${id}/`, data).then((r) => r.data),
