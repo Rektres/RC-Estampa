@@ -27,10 +27,13 @@ import RequireAdmin from './components/shared/RequireAdmin';
 import Panel from './pages/Panel';
 import PanelProductoForm from './pages/Panel/ProductoForm';
 
+import SessionInactivityHandler from './components/shared/SessionInactivityHandler';
+
 export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <SessionInactivityHandler />
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Landing />} />

@@ -92,11 +92,16 @@ export default function Estadisticas() {
 
   const kpis = data?.kpis;
 
-  // Auto-centrado al abrir cualquier modal
+  // Bloquear scroll de fondo cuando un modal esté abierto (sin mover la posición del usuario)
   useEffect(() => {
     if (selectedTx || historyTx) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
     }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [selectedTx, historyTx]);
 
   // Toggle de multi-filtro por estado
@@ -250,14 +255,14 @@ export default function Estadisticas() {
     }
   }
 
-  // Helper para renderizar badges de estado de alto contraste
+  // Helper para renderizar badges de estado de alto contraste en Dark & Light
   const renderEstadoBadge = (estadoKey: string) => {
     const est = ESTADOS_DISPONIBLES.find((e) => e.key === estadoKey);
-    const color = est ? est.color : 'secondary';
     const label = est ? est.label : estadoKey;
+    const cleanKey = (estadoKey || 'pendiente').toLowerCase().replace('_', '-');
     return (
       <span
-        className={`badge bg-${color} bg-opacity-20 text-${color} border border-${color} text-uppercase px-2 py-1`}
+        className={`badge badge-status-${cleanKey} text-uppercase px-2 py-1`}
         style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}
       >
         {label}
@@ -498,7 +503,7 @@ export default function Estadisticas() {
                         )}
                         <span className="small text-muted font-montserrat fw-semibold">{est.label}</span>
                       </div>
-                      <span className={`fs-5 fw-bold font-montserrat text-${est.color}`}>{count}</span>
+                      <span className="fs-5 fw-bold font-montserrat" style={{ color: est.border }}>{count}</span>
                     </div>
                   </div>
                 );
