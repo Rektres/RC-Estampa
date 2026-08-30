@@ -35,6 +35,7 @@ import {
   ListFilter,
   Calendar,
 } from 'lucide-react';
+import { Modal } from 'react-bootstrap';
 import { panelApi, pedidosApi, type EstadisticasData } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { formatPrice } from '../../utils';
@@ -77,8 +78,8 @@ export default function Estadisticas() {
 
   const [isExporting, setIsExporting] = useState(false);
   const [updatingNumero, setUpdatingNumero] = useState<string | null>(null);
-  const [selectedTx, setSelectedTx] = useState<any | null>(null);
-  const [historyTx, setHistoryTx] = useState<any | null>(null);
+  const [activeModalTx, setActiveModalTx] = useState<any | null>(null);
+  const [modalTab, setModalTab] = useState<'trazabilidad' | 'historial'>('trazabilidad');
   const [notaCambio, setNotaCambio] = useState('');
   const [modalNuevoEstado, setModalNuevoEstado] = useState('');
 
@@ -92,25 +93,6 @@ export default function Estadisticas() {
   );
 
   const kpis = data?.kpis;
-
-  const modalTrazabilidadRef = useRef<HTMLDivElement>(null);
-  const modalHistorialRef = useRef<HTMLDivElement>(null);
-
-  // Bloquear scroll de fondo y centrar vista al tope del modal cuando se abra
-  useEffect(() => {
-    if (selectedTx || historyTx) {
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => {
-        if (selectedTx) modalTrazabilidadRef.current?.scrollTo({ top: 0, behavior: 'instant' });
-        if (historyTx) modalHistorialRef.current?.scrollTo({ top: 0, behavior: 'instant' });
-      }, 20);
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [selectedTx, historyTx]);
 
   // Toggle de multi-filtro por estado
   const toggleEstadoFiltro = (estadoKey: string) => {
@@ -263,25 +245,18 @@ export default function Estadisticas() {
       setReload((n) => n + 1);
       
       const nuevoEvento = {
-        estado_anterior: selectedTx?.estado || historyTx?.estado || 'pendiente',
+        estado_anterior: activeModalTx?.estado || 'pendiente',
         estado_nuevo: nuevoEstado,
         fecha: new Date().toISOString(),
-        autor: 'Administrador',
+        autor: 'Administrador (Panel)',
         nota: nota,
       };
 
-      if (selectedTx && selectedTx.numero === numero) {
-        setSelectedTx({
-          ...selectedTx,
+      if (activeModalTx && activeModalTx.numero === numero) {
+        setActiveModalTx({
+          ...activeModalTx,
           estado: nuevoEstado,
-          historial_estados: [...(selectedTx.historial_estados || []), nuevoEvento],
-        });
-      }
-      if (historyTx && historyTx.numero === numero) {
-        setHistoryTx({
-          ...historyTx,
-          estado: nuevoEstado,
-          historial_estados: [...(historyTx.historial_estados || []), nuevoEvento],
+          historial_estados: [...(activeModalTx.historial_estados || []), nuevoEvento],
         });
         setNotaCambio('');
       }
@@ -1016,7 +991,10 @@ export default function Estadisticas() {
                         <td className="text-center">
                           <div className="d-inline-flex gap-1">
                             <button
-                              onClick={() => setSelectedTx(tx)}
+                              onClick={() => {
+                                setActiveModalTx(tx);
+                                setModalTab('trazabilidad');
+                              }}
                               className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 py-1 px-2 font-montserrat"
                               style={{ fontSize: '0.75rem' }}
                               title="Ver trazabilidad visual"
@@ -1027,7 +1005,8 @@ export default function Estadisticas() {
                             <button
                               onClick={() => {
                                 const freshTx = data?.ultimas_transacciones?.find((t) => t.numero === tx.numero) || tx;
-                                setHistoryTx(freshTx);
+                                setActiveModalTx(freshTx);
+                                setModalTab('historial');
                                 setModalNuevoEstado(freshTx.estado);
                               }}
                               className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 py-1 px-2 font-montserrat"
@@ -1098,271 +1077,280 @@ export default function Estadisticas() {
         </>
       )}
 
-      {/* Modal 1: Trazabilidad y Detalle de Pedido */}
-      {selectedTx && (
-        <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)', zIndex: 1060, backdropFilter: 'blur(6px)' }}
-          onClick={() => setSelectedTx(null)}
-        >
-          <div
-            ref={modalTrazabilidadRef}
-            className="bg-surface border border-border rounded-4 p-4 shadow-lg w-100 animate-tab-fade"
-            style={{ maxWidth: '44rem', maxHeight: '90vh', overflowY: 'auto' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="d-flex align-items-center justify-content-between border-bottom border-border pb-3 mb-3">
-              <div>
-                <h4 className="font-montserrat fw-bold text-text fs-5 mb-0">
-                  Trazabilidad del Pedido: <span className="text-primary">{selectedTx.numero}</span>
-                </h4>
-                <div className="font-montserrat text-muted small mt-1 d-flex flex-wrap align-items-center gap-3">
-                  <span><strong>Cliente:</strong> {selectedTx.nombre}</span>
-                  <span><Mail size={12} className="text-primary me-1" />{selectedTx.email}</span>
-                  {selectedTx.telefono && (
-                    <span className="text-primary fw-semibold"><Phone size={12} className="me-1" />{selectedTx.telefono}</span>
-                  )}
+      {/* Modal Unificado: Trazabilidad Visual & Historial de Estados */}
+      <Modal
+        show={!!activeModalTx}
+        onHide={() => setActiveModalTx(null)}
+        centered
+        size="lg"
+        scrollable
+        backdrop="static"
+        className="font-montserrat"
+      >
+        {activeModalTx && (
+          <>
+            <Modal.Header className="bg-surface border-bottom border-border px-4 py-3 d-flex align-items-center justify-content-between">
+              <div className="d-flex align-items-center gap-3">
+                <div className="rounded-circle p-2 bg-primary bg-opacity-15 text-primary border border-primary">
+                  {modalTab === 'trazabilidad' ? <Eye size={18} /> : <History size={18} />}
                 </div>
-              </div>
-              <button
-                onClick={() => setSelectedTx(null)}
-                className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Timeline Interactivo */}
-            <div className="py-3 mb-4 bg-elevated rounded-3 p-3 border border-border">
-              <h6 className="font-montserrat fw-bold text-text small mb-3">Línea de Tiempo de Fabricación y Entrega:</h6>
-              <PedidoTimeline
-                estado={selectedTx.estado}
-                fechaCreacion={selectedTx.creado_en}
-                fechaPago={selectedTx.pagado_en}
-              />
-            </div>
-
-            {/* Cambiar Estado Rápido en Modal */}
-            <div className="p-3 bg-elevated rounded-3 border border-border mb-3 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
-              <div>
-                <span className="font-montserrat fw-bold text-text small d-block">Modificar Estado Actual:</span>
-                <span className="font-montserrat text-muted" style={{ fontSize: '0.75rem' }}>
-                  El cambio notificará al cliente por correo y actualizará su portal.
-                </span>
-              </div>
-              <select
-                value={selectedTx.estado}
-                onChange={(e) => handleCambiarEstado(selectedTx.numero, e.target.value)}
-                className="form-select form-select-sm bg-surface text-text border-primary font-montserrat fw-bold w-auto"
-              >
-                {ESTADOS_DISPONIBLES.map((est) => (
-                  <option key={est.key} value={est.key}>
-                    {est.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Datos de Despacho y Contacto Completo */}
-            {selectedTx.direccion && (
-              <div className="p-3 bg-elevated rounded-3 border border-border mb-3 font-montserrat small">
-                <span className="fw-bold text-text d-block mb-1">📍 Datos de Envío & Contacto:</span>
-                <div className="text-muted">
-                  {selectedTx.direccion}, {selectedTx.comuna}, {selectedTx.ciudad} ({selectedTx.region})
-                </div>
-                {selectedTx.telefono && (
-                  <div className="text-primary mt-1 fw-semibold">📞 Teléfono de Despacho: {selectedTx.telefono}</div>
-                )}
-              </div>
-            )}
-
-            {/* Desglose Financiero */}
-            <div className="row g-2 mb-3 font-montserrat small">
-              <div className="col-4">
-                <div className="p-2 rounded-2 bg-elevated border border-border text-center">
-                  <span className="text-muted d-block" style={{ fontSize: '0.72rem' }}>Total Bruto</span>
-                  <strong className="text-text">{formatPrice(selectedTx.total)}</strong>
-                </div>
-              </div>
-              <div className="col-4">
-                <div className="p-2 rounded-2 bg-elevated border border-border text-center">
-                  <span className="text-muted d-block" style={{ fontSize: '0.72rem' }}>Comisión Pasarela</span>
-                  <strong className="text-warning">-{formatPrice(selectedTx.comision_mp || 0)}</strong>
-                </div>
-              </div>
-              <div className="col-4">
-                <div className="p-2 rounded-2 bg-elevated border border-border text-center">
-                  <span className="text-muted d-block" style={{ fontSize: '0.72rem' }}>Ingreso Líquido</span>
-                  <strong className="text-success">{formatPrice(selectedTx.monto_neto ?? (selectedTx.total - (selectedTx.comision_mp || 0)))}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="d-flex justify-content-between align-items-center mt-3">
-              <button
-                onClick={() => {
-                  const freshTx = data?.ultimas_transacciones?.find((t) => t.numero === selectedTx.numero) || selectedTx;
-                  setHistoryTx(freshTx);
-                  setModalNuevoEstado(freshTx.estado);
-                  setSelectedTx(null);
-                }}
-                className="btn btn-outline-secondary btn-sm font-montserrat d-flex align-items-center gap-1"
-              >
-                <History size={14} />
-                <span>Ver Historial Detallado</span>
-              </button>
-              <button onClick={() => setSelectedTx(null)} className="btn btn-secondary btn-sm font-montserrat px-4">
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 2: Historial Detallado de Cambios de Estado & Notificación */}
-      {historyTx && (
-        <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)', zIndex: 1070, backdropFilter: 'blur(6px)' }}
-          onClick={() => setHistoryTx(null)}
-        >
-          <div
-            ref={modalHistorialRef}
-            className="bg-surface border border-border rounded-4 p-4 shadow-lg w-100 animate-tab-fade"
-            style={{ maxWidth: '44rem', maxHeight: '90vh', overflowY: 'auto' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="d-flex align-items-center justify-content-between border-bottom border-border pb-3 mb-3">
-              <div>
-                <div className="d-flex align-items-center gap-2">
-                  <History size={20} className="text-primary" />
-                  <h4 className="font-montserrat fw-bold text-text fs-5 mb-0">
-                    Historial de Cambios: <span className="text-primary">{historyTx.numero}</span>
+                <div>
+                  <h4 className="fs-5 fw-bold text-text mb-0">
+                    Pedido <span className="text-primary">#{activeModalTx.numero}</span>
                   </h4>
-                </div>
-                <p className="font-montserrat text-muted small mb-0 mt-1">
-                  Cliente: {historyTx.nombre} | 📧 {historyTx.email} {historyTx.telefono ? `| 📞 ${historyTx.telefono}` : ''}
-                </p>
-              </div>
-              <button
-                onClick={() => setHistoryTx(null)}
-                className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Listado de Eventos del Historial */}
-            <div className="mb-4">
-              <h6 className="font-montserrat fw-bold text-text small mb-3">Registro Cronológico de Eventos:</h6>
-              {(!historyTx.historial_estados || historyTx.historial_estados.length === 0) ? (
-                <div className="p-3 bg-elevated rounded-3 border border-border font-montserrat small text-muted">
-                  <div className="d-flex align-items-center justify-content-between">
-                    <span className="fw-semibold text-text">Creación Inicial del Pedido</span>
-                    {renderEstadoBadge(historyTx.estado)}
+                  <div className="text-muted small mt-1 d-flex flex-wrap align-items-center gap-3" style={{ fontSize: '0.75rem' }}>
+                    <span><strong>Cliente:</strong> {activeModalTx.nombre}</span>
+                    <span><Mail size={12} className="text-primary me-1" />{activeModalTx.email}</span>
+                    {activeModalTx.telefono && (
+                      <span className="text-primary fw-semibold"><Phone size={12} className="me-1" />{activeModalTx.telefono}</span>
+                    )}
                   </div>
-                  <div className="mt-1" style={{ fontSize: '0.75rem' }}>
-                    Fecha: {new Date(historyTx.creado_en).toLocaleString('es-CL')} | Autor: Sistema RC Estampa
+                </div>
+              </div>
+
+              <div className="d-flex align-items-center gap-2">
+                {/* Switcher entre Trazabilidad e Historial */}
+                <div className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
+                  <button
+                    onClick={() => setModalTab('trazabilidad')}
+                    className={`btn btn-sm border-0 d-inline-flex align-items-center gap-1 ${
+                      modalTab === 'trazabilidad' ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
+                    }`}
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <Eye size={13} /> <span>Trazabilidad</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setModalTab('historial');
+                      setModalNuevoEstado(activeModalTx.estado);
+                    }}
+                    className={`btn btn-sm border-0 d-inline-flex align-items-center gap-1 ${
+                      modalTab === 'historial' ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
+                    }`}
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <History size={13} /> <span>Historial & Notas</span>
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setActiveModalTx(null)}
+                  className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </Modal.Header>
+
+            <Modal.Body className="p-4 bg-surface text-text">
+              {modalTab === 'trazabilidad' ? (
+                <div className="d-flex flex-column gap-3">
+                  {/* Timeline Interactivo */}
+                  <div className="p-3 bg-elevated rounded-3 border border-border">
+                    <h6 className="fw-bold text-text small mb-3">Línea de Tiempo de Fabricación & Entrega:</h6>
+                    <PedidoTimeline
+                      estado={activeModalTx.estado}
+                      fechaCreacion={activeModalTx.creado_en}
+                      fechaPago={activeModalTx.pagado_en}
+                    />
+                  </div>
+
+                  {/* Modificar Estado Rápido */}
+                  <div className="p-3 bg-elevated rounded-3 border border-border d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                    <div>
+                      <span className="fw-bold text-text small d-block">Modificar Estado Actual:</span>
+                      <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                        Notifica automáticamente al cliente y actualiza el portal.
+                      </span>
+                    </div>
+                    <select
+                      value={activeModalTx.estado}
+                      onChange={(e) => handleCambiarEstado(activeModalTx.numero, e.target.value)}
+                      className="form-select form-select-sm bg-surface text-text border-primary fw-bold w-auto"
+                    >
+                      {ESTADOS_DISPONIBLES.map((est) => (
+                        <option key={est.key} value={est.key}>
+                          {est.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Datos de Despacho */}
+                  {activeModalTx.direccion && (
+                    <div className="p-3 bg-elevated rounded-3 border border-border small">
+                      <span className="fw-bold text-text d-block mb-1">📍 Datos de Envío & Contacto:</span>
+                      <div className="text-muted">
+                        {activeModalTx.direccion}, {activeModalTx.comuna}, {activeModalTx.ciudad} ({activeModalTx.region})
+                      </div>
+                      {activeModalTx.telefono && (
+                        <div className="text-primary mt-1 fw-semibold">📞 Teléfono: {activeModalTx.telefono}</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Desglose Financiero */}
+                  <div className="row g-2 small">
+                    <div className="col-4">
+                      <div className="p-2 rounded-2 bg-elevated border border-border text-center">
+                        <span className="text-muted d-block" style={{ fontSize: '0.72rem' }}>Total Bruto</span>
+                        <strong className="text-text">{formatPrice(activeModalTx.total)}</strong>
+                      </div>
+                    </div>
+                    <div className="col-4">
+                      <div className="p-2 rounded-2 bg-elevated border border-border text-center">
+                        <span className="text-muted d-block" style={{ fontSize: '0.72rem' }}>Comisión Pasarela</span>
+                        <strong className="text-warning">-{formatPrice(activeModalTx.comision_mp || 0)}</strong>
+                      </div>
+                    </div>
+                    <div className="col-4">
+                      <div className="p-2 rounded-2 bg-elevated border border-border text-center">
+                        <span className="text-muted d-block" style={{ fontSize: '0.72rem' }}>Ingreso Líquido</span>
+                        <strong className="text-success">{formatPrice(activeModalTx.monto_neto ?? (activeModalTx.total - (activeModalTx.comision_mp || 0)))}</strong>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="d-flex flex-column gap-2">
-                  {/* Evento inicial de creación */}
-                  <div className="p-3 bg-elevated rounded-3 border border-border font-montserrat small">
-                    <div className="d-flex align-items-center justify-content-between mb-1">
-                      <span className="fw-semibold text-text">1. Creación de Orden</span>
-                      <span className="badge bg-secondary bg-opacity-20 text-secondary border border-secondary text-uppercase">Inicio</span>
-                    </div>
-                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                      Fecha: {new Date(historyTx.creado_en).toLocaleString('es-CL')} | Autor: Cliente ({historyTx.nombre})
-                    </div>
+                /* Contenido de Historial */
+                <div className="d-flex flex-column gap-3">
+                  <div className="mb-2">
+                    <h6 className="fw-bold text-text small mb-3">Registro Cronológico de Eventos:</h6>
+                    {(!activeModalTx.historial_estados || activeModalTx.historial_estados.length === 0) ? (
+                      <div className="p-3 bg-elevated rounded-3 border border-border small text-muted">
+                        <div className="d-flex align-items-center justify-content-between">
+                          <span className="fw-semibold text-text">1. Creación Inicial del Pedido</span>
+                          {renderEstadoBadge(activeModalTx.estado)}
+                        </div>
+                        <div className="mt-1" style={{ fontSize: '0.75rem' }}>
+                          Fecha: {new Date(activeModalTx.creado_en).toLocaleString('es-CL')} | Autor: Sistema RC Estampa
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="d-flex flex-column gap-2">
+                        <div className="p-3 bg-elevated rounded-3 border border-border small">
+                          <div className="d-flex align-items-center justify-content-between mb-1">
+                            <span className="fw-semibold text-text">1. Creación de Orden</span>
+                            <span className="badge bg-secondary bg-opacity-20 text-secondary border border-secondary text-uppercase">Inicio</span>
+                          </div>
+                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                            Fecha: {new Date(activeModalTx.creado_en).toLocaleString('es-CL')} | Autor: Cliente ({activeModalTx.nombre})
+                          </div>
+                        </div>
+
+                        {activeModalTx.historial_estados.map((h: any, idx: number) => (
+                          <div key={idx} className="p-3 bg-elevated rounded-3 border border-border small hover-lift">
+                            <div className="d-flex align-items-center justify-content-between mb-1">
+                              <span className="fw-bold text-text">
+                                {idx + 2}. Cambio de Estado:
+                              </span>
+                              <div className="d-flex align-items-center gap-1">
+                                {h.estado_anterior && (
+                                  <>
+                                    {renderEstadoBadge(h.estado_anterior)}
+                                    <span className="text-muted">→</span>
+                                  </>
+                                )}
+                                {renderEstadoBadge(h.estado_nuevo)}
+                              </div>
+                            </div>
+                            <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                              📅 {new Date(h.fecha).toLocaleString('es-CL')} | 👤 Modificado por: <strong className="text-text">{h.autor || 'Admin'}</strong>
+                            </div>
+                            {h.nota && (
+                              <div className="p-2 mt-2 bg-surface rounded-2 border border-border text-primary" style={{ fontSize: '0.78rem' }}>
+                                💬 <strong>Observación:</strong> {h.nota}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Eventos registrados con badges claros en Dark/Light */}
-                  {historyTx.historial_estados.map((h: any, idx: number) => {
-                    return (
-                      <div key={idx} className="p-3 bg-elevated rounded-3 border border-border font-montserrat small hover-lift">
-                        <div className="d-flex align-items-center justify-content-between mb-1">
-                          <span className="fw-bold text-text">
-                            {idx + 2}. Cambio de Estado:
-                          </span>
-                          <div className="d-flex align-items-center gap-1">
-                            {h.estado_anterior && (
-                              <>
-                                {renderEstadoBadge(h.estado_anterior)}
-                                <span className="text-muted">→</span>
-                              </>
-                            )}
-                            {renderEstadoBadge(h.estado_nuevo)}
-                          </div>
-                        </div>
-                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                          📅 {new Date(h.fecha).toLocaleString('es-CL')} | 👤 Modificado por: <strong className="text-text">{h.autor || 'Admin'}</strong>
-                        </div>
-                        {h.nota && (
-                          <div className="p-2 mt-2 bg-surface rounded-2 border border-border text-primary" style={{ fontSize: '0.78rem' }}>
-                            💬 <strong>Observación:</strong> {h.nota}
-                          </div>
-                        )}
+                  {/* Formulario de Transición de Estado con Nota y Disparo de Correo */}
+                  <div className="p-3 bg-elevated rounded-3 border border-border">
+                    <h6 className="fw-bold text-text small mb-2 d-flex align-items-center gap-2">
+                      <Send size={14} className="text-primary" />
+                      Registrar Nuevo Cambio & Notificar al Cliente:
+                    </h6>
+                    <div className="row g-2 align-items-center mb-2">
+                      <div className="col-12 col-sm-6">
+                        <label className="small text-muted mb-1 d-block" style={{ fontSize: '0.75rem' }}>Nuevo Estado:</label>
+                        <select
+                          value={modalNuevoEstado}
+                          onChange={(e) => setModalNuevoEstado(e.target.value)}
+                          className="form-select form-select-sm bg-surface text-text border-primary fw-bold"
+                        >
+                          {ESTADOS_DISPONIBLES.map((est) => (
+                            <option key={est.key} value={est.key}>
+                              {est.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                    );
-                  })}
+                      <div className="col-12 col-sm-6">
+                        <label className="small text-muted mb-1 d-block" style={{ fontSize: '0.75rem' }}>Observación / Nota para el Cliente:</label>
+                        <input
+                          type="text"
+                          value={notaCambio}
+                          onChange={(e) => setNotaCambio(e.target.value)}
+                          placeholder="Ej. Despachado por Blue Express N° 12345"
+                          className="form-control form-control-sm bg-surface text-text border-border"
+                        />
+                      </div>
+                    </div>
+                    <div className="d-flex justify-content-end mt-3">
+                      <button
+                        onClick={async () => {
+                          await handleCambiarEstado(activeModalTx.numero, modalNuevoEstado, notaCambio);
+                          setNotaCambio('');
+                        }}
+                        disabled={updatingNumero === activeModalTx.numero || modalNuevoEstado === activeModalTx.estado}
+                        className="btn btn-sm btn-primary fw-bold d-flex align-items-center gap-1"
+                      >
+                        <Send size={13} />
+                        <span>{updatingNumero === activeModalTx.numero ? 'Guardando...' : 'Aplicar Estado & Enviar Correo'}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
-            </div>
+            </Modal.Body>
 
-            {/* Formulario de Transición de Estado con Nota y Disparo de Correo */}
-            <div className="p-3 bg-elevated rounded-3 border border-border mb-3 font-montserrat">
-              <h6 className="fw-bold text-text small mb-2 d-flex align-items-center gap-2">
-                <Send size={14} className="text-primary" />
-                Registrar Nuevo Cambio & Notificar al Cliente:
-              </h6>
-              <div className="row g-2 align-items-center mb-2">
-                <div className="col-12 col-sm-6">
-                  <label className="small text-muted mb-1 d-block" style={{ fontSize: '0.75rem' }}>Nuevo Estado:</label>
-                  <select
-                    value={modalNuevoEstado}
-                    onChange={(e) => setModalNuevoEstado(e.target.value)}
-                    className="form-select form-select-sm bg-surface text-text border-primary fw-bold"
-                  >
-                    {ESTADOS_DISPONIBLES.map((est) => (
-                      <option key={est.key} value={est.key}>
-                        {est.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-12 col-sm-6">
-                  <label className="small text-muted mb-1 d-block" style={{ fontSize: '0.75rem' }}>Observación / Nota para el Cliente:</label>
-                  <input
-                    type="text"
-                    value={notaCambio}
-                    onChange={(e) => setNotaCambio(e.target.value)}
-                    placeholder="Ej. Despachado por Blue Express N° 12345"
-                    className="form-control form-control-sm bg-surface text-text border-border"
-                  />
-                </div>
-              </div>
-              <div className="d-flex justify-content-end mt-3">
+            <Modal.Footer className="bg-surface border-top border-border d-flex align-items-center justify-content-between px-4 py-3">
+              {modalTab === 'trazabilidad' ? (
                 <button
-                  onClick={() => handleCambiarEstado(historyTx.numero, modalNuevoEstado, notaCambio)}
-                  disabled={updatingNumero === historyTx.numero || modalNuevoEstado === historyTx.estado}
-                  className="btn btn-sm btn-primary font-montserrat fw-bold d-flex align-items-center gap-1"
+                  onClick={() => {
+                    setModalTab('historial');
+                    setModalNuevoEstado(activeModalTx.estado);
+                  }}
+                  className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 fw-semibold"
                 >
-                  <Send size={13} />
-                  <span>{updatingNumero === historyTx.numero ? 'Guardando...' : 'Aplicar Estado & Enviar Correo'}</span>
+                  <History size={14} />
+                  <span>Ver Historial Completo y Notas ➔</span>
                 </button>
-              </div>
-            </div>
+              ) : (
+                <button
+                  onClick={() => setModalTab('trazabilidad')}
+                  className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 fw-semibold"
+                >
+                  <Eye size={14} />
+                  <span>⬅ Volver a Trazabilidad Visual</span>
+                </button>
+              )}
 
-            <div className="d-flex justify-content-end">
-              <button onClick={() => setHistoryTx(null)} className="btn btn-secondary btn-sm font-montserrat px-4">
+              <button
+                onClick={() => setActiveModalTx(null)}
+                className="btn btn-secondary btn-sm px-4"
+              >
                 Cerrar
               </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </Modal.Footer>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

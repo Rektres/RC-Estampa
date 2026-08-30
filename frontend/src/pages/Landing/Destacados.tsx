@@ -1,23 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Sparkles, X, ShieldCheck, Shirt, Thermometer } from 'lucide-react';
 import HoverSwapCard from '../../components/shared/HoverSwapCard';
 import ShareButton from '../../components/shared/ShareButton';
 import { catalogoApi } from '../../api';
 import { useAsync } from '../../api/hooks';
-import { formatPrice } from '../../utils';
+import { formatPrice, getLinaLabel } from '../../utils';
 import type { Producto, ProductoVajilla } from '../../types';
 
-type Filtro = 'todos' | 'urbana' | 'formal' | 'drinkware';
-
-const filtros: { key: Filtro; label: string }[] = [
-  { key: 'todos', label: 'Todos los Destacados' },
-  { key: 'urbana', label: 'Línea Urbana (Streetwear)' },
-  { key: 'formal', label: 'Línea Formal & Luxury' },
-  { key: 'drinkware', label: 'Drinkware & Accesorios' },
-];
-
 export default function Destacados() {
-  const [filtro, setFiltro] = useState<Filtro>('todos');
+  const [filtro, setFiltro] = useState<string>('todos');
   const [specProduct, setSpecProduct] = useState<Producto | ProductoVajilla | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const { data: prod } = useAsync(() => catalogoApi.productosAll(), []);
@@ -27,6 +18,17 @@ export default function Destacados() {
     ...(prod ?? []).filter((p) => p.destacado),
     ...(vaj ?? []).filter((p) => p.destacado),
   ];
+
+  const distinctLineas = useMemo(() => {
+    const set = new Set(allDestacados.map((p) => p.linea).filter(Boolean));
+    return [
+      { key: 'todos', label: 'Todos los Destacados' },
+      ...Array.from(set).map((l) => ({
+        key: l,
+        label: `Línea ${getLinaLabel(l)}`,
+      })),
+    ];
+  }, [allDestacados]);
 
   const filtered = allDestacados.filter((p) => {
     if (filtro === 'todos') return true;
@@ -62,7 +64,7 @@ export default function Destacados() {
 
           {/* Filter Chips Dinámicos */}
           <div className="d-flex flex-wrap gap-2">
-            {filtros.map((f) => (
+            {distinctLineas.map((f) => (
               <button
                 key={f.key}
                 onClick={() => setFiltro(f.key)}

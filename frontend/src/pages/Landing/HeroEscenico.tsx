@@ -1,8 +1,96 @@
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Sparkles, ShieldCheck, Layers } from 'lucide-react';
+import {
+  ArrowRight,
+  Sparkles,
+  ShieldCheck,
+  Layers,
+  ChevronLeft,
+  ChevronRight,
+  FolderKanban,
+} from 'lucide-react';
+import { catalogoApi } from '../../api';
+import { useAsync } from '../../api/hooks';
+import { getLinaLabel } from '../../utils';
+import type { Producto, ProductoVajilla } from '../../types';
+
+// Fallback por si la base de datos está cargando
+const SAMPLE_CARDS = [
+  {
+    id: 991,
+    nombre: 'Polera Oversize Premium',
+    linea: 'urbana',
+    slug: 'polera-oversize-premium',
+    tipoItem: 'ropa',
+    materialText: 'Algodón 240g · DTF Ultra HD',
+    imagen: 'https://images.pexels.com/photos/8532616/pexels-photo-8532616.jpeg?auto=compress&cs=tinysrgb&w=800',
+  },
+  {
+    id: 992,
+    nombre: 'Botella Térmica 750ml Matte',
+    linea: 'drinkware',
+    slug: 'botella-termica-750ml',
+    tipoItem: 'drinkware',
+    materialText: 'Acero Inox 304 · Grabado Láser HD',
+    imagen: 'https://images.pexels.com/photos/4000090/pexels-photo-4000090.jpeg?auto=compress&cs=tinysrgb&w=800',
+  },
+  {
+    id: 993,
+    nombre: 'Hoodie Felpa Pesada 350g',
+    linea: 'formal',
+    slug: 'hoodie-felpa-pesada',
+    tipoItem: 'ropa',
+    materialText: 'Felpa Francesa · Bordado & DTF',
+    imagen: 'https://images.pexels.com/photos/6311652/pexels-photo-6311652.jpeg?auto=compress&cs=tinysrgb&w=800',
+  },
+];
 
 export default function HeroEscenico() {
   const navigate = useNavigate();
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const { data: prodsRopa } = useAsync(() => catalogoApi.productosAll(), []);
+  const { data: prodsDrink } = useAsync(() => catalogoApi.drinkwareAll(), []);
+
+  // Productos con configuración "destacado" (mostrar en portada)
+  const stackCards = useMemo(() => {
+    const destacadosRopa = (prodsRopa ?? [])
+      .filter((p) => p.destacado)
+      .map((p) => ({
+        id: p.id,
+        nombre: p.nombre,
+        linea: p.linea || 'urbana',
+        slug: p.slug,
+        tipoItem: 'ropa' as const,
+        materialText: 'Algodón 240g · DTF Textil Ultra HD',
+        imagen: p.imagenes?.[0]?.imagen || 'https://images.pexels.com/photos/8532616/pexels-photo-8532616.jpeg?auto=compress&cs=tinysrgb&w=800',
+      }));
+
+    const destacadosDrink = (prodsDrink ?? [])
+      .filter((d) => d.destacado)
+      .map((d) => ({
+        id: d.id,
+        nombre: d.nombre,
+        linea: d.linea || 'drinkware',
+        slug: d.slug,
+        tipoItem: 'drinkware' as const,
+        materialText: d.material ? `${d.material} · Grabado Láser` : 'Acero Inox 304 · Grabado Láser',
+        imagen: d.imagenes?.[0]?.imagen || 'https://images.pexels.com/photos/4000090/pexels-photo-4000090.jpeg?auto=compress&cs=tinysrgb&w=800',
+      }));
+
+    const combined = [...destacadosRopa, ...destacadosDrink];
+    return combined.length > 0 ? combined : SAMPLE_CARDS;
+  }, [prodsRopa, prodsDrink]);
+
+  const totalCards = stackCards.length;
+
+  const nextCard = () => {
+    setActiveIndex((prev) => (prev + 1) % totalCards);
+  };
+
+  const prevCard = () => {
+    setActiveIndex((prev) => (prev - 1 + totalCards) % totalCards);
+  };
 
   return (
     <section className="position-relative overflow-hidden pt-4 pb-5">
@@ -36,7 +124,7 @@ export default function HeroEscenico() {
               <span className="gold-gradient-text">& EXCELENCIA TEXTIL.</span>
             </h1>
 
-            {/* Párrafo Justificado (Regla Maestra) */}
+            {/* Párrafo */}
             <p className="font-montserrat text-muted mb-4 lead" style={{ maxWidth: '38rem', fontSize: '1rem', lineHeight: '1.75' }}>
               Elevamos cada prenda y accesorio mediante técnicas de estampado de alta definición, serigrafía de precisión y sublimación premium. Desarrollamos piezas singulares formuladas para perdurar en el tiempo y destacar con máxima distinción visual en cualquier escenario o acontecimiento.
             </p>
@@ -79,77 +167,151 @@ export default function HeroEscenico() {
             </div>
           </div>
 
-          {/* Columna Derecha: Tarjeta Flotante con Live Dot */}
+          {/* Columna Derecha: Stack de Tarjetas Apiladas como Archivos Navegables */}
           <div className="col-12 col-lg-5">
-            <div className="position-relative">
-              {/* Outer decorative halo */}
+            <div className="position-relative" style={{ minHeight: '520px', paddingTop: '30px' }}>
+              {/* Halo de iluminación exterior */}
               <div
                 className="position-absolute top-50 start-50 translate-middle pointer-events-none"
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  background: 'radial-gradient(circle, rgba(201, 168, 76, 0.15) 0%, transparent 70%)',
-                  filter: 'blur(30px)',
+                  width: '110%',
+                  height: '110%',
+                  background: 'radial-gradient(circle, rgba(201, 168, 76, 0.18) 0%, transparent 70%)',
+                  filter: 'blur(35px)',
                   zIndex: 0,
                 }}
               />
 
-              {/* Floating Preview Card */}
-              <div
-                className="hero-preview-card p-3 shadow-2xl position-relative hover-lift"
-                style={{
-                  zIndex: 2,
-                }}
-              >
-                {/* Header with Live Indicator */}
-                <div className="d-flex align-items-center justify-content-between mb-3 px-1">
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="live-dot" />
-                    <span className="font-montserrat fw-semibold text-text text-uppercase" style={{ fontSize: '0.7rem', letterSpacing: '0.1em' }}>
-                      Producción Activa en RC Estampa
-                    </span>
-                  </div>
-                  <span className="badge bg-primary-10 text-primary border border-primary-30 font-montserrat" style={{ fontSize: '0.65rem' }}>
-                    Edición 2026
+              {/* Barrita superior de pestañas tipo archivador */}
+              <div className="d-flex align-items-center justify-content-between mb-2 px-2 position-relative" style={{ zIndex: 12 }}>
+                <div className="d-flex align-items-center gap-1">
+                  <FolderKanban size={15} className="text-primary" />
+                  <span className="font-montserrat fw-bold text-text text-uppercase" style={{ fontSize: '0.72rem', letterSpacing: '0.08em' }}>
+                    Archivo Portada ({activeIndex + 1}/{totalCards})
                   </span>
                 </div>
 
-                {/* Hero Feature Image */}
-                <div className="position-relative rounded-3 overflow-hidden mb-3" style={{ height: '340px' }}>
-                  <img
-                    src="https://images.pexels.com/photos/8532616/pexels-photo-8532616.jpeg?auto=compress&cs=tinysrgb&w=800"
-                    alt="Polera Oversize Premium"
-                    className="w-100 h-100 object-fit-cover stage-card-img"
-                  />
-                  <div
-                    className="position-absolute bottom-0 start-0 end-0 p-3 stage-card-overlay"
-                  >
-                    <div className="eyebrow-badge mb-1" style={{ fontSize: '0.6rem', padding: '0.15rem 0.5rem' }}>
-                      LÍNEA URBANA PREMIUM
-                    </div>
-                    <h3 className="font-italiana text-text fs-4 mb-0">Polera Oversize Premium</h3>
-                  </div>
-                </div>
-
-                {/* Card footer details & direct link */}
-                <div className="d-flex align-items-center justify-content-between pt-1 px-1">
-                  <div>
-                    <span className="font-montserrat text-muted d-block" style={{ fontSize: '0.7rem' }}>
-                      Acabado Textil
-                    </span>
-                    <span className="font-montserrat fw-semibold text-text small">
-                      Algodón 240g · DTF Ultra HD
-                    </span>
-                  </div>
+                {/* Controles de navegación en el archivador */}
+                <div className="d-flex align-items-center gap-1">
                   <button
-                    onClick={() => navigate('/catalogo')}
-                    className="btn btn-primary btn-sm px-3 py-2 rounded-3 d-flex align-items-center gap-1 font-montserrat fw-semibold"
-                    style={{ fontSize: '0.78rem' }}
+                    onClick={prevCard}
+                    className="btn btn-sm btn-outline-secondary p-1 rounded-circle d-flex align-items-center justify-content-center"
+                    style={{ width: '28px', height: '28px' }}
+                    title="Prenda anterior"
                   >
-                    <span>Ver Detalle</span>
-                    <ArrowRight size={13} />
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    onClick={nextCard}
+                    className="btn btn-sm btn-outline-primary p-1 rounded-circle d-flex align-items-center justify-content-center"
+                    style={{ width: '28px', height: '28px' }}
+                    title="Siguiente prenda destacada"
+                  >
+                    <ChevronRight size={16} />
                   </button>
                 </div>
+              </div>
+
+              {/* Contenedor del Stack 3D */}
+              <div className="position-relative w-100" style={{ height: '470px' }}>
+                {stackCards.map((card, idx) => {
+                  // Calcular posición relativa al activeIndex
+                  const diff = (idx - activeIndex + totalCards) % totalCards;
+
+                  // Renderizar solo las primeras 3 capas del stack
+                  if (diff > 2) return null;
+
+                  const translateY = -diff * 14;
+                  const scale = 1 - diff * 0.05;
+                  const zIndex = 10 - diff;
+                  const opacity = diff === 0 ? 1 : diff === 1 ? 0.75 : 0.45;
+
+                  return (
+                    <div
+                      key={card.id}
+                      onClick={() => diff !== 0 && setActiveIndex(idx)}
+                      className="hero-preview-card p-3 shadow-2xl position-absolute top-0 start-0 w-100"
+                      style={{
+                        transform: `translateY(${translateY}px) scale(${scale})`,
+                        zIndex,
+                        opacity,
+                        transition: 'all 0.45s cubic-bezier(0.34, 1.3, 0.64, 1)',
+                        cursor: diff !== 0 ? 'pointer' : 'default',
+                        pointerEvents: diff === 0 ? 'auto' : 'auto',
+                      }}
+                    >
+                      {/* Header with Live Indicator */}
+                      <div className="d-flex align-items-center justify-content-between mb-3 px-1">
+                        <div className="d-flex align-items-center gap-2">
+                          <span className="live-dot" />
+                          <span className="font-montserrat fw-semibold text-text text-uppercase" style={{ fontSize: '0.7rem', letterSpacing: '0.1em' }}>
+                            Producción Activa en RC Estampa
+                          </span>
+                        </div>
+                        <span className="badge bg-primary-10 text-primary border border-primary-30 font-montserrat" style={{ fontSize: '0.65rem' }}>
+                          Edición 2026
+                        </span>
+                      </div>
+
+                      {/* Hero Feature Image */}
+                      <div className="position-relative rounded-3 overflow-hidden mb-3" style={{ height: '310px' }}>
+                        <img
+                          src={card.imagen}
+                          alt={card.nombre}
+                          className="w-100 h-100 object-fit-cover stage-card-img"
+                        />
+                        <div className="position-absolute bottom-0 start-0 end-0 p-3 stage-card-overlay">
+                          <div className="eyebrow-badge mb-1" style={{ fontSize: '0.6rem', padding: '0.15rem 0.5rem' }}>
+                            LÍNEA {getLinaLabel(card.linea).toUpperCase()} PREMIUM
+                          </div>
+                          <h3 className="font-italiana text-text fs-4 mb-0 text-truncate">{card.nombre}</h3>
+                        </div>
+                      </div>
+
+                      {/* Card footer details & direct link */}
+                      <div className="d-flex align-items-center justify-content-between pt-1 px-1">
+                        <div>
+                          <span className="font-montserrat text-muted d-block" style={{ fontSize: '0.7rem' }}>
+                            Acabado & Soporte
+                          </span>
+                          <span className="font-montserrat fw-semibold text-text small text-truncate d-block" style={{ maxWidth: '200px' }}>
+                            {card.materialText}
+                          </span>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`${card.tipoItem === 'drinkware' ? '/drinkware' : '/ropa'}/${card.slug}`);
+                          }}
+                          className="btn btn-primary btn-sm px-3 py-2 rounded-3 d-flex align-items-center gap-1 font-montserrat fw-semibold"
+                          style={{ fontSize: '0.78rem' }}
+                        >
+                          <span>Ver Detalle</span>
+                          <ArrowRight size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Indicadores de bolitas inferiores */}
+              <div className="d-flex justify-content-center align-items-center gap-2 mt-4">
+                {stackCards.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveIndex(i)}
+                    className="p-0 border-0 rounded-circle transition-all"
+                    style={{
+                      width: i === activeIndex ? '20px' : '7px',
+                      height: '7px',
+                      borderRadius: '999px',
+                      backgroundColor: i === activeIndex ? 'var(--brand-primary)' : 'rgba(255, 255, 255, 0.2)',
+                      cursor: 'pointer',
+                    }}
+                    title={`Ficha ${i + 1}`}
+                  />
+                ))}
               </div>
             </div>
           </div>

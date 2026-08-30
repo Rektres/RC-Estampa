@@ -723,6 +723,51 @@ $rc-solid: (
   }
 }
 
+// Badges de Líneas / Colecciones con Contraste Accesible (Dark & Light)
+.badge-linea-urbana {
+  background-color: rgba(74, 144, 217, 0.16) !important;
+  color: #60a5fa !important;
+  border: 1px solid rgba(96, 165, 250, 0.45) !important;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+}
+
+.badge-linea-formal {
+  background-color: rgba(201, 168, 76, 0.16) !important;
+  color: #e5c777 !important;
+  border: 1px solid rgba(201, 168, 76, 0.45) !important;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+}
+
+.badge-linea-drinkware {
+  background-color: rgba(92, 174, 138, 0.16) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(74, 222, 128, 0.45) !important;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+}
+
+.badge-linea-custom {
+  background-color: rgba(168, 85, 247, 0.16) !important;
+  color: #c084fc !important;
+  border: 1px solid rgba(192, 132, 252, 0.45) !important;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+}
+
 // Badges de Atributos y Características (Alto contraste Dark & Light)
 .badge-luxury-destacado {
   background-color: rgba(201, 168, 76, 0.15) !important;
@@ -778,6 +823,26 @@ $rc-solid: (
 }
 
 [data-bs-theme='light'] {
+  .badge-linea-urbana {
+    background-color: #dbeafe !important;
+    color: #1d4ed8 !important;
+    border-color: #93c5fd !important;
+  }
+  .badge-linea-formal {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+    border-color: #fcd34d !important;
+  }
+  .badge-linea-drinkware {
+    background-color: #dcfce7 !important;
+    color: #15803d !important;
+    border-color: #86efac !important;
+  }
+  .badge-linea-custom {
+    background-color: #f3e8ff !important;
+    color: #7e22ce !important;
+    border-color: #d8b4fe !important;
+  }
   .badge-luxury-destacado {
     background-color: #fef9c3 !important;
     color: #854d0e !important;
@@ -803,6 +868,44 @@ $rc-solid: (
     color: #b91c1c !important;
     border-color: #f87171 !important;
   }
+}
+
+/* Modales Luxury & Scrollbars */
+.modal-content {
+  background-color: var(--surface-card) !important;
+  border: 1px solid rgba(201, 168, 76, 0.3) !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 25px rgba(201, 168, 76, 0.08) !important;
+  overflow: hidden !important;
+}
+
+.modal-header,
+.modal-footer {
+  border-color: var(--card-border) !important;
+}
+
+/* Custom Scrollbar Interior para Modales y Tablas */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 168, 76, 0.3) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.35);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 168, 76, 0.65);
 }
 
 // Badges de Estado con Contraste Accesible y Consistente (Dark & Light)

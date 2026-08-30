@@ -243,11 +243,14 @@ export default function Lineas() {
       {/* Modal Crear / Editar Línea */}
       <Modal show={modalOpen} onHide={() => setModalOpen(false)} centered>
         <Modal.Body className="p-4 bg-surface border border-border rounded-4 font-montserrat">
-          <div className="d-flex align-items-center justify-content-between pb-2 border-bottom border-border mb-3">
+          <div className="d-flex align-items-center justify-content-between pb-3 border-bottom border-border mb-3">
             <h4 className="fs-5 fw-bold text-text mb-0">
-              {editingLinea ? `Editar Línea: ${editingLinea.nombre}` : 'Crear Nueva Línea / Colección'}
+              {editingLinea ? 'Editar Línea / Colección' : 'Crear Nueva Línea'}
             </h4>
-            <button onClick={() => setModalOpen(false)} className="btn btn-sm btn-link text-muted p-0">
+            <button
+              onClick={() => setModalOpen(false)}
+              className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
+            >
               <X size={18} />
             </button>
           </div>

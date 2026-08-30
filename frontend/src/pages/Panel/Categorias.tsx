@@ -9,15 +9,14 @@ import {
   Package,
   Layers,
   Search,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
   Sparkles,
   AlertCircle,
+  Tag,
 } from 'lucide-react';
 import { Modal } from 'react-bootstrap';
-import { panelApi } from '../../api';
+import { panelApi, type LineaInfo } from '../../api';
 import { useAsync } from '../../api/hooks';
+import LineaBadge from '../../components/shared/LineaBadge';
 import { getLinaLabel } from '../../utils';
 import type { Categoria } from '../../types';
 
@@ -37,6 +36,9 @@ export default function Categorias() {
   const [error, setError] = useState<string | null>(null);
 
   const { data: categorias, loading } = useAsync(() => panelApi.categorias.list(), [reload]);
+  const { data: lineasData } = useAsync(() => panelApi.lineas.list(), [reload]);
+
+  const lineasExistentes = Array.isArray(lineasData) ? lineasData : [];
 
   const refresh = () => {
     setReload((n) => n + 1);
@@ -48,7 +50,8 @@ export default function Categorias() {
 
   function openNueva() {
     setEditando('nueva');
-    setDraft(VACIA);
+    const primeraLinea = lineasExistentes[0]?.linea || 'urbana';
+    setDraft({ ...VACIA, linea: primeraLinea as any });
     setError(null);
     setModalOpen(true);
   }
@@ -60,7 +63,6 @@ export default function Categorias() {
     setModalOpen(true);
   }
 
-  // Generar slug automático al escribir nombre si es nueva
   function handleNombreChange(val: string) {
     if (editando === 'nueva') {
       const generatedSlug = val
@@ -121,7 +123,6 @@ export default function Categorias() {
     }
   };
 
-  // Filtrado y ordenamiento reactivo de categorías
   const categoriasFiltradas = useMemo(() => {
     if (!categorias) return [];
     const q = busqueda.toLowerCase().trim();
@@ -153,22 +154,24 @@ export default function Categorias() {
   }, [categorias, busqueda, filtroLinea, sortColumn, sortDirection]);
 
   return (
-    <div className="d-flex flex-column gap-4 animate-tab-fade">
+    <div className="d-flex flex-column gap-4 animate-tab-fade font-montserrat">
       {/* Header & Controles de Categorías */}
-      <div className="p-4 rounded-4 bg-surface border border-border d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm">
-        <div>
-          <div className="d-flex align-items-center gap-2">
-            <Layers size={20} className="text-primary" />
-            <h2 className="fs-5 fw-bold font-montserrat text-text mb-0">Gestión Dinámica de Categorías</h2>
+      <div className="p-3 p-md-4 rounded-4 bg-surface border border-border d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm">
+        <div className="d-flex align-items-center gap-3">
+          <div className="rounded-circle p-2 bg-primary bg-opacity-15 text-primary border border-primary">
+            <Layers size={22} />
           </div>
-          <p className="small text-muted mb-0 mt-1 font-montserrat">
-            Administra las categorías de catálogo para Ropa Textil, Formal y Colección Drinkware.
-          </p>
+          <div>
+            <h2 className="fs-5 fw-bold text-text mb-0">Gestión de Categorías</h2>
+            <p className="small text-muted mb-0">
+              Administra las categorías de catálogo asociadas a cada línea de producto.
+            </p>
+          </div>
         </div>
 
         <button
           onClick={openNueva}
-          className="btn btn-primary font-montserrat fw-bold d-flex align-items-center gap-2 px-3 py-2"
+          className="btn btn-primary fw-bold d-inline-flex align-items-center gap-2 px-3 py-2"
         >
           <FolderPlus size={16} />
           <span>Nueva Categoría</span>
@@ -176,17 +179,18 @@ export default function Categorias() {
       </div>
 
       {error && (
-        <div className="alert alert-danger py-2 font-montserrat small mb-0" role="alert">
-          {error}
+        <div className="alert alert-danger py-2 small mb-0 d-flex align-items-center gap-2" role="alert">
+          <AlertCircle size={16} />
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Barra de Filtros y Ordenamiento */}
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3 rounded-3 bg-surface border border-border font-montserrat">
+      {/* Barra de Filtros Dinámica con Líneas Reales */}
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3 rounded-3 bg-surface border border-border">
         <div className="d-flex align-items-center gap-2 flex-wrap">
           {/* Buscador */}
-          <div className="position-relative" style={{ minWidth: '220px' }}>
-            <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '9px' }} />
+          <div className="position-relative" style={{ minWidth: '200px' }}>
+            <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '10px' }} />
             <input
               type="text"
               value={busqueda}
@@ -206,23 +210,27 @@ export default function Categorias() {
             )}
           </div>
 
-          {/* Filtro por Línea */}
+          {/* Filtro por Líneas Existentes */}
           <div className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
-            {[
-              { key: 'todas', label: 'Todas las Líneas' },
-              { key: 'urbana', label: 'Urbana (Ropa)' },
-              { key: 'formal', label: 'Formal' },
-              { key: 'drinkware', label: 'Drinkware' },
-            ].map((item) => (
+            <button
+              onClick={() => setFiltroLinea('todas')}
+              className={`btn btn-sm border-0 ${
+                filtroLinea === 'todas' ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
+              }`}
+              style={{ fontSize: '0.75rem' }}
+            >
+              Todas
+            </button>
+            {lineasExistentes.map((item) => (
               <button
-                key={item.key}
-                onClick={() => setFiltroLinea(item.key)}
+                key={item.linea}
+                onClick={() => setFiltroLinea(item.linea)}
                 className={`btn btn-sm border-0 ${
-                  filtroLinea === item.key ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
+                  filtroLinea === item.linea ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
                 }`}
                 style={{ fontSize: '0.75rem' }}
               >
-                {item.label}
+                {item.nombre}
               </button>
             ))}
           </div>
@@ -230,7 +238,7 @@ export default function Categorias() {
 
         {/* Botones de Ordenamiento */}
         <div className="d-flex align-items-center gap-2">
-          <span className="text-muted small">Ordenar por:</span>
+          <span className="text-muted small">Ordenar:</span>
           <button
             onClick={() => handleSort('nombre')}
             className={`btn btn-sm ${sortColumn === 'nombre' ? 'btn-outline-primary fw-bold' : 'btn-outline-secondary'} py-1 px-2`}
@@ -244,13 +252,6 @@ export default function Categorias() {
             style={{ fontSize: '0.75rem' }}
           >
             Productos {sortColumn === 'total_productos' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </button>
-          <button
-            onClick={() => handleSort('linea')}
-            className={`btn btn-sm ${sortColumn === 'linea' ? 'btn-outline-primary fw-bold' : 'btn-outline-secondary'} py-1 px-2`}
-            style={{ fontSize: '0.75rem' }}
-          >
-            Línea {sortColumn === 'linea' && (sortDirection === 'asc' ? '↑' : '↓')}
           </button>
         </div>
       </div>
@@ -269,11 +270,11 @@ export default function Categorias() {
           ))}
         </div>
       ) : categoriasFiltradas.length === 0 ? (
-        <div className="p-5 text-center bg-surface border border-border rounded-4 font-montserrat">
+        <div className="p-5 text-center bg-surface border border-border rounded-4">
           <Layers size={40} className="text-muted mb-2 mx-auto" />
           <h4 className="fs-6 text-text fw-bold">No se encontraron categorías</h4>
           <p className="text-muted small mb-3">Prueba cambiando los filtros o crea una nueva categoría.</p>
-          <button onClick={openNueva} className="btn btn-primary btn-sm fw-bold">
+          <button onClick={openNueva} className="btn btn-primary btn-sm fw-bold px-3 py-2">
             + Crear Primera Categoría
           </button>
         </div>
@@ -281,26 +282,13 @@ export default function Categorias() {
         <div className="row g-3">
           {categoriasFiltradas.map((c) => {
             const count = c.total_productos || 0;
-            const esDrinkware = c.linea === 'drinkware';
-            const esFormal = c.linea === 'formal';
 
             return (
               <div key={c.id} className="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div className="p-4 rounded-4 bg-surface border border-border shadow-sm h-100 d-flex flex-column justify-content-between hover-lift font-montserrat position-relative">
+                <div className="p-4 rounded-4 bg-surface border border-border shadow-sm h-100 d-flex flex-column justify-content-between hover-lift position-relative">
                   <div>
-                    <div className="d-flex align-items-center justify-content-between mb-2">
-                      <span
-                        className={`badge ${
-                          esDrinkware
-                            ? 'bg-info bg-opacity-15 text-info border border-info'
-                            : esFormal
-                            ? 'bg-secondary bg-opacity-20 text-text border border-secondary'
-                            : 'bg-primary bg-opacity-15 text-primary border border-primary'
-                        } text-uppercase px-2 py-1`}
-                        style={{ fontSize: '0.68rem', letterSpacing: '0.04em' }}
-                      >
-                        {getLinaLabel(c.linea)}
-                      </span>
+                    <div className="d-flex align-items-center justify-content-between mb-3">
+                      <LineaBadge linea={c.linea} size="xs" />
 
                       <div className="d-flex align-items-center gap-1">
                         <button
@@ -323,7 +311,7 @@ export default function Categorias() {
                     <h3 className="fs-6 fw-bold text-text mb-1 text-truncate" title={c.nombre}>
                       {c.nombre}
                     </h3>
-                    <code className="text-muted small d-block mb-3" style={{ fontSize: '0.75rem' }}>
+                    <code className="text-primary small d-block mb-3" style={{ fontSize: '0.75rem' }}>
                       /{c.slug}
                     </code>
                   </div>
@@ -335,7 +323,7 @@ export default function Categorias() {
                     </span>
                     <button
                       onClick={() => startEdit(c)}
-                      className="btn btn-sm btn-outline-secondary py-1 px-2"
+                      className="btn btn-sm btn-outline-primary py-1 px-2 fw-semibold"
                       style={{ fontSize: '0.72rem' }}
                     >
                       Configurar
@@ -349,12 +337,17 @@ export default function Categorias() {
       )}
 
       {/* Modal Crear / Editar Categoría */}
-      <Modal show={modalOpen} onHide={() => setModalOpen(false)} centered>
+      <Modal show={modalOpen} onHide={() => setModalOpen(false)} centered backdrop="static">
         <Modal.Body className="p-4 bg-surface border border-border rounded-4 font-montserrat">
-          <div className="d-flex align-items-center justify-content-between pb-3 border-bottom border-border mb-3">
-            <h4 className="fs-5 fw-bold text-text mb-0">
-              {editando === 'nueva' ? 'Crear Nueva Categoría' : 'Editar Categoría'}
-            </h4>
+          <div className="d-flex align-items-center justify-content-between pb-3 border-bottom border-border mb-4">
+            <div className="d-flex align-items-center gap-2">
+              <div className="p-2 rounded-circle bg-primary bg-opacity-15 text-primary border border-primary">
+                <Tag size={18} />
+              </div>
+              <h4 className="fs-5 fw-bold text-text mb-0">
+                {editando === 'nueva' ? 'Crear Nueva Categoría' : 'Editar Categoría'}
+              </h4>
+            </div>
             <button
               onClick={() => setModalOpen(false)}
               className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
@@ -364,85 +357,68 @@ export default function Categorias() {
           </div>
 
           {error && (
-            <div className="alert alert-danger py-2 small mb-3">
-              {error}
+            <div className="alert alert-danger py-2 small mb-3 d-flex align-items-center gap-2">
+              <AlertCircle size={15} />
+              <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={guardar}>
-            <div className="mb-3">
-              <label className="form-label text-muted small fw-semibold">Nombre de la Categoría</label>
+          <form onSubmit={guardar} className="d-flex flex-column gap-3">
+            <div>
+              <label className="form-label text-muted small fw-semibold">Nombre de la Categoría *</label>
               <input
                 type="text"
                 value={draft.nombre}
                 onChange={(e) => handleNombreChange(e.target.value)}
-                placeholder="Ej. Polerones Oversize, Tazones Cerámica"
+                placeholder="Ej. Polerones Oversize, Tazas Térmicas"
                 className="form-control bg-elevated text-text border-border"
                 required
                 autoFocus
               />
             </div>
 
-            <div className="mb-3">
-              <label className="form-label text-muted small fw-semibold">Slug URL (Identificador único)</label>
+            <div>
+              <label className="form-label text-muted small fw-semibold">Slug URL (Identificador único) *</label>
               <input
                 type="text"
                 value={draft.slug}
                 onChange={(e) => setDraft({ ...draft, slug: e.target.value })}
-                placeholder="ej-polerones-oversize"
+                placeholder="polerones-oversize"
                 className="form-control bg-elevated text-text border-border"
                 required
               />
             </div>
 
-            <div className="mb-4">
-              <label className="form-label text-muted small fw-semibold">Línea de Producto / Colección</label>
+            <div>
+              <label className="form-label text-muted small fw-semibold">Línea / Colección Existente *</label>
               <select
-                value={['urbana', 'formal', 'drinkware', 'corporativa', 'accesorios', 'deportiva'].includes(draft.linea) ? draft.linea : 'custom'}
-                onChange={(e) => {
-                  if (e.target.value === 'custom') {
-                    setDraft({ ...draft, linea: 'nueva_linea' });
-                  } else {
-                    setDraft({ ...draft, linea: e.target.value as any });
-                  }
-                }}
-                className="form-select bg-elevated text-text border-border mb-2"
+                value={draft.linea}
+                onChange={(e) => setDraft({ ...draft, linea: e.target.value as any })}
+                className="form-select bg-elevated text-text border-border"
+                required
               >
-                <option value="urbana">Urbana (Ropa Textil Casual / Oversize)</option>
-                <option value="formal">Formal (Camisas / Chaquetas Luxury)</option>
-                <option value="drinkware">Drinkware (Vasos, Botellas & Shottings)</option>
-                <option value="corporativa">Corporativa (Empresas / Merchandising)</option>
-                <option value="accesorios">Accesorios & Complementos</option>
-                <option value="deportiva">Deportiva & Training</option>
-                <option value="custom">✨ + Otra línea personalizada...</option>
+                {lineasExistentes.map((l) => (
+                  <option key={l.linea} value={l.linea}>
+                    {l.nombre} ({l.total_productos} prod.)
+                  </option>
+                ))}
               </select>
-
-              {!['urbana', 'formal', 'drinkware', 'corporativa', 'accesorios', 'deportiva'].includes(draft.linea) && (
-                <input
-                  type="text"
-                  value={draft.linea}
-                  onChange={(e) => setDraft({ ...draft, linea: e.target.value })}
-                  placeholder="Escribe el nombre de la nueva línea (ej. Edicion Limitada)"
-                  className="form-control form-control-sm bg-elevated text-primary border-primary"
-                  required
-                />
-              )}
             </div>
 
-            <div className="d-flex justify-content-end gap-2 pt-2 border-top border-border">
+            <div className="d-flex justify-content-end gap-2 pt-3 border-top border-border mt-2">
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="btn btn-secondary btn-sm px-3"
+                className="btn btn-secondary btn-sm px-3 py-2"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={busy}
-                className="btn btn-primary btn-sm fw-bold px-4 d-flex align-items-center gap-1"
+                className="btn btn-primary btn-sm fw-bold px-4 py-2 d-flex align-items-center gap-2"
               >
-                <Check size={15} />
+                <Check size={16} />
                 <span>{busy ? 'Guardando...' : 'Guardar Categoría'}</span>
               </button>
             </div>
@@ -453,27 +429,15 @@ export default function Categorias() {
       {/* Modal Confirmación de Eliminación */}
       <Modal show={!!toDelete} onHide={() => setToDelete(null)} centered>
         <Modal.Body className="p-4 bg-surface border border-border rounded-4 font-montserrat">
-          <div className="d-flex align-items-center gap-2 text-danger mb-3">
-            <AlertCircle size={24} />
-            <h4 className="fs-5 fw-bold mb-0">Eliminar Categoría</h4>
-          </div>
+          <h4 className="fs-5 fw-bold text-danger mb-2">Eliminar Categoría</h4>
           <p className="text-muted small mb-4">
             ¿Estás seguro de eliminar la categoría <strong className="text-text">{toDelete?.nombre}</strong>?
-            {toDelete?.total_productos ? (
-              <span className="text-danger d-block mt-2">
-                ⚠️ Atención: Esta categoría tiene <strong>{toDelete.total_productos} productos</strong> asociados.
-              </span>
-            ) : null}
           </p>
           <div className="d-flex justify-content-end gap-2">
             <button onClick={() => setToDelete(null)} className="btn btn-secondary btn-sm px-3">
               Cancelar
             </button>
-            <button
-              onClick={confirmDelete}
-              disabled={busy}
-              className="btn btn-danger btn-sm fw-bold px-4"
-            >
+            <button onClick={confirmDelete} disabled={busy} className="btn btn-danger btn-sm fw-bold px-4">
               {busy ? 'Eliminando...' : 'Sí, Eliminar'}
             </button>
           </div>

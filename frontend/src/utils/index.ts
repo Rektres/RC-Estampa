@@ -16,12 +16,13 @@ export function getLinaLabel(linea: string): string {
 }
 
 export function getLineaBadgeClass(linea: string): string {
+  const normalized = (linea || '').toLowerCase().trim();
   const map: Record<string, string> = {
-    urbana: 'bg-urban-20 text-urban border border-urban-30',
-    formal: 'bg-primary-20 text-primary border border-primary-30',
-    drinkware: 'bg-drinkware-20 text-drinkware border border-drinkware-30',
+    urbana: 'badge-linea-urbana',
+    formal: 'badge-linea-formal',
+    drinkware: 'badge-linea-drinkware',
   };
-  return map[linea] ?? 'bg-elevated text-muted border border-border';
+  return map[normalized] ?? 'badge-linea-custom';
 }
 
 export function useIntersectionObserver() {
