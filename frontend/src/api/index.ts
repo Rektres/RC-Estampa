@@ -278,9 +278,25 @@ export interface EstadisticasData {
   }[];
 }
 
+export interface LineaInfo {
+  linea: string;
+  nombre: string;
+  total_productos: number;
+  total_ropa: number;
+  total_drinkware: number;
+  total_categorias: number;
+}
+
 export const panelApi = {
   productos: crudPanel<Producto>('productos'),
   drinkware: crudPanel<ProductoVajilla>('drinkware'),
+  lineas: {
+    list: () => api.get<LineaInfo[]>('/panel/lineas/').then((r) => r.data),
+    save: (data: { old_linea?: string; new_linea: string }) =>
+      api.post<{ success: boolean; linea: string }>('/panel/lineas/', data).then((r) => r.data),
+    remove: (linea: string, reassign_to: string = 'urbana') =>
+      api.delete('/panel/lineas/', { params: { linea, reassign_to } }).then((r) => r.data),
+  },
   categorias: {
     list: () => api.get<Categoria[]>('/panel/categorias/').then((r) => r.data),
     create: (data: Omit<Categoria, 'id'>) =>
@@ -308,6 +324,23 @@ export const panelApi = {
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.download = `RC_Estampa_Ventas_${periodo}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  },
+  exportarProductosExcel: async (tipo: 'ropa' | 'drinkware') => {
+    const response = await api.get('/panel/exportar-productos-excel/', {
+      params: { tipo },
+      responseType: 'blob',
+    });
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `RC_Estampa_Catalogo_${tipo === 'ropa' ? 'Ropa' : 'Drinkware'}.xlsx`;
     document.body.appendChild(link);
     link.click();
     link.remove();

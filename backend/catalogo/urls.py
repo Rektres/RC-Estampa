@@ -5,6 +5,8 @@ from .views import (
     CategoriaViewSet,
     FotoClienteViewSet,
     PanelCategoriaViewSet,
+    PanelExportarProductosExcelView,
+    PanelLineasView,
     PanelProductoVajillaViewSet,
     PanelProductoViewSet,
     PanelUploadView,
@@ -25,4 +27,6 @@ router.register('panel/categorias', PanelCategoriaViewSet, basename='panel-categ
 urlpatterns = [
     path('editor/', editor_config, name='editor-config'),
     path('panel/upload/', PanelUploadView.as_view(), name='panel-upload'),
+    path('panel/lineas/', PanelLineasView.as_view(), name='panel-lineas'),
+    path('panel/exportar-productos-excel/', PanelExportarProductosExcelView.as_view(), name='panel-exportar-productos-excel'),
 ] + router.urls

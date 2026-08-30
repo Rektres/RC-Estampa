@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   TrendingUp,
   DollarSign,
@@ -93,10 +93,17 @@ export default function Estadisticas() {
 
   const kpis = data?.kpis;
 
-  // Bloquear scroll de fondo cuando un modal esté abierto (sin mover la posición del usuario)
+  const modalTrazabilidadRef = useRef<HTMLDivElement>(null);
+  const modalHistorialRef = useRef<HTMLDivElement>(null);
+
+  // Bloquear scroll de fondo y centrar vista al tope del modal cuando se abra
   useEffect(() => {
     if (selectedTx || historyTx) {
       document.body.style.overflow = 'hidden';
+      setTimeout(() => {
+        if (selectedTx) modalTrazabilidadRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+        if (historyTx) modalHistorialRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+      }, 20);
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -1099,6 +1106,7 @@ export default function Estadisticas() {
           onClick={() => setSelectedTx(null)}
         >
           <div
+            ref={modalTrazabilidadRef}
             className="bg-surface border border-border rounded-4 p-4 shadow-lg w-100 animate-tab-fade"
             style={{ maxWidth: '44rem', maxHeight: '90vh', overflowY: 'auto' }}
             onClick={(e) => e.stopPropagation()}
@@ -1219,6 +1227,7 @@ export default function Estadisticas() {
           onClick={() => setHistoryTx(null)}
         >
           <div
+            ref={modalHistorialRef}
             className="bg-surface border border-border rounded-4 p-4 shadow-lg w-100 animate-tab-fade"
             style={{ maxWidth: '44rem', maxHeight: '90vh', overflowY: 'auto' }}
             onClick={(e) => e.stopPropagation()}

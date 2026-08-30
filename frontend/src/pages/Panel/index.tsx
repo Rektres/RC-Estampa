@@ -10,11 +10,12 @@ import {
   Shirt,
   Coffee,
   Tags,
+  Sparkles,
   LayoutList,
   LayoutGrid,
   Search,
   X,
-  Sparkles,
+  FileSpreadsheet,
   ShoppingBag,
   Filter,
   CheckCircle2,
@@ -29,17 +30,19 @@ import { useAsync } from '../../api/hooks';
 import { formatPrice } from '../../utils';
 import LineaBadge from '../../components/shared/LineaBadge';
 import Categorias from './Categorias';
+import Lineas from './Lineas';
 import Estadisticas from './Estadisticas';
 import ProductoModalForm from './ProductoModalForm';
 import type { Producto, ProductoVajilla } from '../../types';
 
-type Tab = 'estadisticas' | 'ropa' | 'drinkware' | 'categorias';
+type Tab = 'estadisticas' | 'ropa' | 'drinkware' | 'categorias' | 'lineas';
 
 const TABS: { key: Tab; label: string; icon: typeof BarChart3 }[] = [
   { key: 'estadisticas', label: 'Estadísticas & Ventas', icon: BarChart3 },
   { key: 'ropa', label: 'Ropa Textil', icon: Shirt },
   { key: 'drinkware', label: 'Colección Drinkware', icon: Coffee },
   { key: 'categorias', label: 'Categorías', icon: Tags },
+  { key: 'lineas', label: 'Líneas & Colecciones', icon: Sparkles },
 ];
 
 export default function Panel() {
@@ -60,17 +63,18 @@ export default function Panel() {
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-  // Modales
+  // Modales y estados de acción
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<Producto | ProductoVajilla | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const recurso = tab === 'drinkware' ? panelApi.drinkware : panelApi.productos;
 
   const { data: items, loading } = useAsync<(Producto | ProductoVajilla)[]>(
-    () => (tab === 'categorias' || tab === 'estadisticas' ? Promise.resolve([]) : recurso.list()),
+    () => (tab === 'categorias' || tab === 'estadisticas' || tab === 'lineas' ? Promise.resolve([]) : recurso.list()),
     [tab, reload]
   );
 
@@ -128,8 +132,8 @@ export default function Panel() {
         valA = a.categoria?.nombre || '';
         valB = b.categoria?.nombre || '';
       } else if (sortColumn === 'stock') {
-        valA = a.variantes?.reduce((s, v) => s + v.stock, 0) || 0;
-        valB = b.variantes?.reduce((s, v) => s + v.stock, 0) || 0;
+        valA = a.variantes?.reduce((s, v) => s + (v.stock || 0), 0) || 0;
+        valB = b.variantes?.reduce((s, v) => s + (v.stock || 0), 0) || 0;
       }
 
       if (typeof valA === 'number' && typeof valB === 'number') {
@@ -154,6 +158,17 @@ export default function Panel() {
   function openEditarProducto(id: number) {
     setEditId(id);
     setModalOpen(true);
+  }
+
+  async function handleExportExcel() {
+    setIsExporting(true);
+    try {
+      await panelApi.exportarProductosExcel(tab === 'drinkware' ? 'drinkware' : 'ropa');
+    } catch {
+      alert('Error al exportar catálogo a Excel.');
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   async function toggleActivo(p: Producto | ProductoVajilla) {
@@ -196,18 +211,30 @@ export default function Panel() {
         </div>
 
         {(tab === 'ropa' || tab === 'drinkware') && (
-          <button
-            onClick={openNuevoProducto}
-            className="btn btn-primary font-montserrat fw-bold d-inline-flex align-items-center gap-2 px-3 py-2"
-          >
-            <Plus size={16} />
-            <span>Nuevo Producto ({tab === 'ropa' ? 'Ropa' : 'Drinkware'})</span>
-          </button>
+          <div className="d-flex align-items-center gap-2">
+            <button
+              onClick={handleExportExcel}
+              disabled={isExporting}
+              className="btn btn-outline-success font-montserrat fw-semibold d-inline-flex align-items-center gap-2 px-3 py-2"
+              title="Exportar a Excel con hojas por categoría"
+            >
+              <FileSpreadsheet size={16} />
+              <span>{isExporting ? 'Exportando...' : 'Exportar Excel'}</span>
+            </button>
+
+            <button
+              onClick={openNuevoProducto}
+              className="btn btn-primary font-montserrat fw-bold d-inline-flex align-items-center gap-2 px-3 py-2"
+            >
+              <Plus size={16} />
+              <span>Nuevo Producto</span>
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Selector de Pestañas Principales */}
-      <div className="d-flex gap-2 border-bottom border-border mb-4 overflow-x-auto font-montserrat">
+      {/* Selector de Pestañas Principales con Separador Limpio */}
+      <div className="d-flex gap-2 border-bottom border-border pb-3 mb-4 overflow-x-auto font-montserrat">
         {TABS.map((t) => {
           const Icon = t.icon;
           const isActive = tab === t.key;
@@ -242,6 +269,8 @@ export default function Panel() {
           <Estadisticas />
         ) : tab === 'categorias' ? (
           <Categorias />
+        ) : tab === 'lineas' ? (
+          <Lineas />
         ) : (
           <div className="d-flex flex-column gap-3">
             {/* Barra de Filtros y Selector de Modo de Vista */}
@@ -427,10 +456,11 @@ export default function Panel() {
                             </td>
                             <td>
                               <span className="text-text fw-semibold d-block">{p.nombre}</span>
-                              <div className="d-flex gap-1 mt-1">
+                              <div className="d-flex flex-wrap gap-1 mt-1">
                                 <LineaBadge linea={p.linea} size="xs" />
-                                {p.destacado && <span className="badge bg-primary bg-opacity-15 text-primary">★ Destacado</span>}
-                                {p.nuevo && <span className="badge bg-info bg-opacity-15 text-info">✨ Nuevo</span>}
+                                {p.destacado && <span className="badge badge-luxury-destacado">★ Destacado</span>}
+                                {p.nuevo && <span className="badge badge-luxury-nuevo">✨ Nuevo</span>}
+                                {p.precio_oferta && <span className="badge badge-luxury-oferta">🏷️ Oferta</span>}
                               </div>
                             </td>
                             <td className="text-muted">{p.categoria?.nombre || '-'}</td>
@@ -443,7 +473,7 @@ export default function Panel() {
                               )}
                             </td>
                             <td>
-                              <span className={`badge ${stockTotal > 0 ? 'bg-elevated text-text border border-border' : 'bg-danger bg-opacity-15 text-danger'}`}>
+                              <span className={`badge ${stockTotal > 0 ? 'badge-luxury-stock-ok' : 'badge-luxury-stock-empty'}`}>
                                 {stockTotal} un.
                               </span>
                             </td>
@@ -541,11 +571,13 @@ export default function Panel() {
                               {/* Badges superiores */}
                               <div className="position-absolute top-0 start-0 m-2 d-flex flex-column gap-1">
                                 <LineaBadge linea={p.linea} size="xs" />
-                                {p.destacado && <span className="badge bg-primary text-black fw-bold" style={{ fontSize: '0.65rem' }}>★ Destacado</span>}
+                                {p.destacado && <span className="badge badge-luxury-destacado">★ Destacado</span>}
+                                {p.nuevo && <span className="badge badge-luxury-nuevo">✨ Nuevo</span>}
+                                {p.precio_oferta && <span className="badge badge-luxury-oferta">🏷️ Oferta</span>}
                               </div>
 
                               <div className="position-absolute top-0 end-0 m-2">
-                                <span className={`badge ${stockTotal > 0 ? 'bg-black text-primary' : 'bg-danger text-white'}`} style={{ fontSize: '0.7rem' }}>
+                                <span className={`badge ${stockTotal > 0 ? 'badge-luxury-stock-ok' : 'badge-luxury-stock-empty'}`}>
                                   Stock: {stockTotal}
                                 </span>
                               </div>

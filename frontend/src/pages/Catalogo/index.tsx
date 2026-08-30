@@ -1,14 +1,23 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { SlidersHorizontal, X, ShoppingBag, Sparkles, Layers } from 'lucide-react';
+import {
+  SlidersHorizontal,
+  X,
+  ShoppingBag,
+  Sparkles,
+  Layers,
+  LayoutList,
+  LayoutGrid,
+  ArrowRight,
+} from 'lucide-react';
 import FilterSidebar from '../../components/shared/FilterSidebar';
 import HoverSwapCard from '../../components/shared/HoverSwapCard';
+import LineaBadge from '../../components/shared/LineaBadge';
 import { catalogoApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { useSEO } from '../../hooks/useSEO';
+import { formatPrice } from '../../utils';
 import type { Producto, ProductoVajilla } from '../../types';
-
-const PER_PAGE = 12;
 
 const ORDENES = [
   { value: '-creado_en', label: 'Más reciente' },
@@ -34,6 +43,10 @@ export default function Catalogo() {
   const [params, setParams] = useSearchParams();
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
   const [page, setPage] = useState(1);
+
+  // Modo de visualización y productos por página
+  const [modoVista, setModoVista] = useState<'cards' | 'lista'>('cards');
+  const [perPage, setPerPage] = useState<number>(12);
 
   // Cargar productos de ropa, drinkware y categorías
   const { data: productosRopa, loading: loadingRopa } = useAsync(() => catalogoApi.productosAll(), []);
@@ -124,12 +137,11 @@ export default function Catalogo() {
     if (soloNuevos) list = list.filter((item) => item.nuevo);
     if (soloOferta) list = list.filter((item) => item.precio_oferta && item.precio_oferta < item.precio);
 
-    // 8. Búsqueda por Palabras Clave (Multi-coincidencia / Multi-word matching)
+    // 8. Búsqueda por Palabras Clave (Multi-coincidencia)
     if (q.trim()) {
       const words = q.toLowerCase().trim().split(/\s+/).filter(Boolean);
       list = list.filter((item) => {
         const fullSearchableText = `${item.nombre} ${item.descripcion || ''} ${item.categoria?.nombre || ''} ${item.linea || ''} ${item.material || ''}`.toLowerCase();
-        // Coincidencia: el texto contiene todas las palabras ingresadas
         return words.every((word) => fullSearchableText.includes(word));
       });
     }
@@ -144,8 +156,8 @@ export default function Catalogo() {
     return list;
   }, [productosRopa, productosDrinkware, linea, categorias, tallas, colores, materiales, precioMax, soloDestacados, soloNuevos, soloOferta, q, orden]);
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE) || 1;
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / perPage) || 1;
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   const filterConfig = {
     showLinea: true,
@@ -285,9 +297,9 @@ export default function Catalogo() {
           </div>
         )}
 
-        {/* Grid de Productos a la Derecha */}
+        {/* Grid / Lista de Productos a la Derecha */}
         <div className="col-12 col-lg-9">
-          {/* Barra Superior de Ordenamiento y Tags de Filtro */}
+          {/* Barra Superior: Tags, Switcher Vista, Cantidad y Ordenamiento */}
           <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3 rounded-3 bg-card border border-border mb-4 font-montserrat">
             <div className="d-flex align-items-center gap-2 flex-wrap">
               <span className="small text-muted">
@@ -313,25 +325,70 @@ export default function Catalogo() {
               ))}
             </div>
 
-            {/* Selector de Orden */}
-            <div className="d-flex align-items-center gap-2">
-              <span className="text-muted small text-nowrap">Ordenar por:</span>
-              <select
-                value={orden}
-                onChange={(e) => setOrder(e.target.value)}
-                className="form-select form-select-sm bg-elevated text-text border-border font-montserrat w-auto"
-                style={{ fontSize: '0.8rem' }}
-              >
-                {ORDENES.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+            {/* Controles de Vista, Paginación y Orden */}
+            <div className="d-flex flex-wrap align-items-center gap-2">
+              {/* Switcher de Vista: Cards vs Lista */}
+              <div className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
+                <button
+                  onClick={() => setModoVista('cards')}
+                  className={`btn btn-sm border-0 d-inline-flex align-items-center gap-1 ${
+                    modoVista === 'cards' ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
+                  }`}
+                  style={{ fontSize: '0.75rem' }}
+                  title="Vista en Tarjetas"
+                >
+                  <LayoutGrid size={13} /> <span>Cards</span>
+                </button>
+                <button
+                  onClick={() => setModoVista('lista')}
+                  className={`btn btn-sm border-0 d-inline-flex align-items-center gap-1 ${
+                    modoVista === 'lista' ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
+                  }`}
+                  style={{ fontSize: '0.75rem' }}
+                  title="Vista en Lista"
+                >
+                  <LayoutList size={13} /> <span>Lista</span>
+                </button>
+              </div>
+
+              {/* Selector de Items por Página */}
+              <div className="d-flex align-items-center gap-1">
+                <span className="text-muted small text-nowrap">Ver:</span>
+                <select
+                  value={perPage}
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="form-select form-select-sm bg-elevated text-text border-border font-montserrat w-auto"
+                  style={{ fontSize: '0.78rem' }}
+                >
+                  <option value={12}>12 / pág</option>
+                  <option value={24}>24 / pág</option>
+                  <option value={48}>48 / pág</option>
+                  <option value={9999}>Todos</option>
+                </select>
+              </div>
+
+              {/* Selector de Orden */}
+              <div className="d-flex align-items-center gap-1">
+                <select
+                  value={orden}
+                  onChange={(e) => setOrder(e.target.value)}
+                  className="form-select form-select-sm bg-elevated text-text border-border font-montserrat w-auto"
+                  style={{ fontSize: '0.78rem' }}
+                >
+                  {ORDENES.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* Grid de Cards de Productos */}
+          {/* VISTA 1: CARDS / CUADRÍCULA */}
           {loading ? (
             <div className="row g-4">
               {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -358,13 +415,85 @@ export default function Catalogo() {
                 Limpiar Todos los Filtros
               </button>
             </div>
-          ) : (
+          ) : modoVista === 'cards' ? (
             <div className="row g-4">
               {paginated.map((item: any) => (
                 <div key={`${item.tipoItem}-${item.id}`} className="col-12 col-sm-6 col-xl-4">
                   <HoverSwapCard producto={item} />
                 </div>
               ))}
+            </div>
+          ) : (
+            /* VISTA 2: LISTA HORIZONTAL ENRIQUECIDA */
+            <div className="d-flex flex-column gap-3 font-montserrat">
+              {paginated.map((item: any) => {
+                const foto = item.imagenes?.[0]?.imagen;
+                const path = item.tipoItem === 'drinkware' ? '/drinkware' : '/ropa';
+                const stockTotal = (item.variantes || []).reduce((s: number, v: any) => s + (v.stock || 0), 0);
+
+                return (
+                  <div
+                    key={`${item.tipoItem}-${item.id}`}
+                    className="p-3 bg-card rounded-4 border border-border shadow-sm hover-lift d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3"
+                  >
+                    <div className="d-flex align-items-center gap-3">
+                      <Link to={`${path}/${item.slug}`} className="text-decoration-none flex-shrink-0">
+                        <div className="rounded-3 bg-elevated border border-border overflow-hidden d-flex align-items-center justify-content-center" style={{ width: '6rem', height: '6rem' }}>
+                          {foto ? (
+                            <img src={foto} alt={item.nombre} className="w-100 h-100 object-fit-cover" />
+                          ) : (
+                            <ShoppingBag size={28} className="text-muted opacity-40" />
+                          )}
+                        </div>
+                      </Link>
+
+                      <div>
+                        <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
+                          <LineaBadge linea={item.linea} size="xs" />
+                          <span className="text-muted small text-uppercase" style={{ fontSize: '0.7rem' }}>
+                            {item.categoria?.nombre || '-'}
+                          </span>
+                          {item.destacado && <span className="badge badge-luxury-destacado">★ Destacado</span>}
+                          {item.nuevo && <span className="badge badge-luxury-nuevo">✨ Nuevo</span>}
+                          {item.precio_oferta && <span className="badge badge-luxury-oferta">🏷️ Oferta</span>}
+                        </div>
+
+                        <Link to={`${path}/${item.slug}`} className="text-decoration-none">
+                          <h3 className="fs-6 fw-bold text-text mb-1 hover-text-primary">{item.nombre}</h3>
+                        </Link>
+
+                        <p className="text-muted small mb-0 text-truncate" style={{ maxWidth: '400px', fontSize: '0.78rem' }}>
+                          {item.descripcion || 'Producto oficial de alta durabilidad y confección premium.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="d-flex flex-row flex-sm-column align-items-end justify-content-between gap-2 border-top border-sm-top-0 pt-2 pt-sm-0 border-border">
+                      <div className="text-sm-end">
+                        <span className="text-primary fw-bold fs-5 d-block">{formatPrice(item.precio_oferta ?? item.precio)}</span>
+                        {item.precio_oferta && (
+                          <span className="text-muted text-decoration-line-through small" style={{ fontSize: '0.75rem' }}>
+                            {formatPrice(item.precio)}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="d-flex align-items-center gap-2">
+                        <span className={`badge ${stockTotal > 0 ? 'badge-luxury-stock-ok' : 'badge-luxury-stock-empty'}`}>
+                          {stockTotal > 0 ? `${stockTotal} un.` : 'Agotado'}
+                        </span>
+                        <Link
+                          to={`${path}/${item.slug}`}
+                          className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 px-3 py-1 fw-bold"
+                          style={{ fontSize: '0.75rem' }}
+                        >
+                          <span>Ver</span> <ArrowRight size={13} />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 

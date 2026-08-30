@@ -15,6 +15,8 @@ import {
   DollarSign,
   Tag,
   AlertCircle,
+  Star,
+  Flame,
 } from 'lucide-react';
 import { panelApi } from '../../api';
 import type { Producto, ProductoVajilla, ProductoInput, Categoria } from '../../types';
@@ -31,10 +33,10 @@ const VARIANTE_DEFAULT = { talla: 'M', color: 'Negro', color_hex: '#111111', sto
 const IMAGEN_DEFAULT = { imagen: '', es_principal: true, es_frente: true, es_reverso: false };
 
 const LINEAS_PRESET = [
-  { key: 'urbana', label: 'Urbana (Streetwear / Oversize)' },
+  { key: 'urbana', label: 'Urbana (Streetwear / Casual)' },
   { key: 'formal', label: 'Formal (Camisas / Chaquetas Luxury)' },
-  { key: 'drinkware', label: 'Drinkware (Botellas & Vasos)' },
-  { key: 'corporativa', label: 'Línea Corporativa / Empresas' },
+  { key: 'drinkware', label: 'Drinkware (Botellas & Vasos Térmicos)' },
+  { key: 'corporativa', label: 'Corporativa / Empresas' },
   { key: 'accesorios', label: 'Accesorios & Merchandising' },
   { key: 'deportiva', label: 'Deportiva & Training' },
 ];
@@ -68,7 +70,6 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
   const [variantes, setVariantes] = useState<any[]>([{ ...VARIANTE_DEFAULT }]);
   const [imagenes, setImagenes] = useState<any[]>([{ ...IMAGEN_DEFAULT }]);
 
-  // Cargar categorías disponibles
   useEffect(() => {
     if (!show) return;
     panelApi.categorias.list().then((cats) => {
@@ -76,7 +77,6 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
     }).catch(() => setCategorias([]));
   }, [show]);
 
-  // Cargar producto si estamos en modo edición
   useEffect(() => {
     if (!show) return;
     if (esEdicion && productoId) {
@@ -141,7 +141,6 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
         .catch(() => setError('No se pudo cargar la información del producto.'))
         .finally(() => setLoadingInitial(false));
     } else {
-      // Valores por defecto al crear
       setNombre('');
       setSlug('');
       setDescripcion('');
@@ -162,7 +161,6 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
     }
   }, [show, esEdicion, productoId, esRopa]);
 
-  // Generación automática de Slug
   function handleNombreChange(val: string) {
     setNombre(val);
     if (!esEdicion) {
@@ -176,7 +174,6 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
     }
   }
 
-  // Manejo de Línea
   function handleLineaChange(val: string) {
     if (val === 'custom') {
       setIsCustomLinea(true);
@@ -187,7 +184,6 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
     }
   }
 
-  // Manejo de imágenes (subida y URL)
   async function handleFileUpload(idx: number, file: File | undefined) {
     if (!file) return;
     setSubiendoIdx(idx);
@@ -234,7 +230,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
     e.preventDefault();
     if (!nombre.trim()) { setError('El nombre del producto es obligatorio.'); return; }
     if (!descripcion.trim()) { setError('La descripción es obligatoria.'); return; }
-    if (!precio || isNaN(Number(precio))) { setError('Ingresa un precio válido.'); return; }
+    if (!precio || isNaN(Number(precio))) { setError('Ingresa un precio normal válido.'); return; }
     if (!categoriaId) { setError('Selecciona una categoría.'); return; }
 
     const finalLinea = isCustomLinea ? customLineaName.trim() || 'urbana' : linea;
@@ -312,7 +308,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                 {esEdicion ? `Editar Producto #${productoId}` : `Crear Nuevo Producto (${esRopa ? 'Ropa Textil' : 'Drinkware'})`}
               </h3>
               <p className="text-muted small mb-0">
-                Completa los datos técnicos, variantes de stock y fotos del producto.
+                Configura los datos del producto, stock de variantes y fotos oficiales.
               </p>
             </div>
           </div>
@@ -333,13 +329,13 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
         ) : (
           <form onSubmit={handleSubmit} className="d-flex flex-column gap-4">
             {/* SECCIÓN 1: DATOS GENERALES */}
-            <div className="p-3 bg-card rounded-3 border border-border">
-              <h4 className="fs-6 fw-bold text-text mb-3 d-flex align-items-center gap-2">
+            <div className="p-3 p-md-4 bg-card rounded-3 border border-border">
+              <h4 className="fs-6 fw-bold text-text mb-3 d-flex align-items-center gap-2 pb-2 border-bottom border-border">
                 <Tag size={16} className="text-primary" /> Datos Generales
               </h4>
 
               <div className="row g-3">
-                <div className="col-12 col-md-8">
+                <div className="col-12 col-md-7">
                   <label className="form-label small fw-semibold text-muted">Nombre del Producto *</label>
                   <input
                     type="text"
@@ -351,8 +347,8 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                   />
                 </div>
 
-                <div className="col-12 col-md-4">
-                  <label className="form-label small fw-semibold text-muted">Slug URL</label>
+                <div className="col-12 col-md-5">
+                  <label className="form-label small fw-semibold text-muted">Slug URL (Identificador)</label>
                   <input
                     type="text"
                     value={slug}
@@ -412,14 +408,15 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                       type="text"
                       value={customLineaName}
                       onChange={(e) => setCustomLineaName(e.target.value)}
-                      placeholder="Escribe el nombre de la nueva línea (ej. Edición Limitada)"
+                      placeholder="Escribe el nombre de la nueva línea"
                       className="form-control form-control-sm bg-elevated text-primary border-primary"
                       required
                     />
                   )}
                 </div>
 
-                <div className="col-6 col-md-3">
+                {/* Precios y Atributos Específicos */}
+                <div className="col-12 col-sm-6 col-md-3">
                   <label className="form-label small fw-semibold text-muted">Precio Normal (CLP) *</label>
                   <input
                     type="number"
@@ -431,8 +428,8 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                   />
                 </div>
 
-                <div className="col-6 col-md-3">
-                  <label className="form-label small fw-semibold text-muted">Precio Oferta (Opcional)</label>
+                <div className="col-12 col-sm-6 col-md-3">
+                  <label className="form-label small fw-semibold text-muted">Precio Oferta (CLP)</label>
                   <input
                     type="number"
                     value={precioOferta}
@@ -444,7 +441,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
 
                 {!esRopa && (
                   <>
-                    <div className="col-6 col-md-3">
+                    <div className="col-12 col-sm-6 col-md-3">
                       <label className="form-label small fw-semibold text-muted">Material</label>
                       <input
                         type="text"
@@ -454,7 +451,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                         className="form-control bg-elevated text-text border-border"
                       />
                     </div>
-                    <div className="col-6 col-md-3">
+                    <div className="col-12 col-sm-6 col-md-3">
                       <label className="form-label small fw-semibold text-muted">Capacidad (ml)</label>
                       <input
                         type="number"
@@ -468,45 +465,60 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                 )}
               </div>
 
-              {/* Toggles de Estado */}
-              <div className="d-flex flex-wrap gap-4 mt-3 pt-3 border-top border-border">
-                <label className="d-flex align-items-center gap-2 small user-select-none cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={activo}
-                    onChange={(e) => setActivo(e.target.checked)}
-                    className="form-check-input mt-0"
-                  />
-                  <span className="text-text fw-semibold">Producto Activo (Visible en tienda)</span>
-                </label>
+              {/* Toggles de Estado Espaciados y Ordenados */}
+              <div className="row g-2 mt-3 pt-3 border-top border-border">
+                <div className="col-12 col-md-4">
+                  <label className="p-2 bg-elevated rounded-3 border border-border d-flex align-items-center gap-2 user-select-none cursor-pointer h-100 mb-0">
+                    <input
+                      type="checkbox"
+                      checked={activo}
+                      onChange={(e) => setActivo(e.target.checked)}
+                      className="form-check-input mt-0"
+                    />
+                    <div>
+                      <span className="text-text fw-semibold small d-block">Producto Activo</span>
+                      <span className="text-muted" style={{ fontSize: '0.68rem' }}>Visible en la tienda</span>
+                    </div>
+                  </label>
+                </div>
 
-                <label className="d-flex align-items-center gap-2 small user-select-none cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={destacado}
-                    onChange={(e) => setDestacado(e.target.checked)}
-                    className="form-check-input mt-0"
-                  />
-                  <span className="text-primary fw-semibold">★ Destacado en Portada</span>
-                </label>
+                <div className="col-12 col-md-4">
+                  <label className="p-2 bg-elevated rounded-3 border border-border d-flex align-items-center gap-2 user-select-none cursor-pointer h-100 mb-0">
+                    <input
+                      type="checkbox"
+                      checked={destacado}
+                      onChange={(e) => setDestacado(e.target.checked)}
+                      className="form-check-input mt-0"
+                    />
+                    <div>
+                      <span className="text-primary fw-semibold small d-block">★ Destacado</span>
+                      <span className="text-muted" style={{ fontSize: '0.68rem' }}>Aparece en portada</span>
+                    </div>
+                  </label>
+                </div>
 
-                <label className="d-flex align-items-center gap-2 small user-select-none cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={nuevo}
-                    onChange={(e) => setNuevo(e.target.checked)}
-                    className="form-check-input mt-0"
-                  />
-                  <span className="text-info fw-semibold">✨ Nuevo Lanzamiento</span>
-                </label>
+                <div className="col-12 col-md-4">
+                  <label className="p-2 bg-elevated rounded-3 border border-border d-flex align-items-center gap-2 user-select-none cursor-pointer h-100 mb-0">
+                    <input
+                      type="checkbox"
+                      checked={nuevo}
+                      onChange={(e) => setNuevo(e.target.checked)}
+                      className="form-check-input mt-0"
+                    />
+                    <div>
+                      <span className="text-info fw-semibold small d-block">✨ Nuevo Lanzamiento</span>
+                      <span className="text-muted" style={{ fontSize: '0.68rem' }}>Badge de novedad</span>
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
 
             {/* SECCIÓN 2: VARIANTES & STOCK */}
-            <div className="p-3 bg-card rounded-3 border border-border">
-              <div className="d-flex align-items-center justify-content-between mb-3">
+            <div className="p-3 p-md-4 bg-card rounded-3 border border-border">
+              <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-border">
                 <h4 className="fs-6 fw-bold text-text mb-0 d-flex align-items-center gap-2">
-                  <Package size={16} className="text-primary" /> Variantes de Color, Talla & Stock
+                  <Package size={16} className="text-primary" /> Variantes de Stock & Color
                 </h4>
                 <button
                   type="button"
@@ -521,7 +533,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                 {variantes.map((v, idx) => (
                   <div key={idx} className="p-2 bg-elevated rounded-3 border border-border d-flex flex-wrap align-items-center gap-2">
                     {esRopa && (
-                      <div style={{ width: '85px' }}>
+                      <div style={{ width: '90px' }}>
                         <select
                           value={v.talla}
                           onChange={(e) => {
@@ -553,7 +565,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                       />
                     </div>
 
-                    <div className="d-flex align-items-center gap-1" style={{ width: '70px' }}>
+                    <div className="d-flex align-items-center gap-1" style={{ width: '75px' }}>
                       <input
                         type="color"
                         value={v.color_hex || '#111111'}
@@ -595,7 +607,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                           next[idx].sku = e.target.value;
                           setVariantes(next);
                         }}
-                        placeholder="SKU (opcional)"
+                        placeholder="SKU (código)"
                         className="form-control form-control-sm bg-surface text-text border-border"
                       />
                     </div>
@@ -616,8 +628,8 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
             </div>
 
             {/* SECCIÓN 3: FOTOS DEL PRODUCTO */}
-            <div className="p-3 bg-card rounded-3 border border-border">
-              <div className="d-flex align-items-center justify-content-between mb-3">
+            <div className="p-3 p-md-4 bg-card rounded-3 border border-border">
+              <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-border">
                 <h4 className="fs-6 fw-bold text-text mb-0 d-flex align-items-center gap-2">
                   <ImageIcon size={16} className="text-primary" /> Fotos & Vistas (Hover Swap)
                 </h4>

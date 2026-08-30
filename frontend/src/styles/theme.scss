@@ -723,6 +723,88 @@ $rc-solid: (
   }
 }
 
+// Badges de Atributos y Características (Alto contraste Dark & Light)
+.badge-luxury-destacado {
+  background-color: rgba(201, 168, 76, 0.15) !important;
+  color: #c9a84c !important;
+  border: 1px solid rgba(201, 168, 76, 0.45) !important;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.badge-luxury-nuevo {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  color: #22d3ee !important;
+  border: 1px solid rgba(6, 182, 212, 0.45) !important;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.badge-luxury-oferta {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.45) !important;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.badge-luxury-stock-ok {
+  background-color: var(--surface-alt) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--card-border) !important;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+}
+
+.badge-luxury-stock-empty {
+  background-color: rgba(239, 68, 68, 0.16) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.45) !important;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+}
+
+[data-bs-theme='light'] {
+  .badge-luxury-destacado {
+    background-color: #fef9c3 !important;
+    color: #854d0e !important;
+    border-color: #fde047 !important;
+  }
+  .badge-luxury-nuevo {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    border-color: #7dd3fc !important;
+  }
+  .badge-luxury-oferta {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+    border-color: #fca5a5 !important;
+  }
+  .badge-luxury-stock-ok {
+    background-color: #f1ede4 !important;
+    color: #121324 !important;
+    border-color: rgba(18, 19, 36, 0.15) !important;
+  }
+  .badge-luxury-stock-empty {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+    border-color: #f87171 !important;
+  }
+}
+
 // Badges de Estado con Contraste Accesible y Consistente (Dark & Light)
 .badge-status-pagado {
   background-color: rgba(34, 197, 94, 0.16) !important;
