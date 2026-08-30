@@ -375,8 +375,10 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                 </div>
 
                 {/* Precios y Atributos Específicos */}
-                <div className="col-12 col-sm-6 col-md-3">
-                  <label className="form-label small fw-semibold text-muted">Precio Normal (CLP) *</label>
+                <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
+                  <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                    Precio Normal (CLP) <span className="text-danger">*</span>
+                  </label>
                   <input
                     type="number"
                     value={precio}
@@ -387,8 +389,10 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                   />
                 </div>
 
-                <div className="col-12 col-sm-6 col-md-3">
-                  <label className="form-label small fw-semibold text-muted">Precio Oferta (CLP)</label>
+                <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
+                  <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                    Precio Oferta (CLP)
+                  </label>
                   <input
                     type="number"
                     value={precioOferta}
@@ -401,7 +405,9 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                 {!esRopa && (
                   <>
                     <div className="col-12 col-sm-6 col-md-3">
-                      <label className="form-label small fw-semibold text-muted">Material</label>
+                      <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                        Material
+                      </label>
                       <input
                         type="text"
                         value={material}
@@ -411,7 +417,9 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                       />
                     </div>
                     <div className="col-12 col-sm-6 col-md-3">
-                      <label className="form-label small fw-semibold text-muted">Capacidad (ml)</label>
+                      <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                        Capacidad (ml)
+                      </label>
                       <input
                         type="number"
                         value={capacidadMl}

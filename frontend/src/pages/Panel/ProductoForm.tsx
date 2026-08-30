@@ -205,19 +205,19 @@ export default function PanelProductoForm() {
             <ErrorMsg msg={errors.descripcion?.message} />
           </div>
           <div className="row g-3">
-            <div className="col-6 col-sm-3">
-              <label className={labelCls} style={labelStyle}>Precio (CLP) *</label>
+            <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
+              <label className={labelCls} style={{ ...labelStyle, whiteSpace: 'nowrap' }}>Precio (CLP) *</label>
               <input {...register('precio')} className={inputCls} placeholder="19990" />
               <ErrorMsg msg={errors.precio?.message} />
             </div>
-            <div className="col-6 col-sm-3">
-              <label className={labelCls} style={labelStyle}>Precio oferta</label>
+            <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
+              <label className={labelCls} style={{ ...labelStyle, whiteSpace: 'nowrap' }}>Precio oferta</label>
               <input {...register('precio_oferta')} className={inputCls} placeholder="opcional" />
               <ErrorMsg msg={errors.precio_oferta?.message} />
             </div>
             {esRopa ? (
-              <div className="col-6 col-sm-3">
-                <label className={labelCls} style={labelStyle}>Línea *</label>
+              <div className="col-12">
+                <label className={labelCls} style={{ ...labelStyle, whiteSpace: 'nowrap' }}>Línea *</label>
                 <select {...register('linea')} className="form-select form-select-sm bg-elevated font-montserrat">
                   {(lineas ?? []).map((l) => (
                     <option key={l.linea} value={l.linea}>
@@ -228,12 +228,12 @@ export default function PanelProductoForm() {
               </div>
             ) : (
               <>
-                <div className="col-6 col-sm-3">
-                  <label className={labelCls} style={labelStyle}>Material *</label>
+                <div className="col-12 col-sm-6 col-md-3">
+                  <label className={labelCls} style={{ ...labelStyle, whiteSpace: 'nowrap' }}>Material *</label>
                   <input {...register('material')} className={inputCls} placeholder="Cerámica" />
                 </div>
-                <div className="col-6 col-sm-3">
-                  <label className={labelCls} style={labelStyle}>Capacidad (ml)</label>
+                <div className="col-12 col-sm-6 col-md-3">
+                  <label className={labelCls} style={{ ...labelStyle, whiteSpace: 'nowrap' }}>Capacidad (ml)</label>
                   <input {...register('capacidad_ml')} className={inputCls} placeholder="350" />
                 </div>
               </>
