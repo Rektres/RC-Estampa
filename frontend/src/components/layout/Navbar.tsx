@@ -49,7 +49,7 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`position-fixed top-0 start-0 end-0 navbar-escenico ${
+        className={`position-fixed top-0 start-0 end-0 navbar-custom ${
           scrolled ? 'scrolled' : ''
         }`}
         style={{ zIndex: 1030 }}
@@ -176,7 +176,7 @@ export default function Navbar() {
       {/* Search overlay */}
       {searchOpen && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center px-3 modal-backdrop-escenico"
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center px-3 modal-backdrop-custom"
           style={{ zIndex: 1060, paddingTop: '6.5rem' }}
         >
           <form onSubmit={handleSearch} className="w-100" style={{ maxWidth: '38rem' }}>
@@ -187,7 +187,7 @@ export default function Navbar() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar poleras, polerones, drinkware..."
+                placeholder="Buscar poleras, polerones, vasos, termos, tazas..."
                 className="flex-grow-1 bg-transparent text-text font-montserrat border-0"
                 style={{ outline: 'none', boxShadow: 'none' }}
               />

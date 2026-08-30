@@ -192,7 +192,7 @@ export default function Lineas() {
                     <div className="d-flex align-items-center justify-content-between mb-3">
                       <LineaBadge linea={l.linea} size="sm" />
                       {isSinCategoria ? (
-                        <span className="badge bg-warning bg-opacity-15 text-warning border border-warning d-flex align-items-center gap-1" style={{ fontSize: '0.68rem' }}>
+                        <span className="badge-admin-only">
                           <EyeOff size={12} />
                           <span>Solo Admin (Oculta al público)</span>
                         </span>

@@ -89,7 +89,7 @@ export default function Destacados() {
       {/* Modal de Especificaciones Técnicas (Componente F de la Guía) */}
       {specProduct && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center px-3 modal-backdrop-escenico"
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center px-3 modal-backdrop-custom"
           style={{
             zIndex: 1070,
           }}

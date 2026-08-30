@@ -42,15 +42,15 @@ export default function ManifiestoEscenico() {
           <div className="col-12 col-md-9 ps-md-4">
             <div className="eyebrow-badge mb-3">
               <span className="glyph">★</span>
-              <span>FILOSOFÍA DEL ATELIER</span>
+              <span>CALIDAD & ESTAMPADO INTEGRAL</span>
             </div>
 
             <h2 className="font-italiana text-text fs-1 mb-4 lh-sm">
-              La estampería como lenguaje de identidad, arte y calidad duradera.
+              Estampado y personalización premium en textil, drinkware y artículos de colección.
             </h2>
 
             <p className="font-montserrat text-muted lead mb-4" style={{ fontSize: '0.98rem', lineHeight: '1.8' }}>
-              En RC Estampa no concebimos la prenda como un simple lienzo inerte, sino como un manifiesto visual en movimiento. Cada gota de tinta pigmentada, cada emulsión y cada curado térmico responden a la exigencia de creadores, bandas, empresas y personas que entienden que vestir o portar una pieza es proyectar carácter y autenticidad sin concesiones.
+              En RC Estampa transformamos poleras, polerones, camisas, botellas térmicas, vasos y tazas en piezas únicas de alta fidelidad. Utilizamos tecnología DTF Textil Ultra HD con tintas ecológicas certificadas y grabado láser de ultra precisión, garantizando colores vibrantes, máxima resistencia a más de 50 lavados y acabados profesionales para marcas, empresas y creadores.
             </p>
 
             <div className="d-flex flex-wrap align-items-center gap-4 pt-2">
@@ -59,7 +59,7 @@ export default function ManifiestoEscenico() {
                 className="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2 rounded-3 hover-lift"
               >
                 <Sparkles size={16} />
-                <span>Crear Pieza en el taller de RC Estampa</span>
+                <span>Diseñar en el Editor Digital</span>
                 <ArrowRight size={15} />
               </Link>
               <span className="font-montserrat text-ghost small" style={{ fontSize: '0.78rem' }}>

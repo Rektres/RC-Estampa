@@ -1,5 +1,5 @@
 // ===========================================================================
-// RC Estampa — Sistema de Diseño Escénico (v2.0 Fusión Escénica + Luxury)
+// RC Estampa — Sistema de Diseño Luxury E-Commerce & Alta Fidelidad
 // ===========================================================================
 
 // 1. Overrides de variables ANTES de importar Bootstrap
@@ -19,7 +19,7 @@ $enable-negative-margins: true;
 @import 'bootstrap/scss/bootstrap';
 
 // ===========================================================================
-// 3. Arquitectura de Tokens Dinámicos & Paleta Escénica Luxury
+// 3. Arquitectura de Tokens Dinámicos & Paleta Luxury
 // ===========================================================================
 :root {
   // Capa 1: Tokens de Marca (Base)
@@ -29,7 +29,7 @@ $enable-negative-margins: true;
   --brand-accent-cyan: #22d3ee;    // Láser cian para indicadores en vivo / badges activos
 
   // Capa 2: Tokens de Superficie (Dark Mode por defecto)
-  --surface-base: #070814;         // Fondo principal escénico
+  --surface-base: #070814;         // Fondo principal
   --surface-card: #0f1026;         // Tarjetas y paneles flotantes
   --surface-alt: #161836;          // Secciones alternadas y elevadas
 
@@ -59,7 +59,7 @@ $enable-negative-margins: true;
   --rc-drinkware: #5cae8a;
 }
 
-// Adaptación de Bootstrap al esquema escénico Dark
+// Adaptación de Bootstrap al esquema Dark
 [data-bs-theme='dark'] {
   --brand-primary: #c9a84c;
   --brand-secondary: #dfb755;
@@ -70,8 +70,8 @@ $enable-negative-margins: true;
   --surface-card: #0f1026;
   --surface-alt: #161836;
 
-  --card-border: rgba(255, 255, 255, 0.1);
-  --card-border-gold: rgba(201, 168, 76, 0.35);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-border-gold: rgba(201, 168, 76, 0.25);
   --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
   --card-shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.65);
 
@@ -79,12 +79,13 @@ $enable-negative-margins: true;
   --text-muted: #E2E8F0;
   --text-ghost: #94A3B8;
 
-  --stage-card-overlay-bg: linear-gradient(to top, rgba(7, 8, 20, 0.94) 0%, rgba(7, 8, 20, 0.45) 50%, transparent 100%);
-  --platform-path-overlay-bg: linear-gradient(180deg, rgba(7, 8, 20, 0.82) 0%, rgba(7, 8, 20, 0.96) 100%);
-  --preview-card-bg: linear-gradient(145deg, rgba(15, 16, 38, 0.95) 0%, rgba(22, 24, 54, 0.9) 100%);
+  --badge-pill-bg: rgba(201, 168, 76, 0.08);
+  --badge-pill-border: rgba(201, 168, 76, 0.3);
+  --badge-pill-color: var(--brand-primary);
+
+  --platform-path-overlay-bg: rgba(7, 8, 20, 0.85);
   --modal-backdrop-bg: rgba(7, 8, 20, 0.85);
 
-  --bs-body-bg: var(--surface-base);
   --bs-body-color: var(--text-main);
   --bs-border-color: var(--card-border);
   --bs-secondary-color: var(--text-muted);
@@ -107,7 +108,7 @@ $enable-negative-margins: true;
   --bs-form-control-border-color: var(--card-border);
 }
 
-// Adaptación de Bootstrap al esquema escénico Light (Luxury Alabaster & Warm Gold)
+// Adaptación de Bootstrap al esquema Light (Luxury Alabaster & Warm Gold)
 [data-bs-theme='light'] {
   --brand-primary: #b8933d;        // Oro con alto contraste para legibilidad en fondos claros
   --brand-secondary: #c9a84c;
@@ -176,7 +177,7 @@ h4, h5, h6 {
   font-weight: 600;
 }
 
-// Regla Maestra de Justificación (del Sistema de Diseño Escénico)
+// Regla Maestra de Justificación de Texto
 p {
   text-align: justify;
   text-justify: inter-word;
@@ -197,7 +198,7 @@ p {
   hyphens: manual;
 }
 
-// Titular Monumental Escénico (Hero Giant Title)
+// Titular Monumental (Hero Giant Title)
 .hero-giant-title {
   font-family: 'Italiana', serif;
   letter-spacing: -0.035em;
@@ -356,6 +357,7 @@ p {
 }
 
 // 5.6 Navbar Glassmorphism
+.navbar-custom,
 .navbar-escenico {
   background: rgba(7, 8, 20, 0.75) !important;
   backdrop-filter: blur(20px) !important;
@@ -374,20 +376,23 @@ p {
 
     &.scrolled {
       background: rgba(250, 248, 245, 0.96) !important;
-      box-shadow: 0 8px 24px rgba(18, 19, 36, 0.07);
+      box-shadow: 0 10px 30px rgba(18, 19, 36, 0.08);
     }
   }
 }
 
-// 5.7 Stage Card (Catálogo Técnico)
-.stage-card {
-  background: var(--surface-card);
-  border: 1px solid var(--card-border);
-  border-radius: 12px;
+// 5.7 Hero Showcase Cards
+.hero-showcase-card {
+  border-radius: 1.5rem !important;
   overflow: hidden;
-  position: relative;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(201, 168, 76, 0.25) !important;
+}
 
+// 5.8 Destacados Mini Cards
+.destacado-mini-card {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
   &:hover {
     transform: translateY(-4px);
     border-color: rgba(201, 168, 76, 0.45);
@@ -446,7 +451,8 @@ p {
   background: var(--platform-path-overlay-bg) !important;
 }
 
-// 5.12 Modal Backdrop Escénico
+// 5.12 Modal Backdrop
+.modal-backdrop-custom,
 .modal-backdrop-escenico {
   background-color: var(--modal-backdrop-bg) !important;
   backdrop-filter: blur(12px) !important;
@@ -614,7 +620,7 @@ $rc-solid: (
   }
 }
 
-// Botón Primario con Gradiente Escénico Luxury
+// Botón Primario con Gradiente Luxury
 .btn-primary {
   --bs-btn-bg: var(--brand-primary);
   --bs-btn-border-color: var(--brand-primary);
@@ -822,6 +828,20 @@ $rc-solid: (
   border-radius: 6px;
 }
 
+.badge-admin-only {
+  background-color: rgba(234, 179, 8, 0.16) !important;
+  color: #facc15 !important;
+  border: 1px solid rgba(250, 204, 21, 0.45) !important;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 [data-bs-theme='light'] {
   .badge-linea-urbana {
     background-color: #dbeafe !important;
@@ -842,6 +862,11 @@ $rc-solid: (
     background-color: #f3e8ff !important;
     color: #7e22ce !important;
     border-color: #d8b4fe !important;
+  }
+  .badge-admin-only {
+    background-color: #fef9c3 !important;
+    color: #854d0e !important;
+    border-color: #facc15 !important;
   }
   .badge-luxury-destacado {
     background-color: #fef9c3 !important;

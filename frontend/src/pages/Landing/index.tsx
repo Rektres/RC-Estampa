@@ -13,14 +13,14 @@ import { useSEO } from '../../hooks/useSEO';
 
 export default function Landing() {
   useSEO({
-    title: 'RC Estampa de Estampado Textil & Drinkware',
-    description: 'Personalización y estampado de alta definición en poleras oversize, polerones, tazas y botellas térmicas. DTF Textil Ultra HD y serigrafía en Chile.',
-    keywords: 'estampado textil santiago, dtf textil chile, poleras personalizadas, serigrafia santiago, drinkware personalizado, botellas termicas grabadas, rc estampa',
+    title: 'RC Estampa | E-Commerce de Estampado Textil & Drinkware Personalizado',
+    description: 'Personalización y estampado de alta definición en poleras, polerones, camisas, vasos, termos, tazas y botellas térmicas. DTF Textil Ultra HD y grabado láser en Chile.',
+    keywords: 'estampado textil santiago, dtf textil chile, poleras personalizadas, polerones estampados, vasos grabados, termos personalizados, tazas sublimadas, drinkware grabado, rc estampa',
   });
 
   return (
     <div className="bg-surface">
-      {/* 1. Hero con Eyebrow + Titular Monumental + Doble CTA + Preview con Live Dot */}
+      {/* 1. Hero con Cover Flow 3D + Titular + Doble CTA + Preview */}
       <HeroEscenico />
 
       {/* 2. Barra de Estadísticas y Confianza (Trust Bar) */}
@@ -32,10 +32,10 @@ export default function Landing() {
       {/* 4. Grilla de los 4 Pilares de Excelencia */}
       <PilaresExcelencia />
 
-      {/* 5. Catálogo Técnico con Filter Chips Dinámicos y Stage Cards */}
+      {/* 5. Catálogo Técnico con Filter Chips Dinámicos y Cards */}
       <Destacados />
 
-      {/* 6. Manifiesto Escénico con Orbe Holográfico Interactivo */}
+      {/* 6. Manifiesto de Marca con Orbe Holográfico Interactivo */}
       <ManifiestoEscenico />
 
       {/* 7. Platform Paths (Recorridos por Tipo de Audiencia) */}

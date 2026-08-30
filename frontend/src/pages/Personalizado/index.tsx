@@ -94,11 +94,11 @@ export default function Personalizado() {
       <div className="text-center mb-5">
         <div className="eyebrow-badge mb-3">
           <span className="glyph">★</span>
-          <span>ATELIER DE PEDIDOS PERSONALIZADOS</span>
+          <span>CENTRO DE ESTAMPADO & PEDIDOS PERSONALIZADOS</span>
         </div>
         <h1 className="font-italiana text-text fs-1 mb-2">Solicitud de Cotización a Medida</h1>
-        <p className="font-montserrat text-muted mx-auto" style={{ maxWidth: '34rem' }}>
-          Cuéntanos sobre tu proyecto. Elaboramos cotizaciones personalizadas para marcas, producciones especiales, eventos y empresas.
+        <p className="font-montserrat text-muted mx-auto" style={{ maxWidth: '36rem' }}>
+          Cuéntanos sobre tu proyecto. Elaboramos cotizaciones y presupuestos a medida para ropa textil, vasos, termos, tazas, botellas térmicas, marcas y empresas.
         </p>
 
         {/* Steps Cards */}

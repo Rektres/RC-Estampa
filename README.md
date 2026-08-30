@@ -1,173 +1,183 @@
-# RC Estampa — Atelier & E-Commerce Escénico
+# RC Estampa — E-Commerce de Estampado Integral & Drinkware Personalizado
 
-Plataforma e-commerce y atelier digital de estampado textil y drinkware premium. Cuenta con catálogo dinámico con filtros facetados, carrito persistente, checkout, sistema de cotizaciones a medida, **editor de diseño interactivo sobre canvas** (fabric.js), **suite completa de SEO & AI-Readiness** y diseño visual de alta costura con soporte nativo para **Modo Light y Dark**.
+Plataforma e-commerce y estudio digital de personalización y estampado de alta gama para todo tipo de productos: **ropa textil (poleras, polerones, camisas, chaquetas)**, **drinkware (vasos, termos, tazas, botellas térmicas)** y **merchandising corporativo**. 
 
-Monorepo desacoplado: **React 18 + TypeScript** (frontend) · **Django 5 + DRF** (backend) · **PostgreSQL** · empaquetado y orquestado con **Docker**.
+Integra catálogo facetado con filtros reactivos, carrito persistente, checkout seguro con pasarela de pagos, sistema de cotizaciones B2B, **editor interactivo sobre canvas** (*Fabric.js*), **panel de administración avanzado con métricas y exportación a Excel**, y una **suite completa de SEO & AI-Readiness** con soporte nativo para **Modo Light y Dark**.
 
----
-
-## 💎 Características Principales
-
-### 1. Diseño Escénico Luxury & Paleta de Marca
-* **Tipografías:** *Italiana* (serif monumental para titulares) y *Montserrat* (sans-serif geométrica para lectura técnica y cuerpo).
-* **Componentes Escénicos:**
-  * `HeroEscenico`: Titular monumental, micro trust pills, doble llamado a la acción y tarjeta de previsualización de producto con Live Dot.
-  * `TrustBar`: Estadísticas clave de producción (24-48h despacho, 50+ lavados garantizados, 100% DTF HD).
-  * `MarqueeTicker`: Carrusel orgánico infinito con marcas y técnicas del taller.
-  * `PilaresExcelencia`: Grilla de diferenciales de valor y certificaciones ecológicas OEKO-TEX®.
-  * `Destacados`: Filtros de catálogo en vivo con tarjetas *Stage Card* y modal de ficha técnica.
-  * `ManifiestoEscenico`: Caja editorial con orbe holográfico interactivo.
-  * `PlatformPaths`: Recorridos visuales según tipo de audiencia (Streetwear, Corporativo, Drinkware).
-  * `GarantiaModulo` & `SocialProof`: Módulo de certificación oficial y mosaico de testimonios.
-  * `FAQEscenico`: Acordeón interactivo de preguntas frecuentes con soporte para Schema.org.
-  * `LuxuryBoxCotizacion`: Formulario express de cotización B2B integrado en la landing.
-
-### 2. Modo Light / Dark Dinámico
-* **Arquitectura de Tokens CSS ([`theme.scss`](frontend/src/styles/theme.scss)):**
-  * **Modo Dark:** Obsidiana profundo (`#070814`), azul noche (`#0F1026`), elevación (`#161836`) y acentos dorados luminosos (`#C9A84C`).
-  * **Modo Light:** Fondo pergamino alabastro (`#FAF8F5`), tarjetas blanco marfil puro (`#FFFFFF`), elevación beige perla (`#F3EFE6`), textos en tinta obsidiana (`#121324`) y acentos dorados satinados (`#B8933D`).
-* **Sincronización:** Zustand store con persistencia en `localStorage` (`rc_theme`) y conmutador Sol/Luna en Navbar para escritorio y móvil.
-
-### 3. Suite SEO, Rich Snippets & AI-Readiness
-* **Hook Reactivo [`useSEO.ts`](frontend/src/hooks/useSEO.ts):** Metatítulos dinámicos optimizados para CTR por vista, metadescripciones persuasivas y canonical URLs automáticas.
-* **Datos Estructurados Schema.org (JSON-LD):**
-  * `LocalBusiness` en [`index.html`](frontend/index.html) con geolocalización, horarios, teléfono y cobertura en Chile.
-  * `FAQPage` en [`FAQEscenico.tsx`](frontend/src/pages/Landing/FAQEscenico.tsx) para activar rich snippets (preguntas desplegables) en Google.
-* **Estándares Web y Rastreo de IA:**
-  * [`robots.txt`](frontend/public/robots.txt): Directivas para Googlebot, Bingbot y crawlers de IA (`GPTBot`, `ClaudeBot`, `PerplexityBot`, `Google-Extended`).
-  * [`sitemap.xml`](frontend/public/sitemap.xml): Mapa del sitio XML con todas las URLs públicas y prioridades.
-  * [`llms.txt`](frontend/public/llms.txt): Estándar estructurado para indexación contextual por modelos de Inteligencia Artificial (ChatGPT, Claude, Gemini, Perplexity).
-* **Manual y Checklist de Auditoría en PDF:** Incluye la [`Guia_Maestra_SEO_CRO_Estandar_Web.pdf`](Guia_Maestra_SEO_CRO_Estandar_Web.pdf) con 27 puntos clave y tabla de verificación imprimible.
-
-### 4. Herramientas CRO & Conversión Móvil
-* **Barra Sticky Móvil ([`MobileStickyBar.tsx`](frontend/src/components/layout/MobileStickyBar.tsx)):** Barra inferior fija en celulares con accesos directos (*Diseñar Prenda*, *Catálogo*, *WhatsApp Asesor*).
-* **Botón de Compartir ([`ShareButton.tsx`](frontend/src/components/shared/ShareButton.tsx)):** Integración nativa con Web Share API en dispositivos móviles y fallback a WhatsApp / Copiar enlace en escritorio.
-* **Open Graph & Twitter Cards:** Previsualización con imagen de portada, título y descripción al compartir en WhatsApp, Instagram, Telegram y redes sociales.
+Arquitectura monorepo desacoplada: **React 18 + TypeScript** en frontend, **Django 5 + Django REST Framework** en backend, **PostgreSQL** y orquestación con **Docker**.
 
 ---
 
-## Stack Tecnológico
+## 🚀 Stack Tecnológico
 
-| Capa | Tecnologías |
-| :--- | :--- |
-| **Frontend** | Vite, React 18, TypeScript, Bootstrap 5 (react-bootstrap + SCSS), Zustand, React Router 7, react-hook-form + Zod, Lucide React, fabric.js |
-| **Backend** | Django 5, Django REST Framework, SimpleJWT (auth), django-filter, Pillow, Gunicorn, WhiteNoise |
-| **Base de Datos** | PostgreSQL (Docker) · SQLite (fallback de desarrollo local) |
-| **Infraestructura** | Docker, Docker Compose, Nginx (Reverse Proxy & SPA fallback), Tailscale Funnel |
+| Capa | Tecnologías | Descripción |
+| :--- | :--- | :--- |
+| **Frontend** | React 18, TypeScript, Vite | SPA modular con tipado estricto y renderizado ultra rápido. |
+| **Estilos & UI** | Bootstrap 5, SCSS Tokens, Lucide React | Sistema de diseño de alta gama con soporte nativo Light / Dark. |
+| **Estado Global** | Zustand (`persist`) | Manejo de carrito de compras, sesión de usuario y tema visual. |
+| **Diseñador Canvas** | Fabric.js (HTML5 Canvas) | Editor interactivo de personalización con carga de capas, logos y texto. |
+| **Validaciones** | React Hook Form + Zod | Formularios tipados con validación de esquemas en tiempo real. |
+| **Backend API** | Django 5, Django REST Framework | API RESTful robusta, autenticación SimpleJWT y permisos por rol. |
+| **Procesamiento** | Pillow, OpenPyXL, django-filter | Optimización de imágenes, exportación de catálogos a Excel y filtrado. |
+| **Base de Datos** | PostgreSQL 16 (Docker) · SQLite (Local) | Persistencia relacional optimizada con índices y migraciones continuas. |
+| **Infraestructura** | Docker, Docker Compose, Nginx | Multi-stage build para frontend, proxy inverso y aislamiento de red. |
 
 ---
 
-## Estructura del Proyecto
+## 💎 Módulos y Funcionalidades Destacadas
+
+### 1. Portada Interactiva con Efecto Cover Flow 3D
+- Carrusel de productos destacados con **perspectiva tridimensional** (`perspective: 1100px`, `transform-style: preserve-3d`), rotación dinámica en el eje Y y navegación fluida por clic, controles táctiles y selector de puntos.
+- Módulos de confianza: barra de estadísticas de despacho y calidad, ticker infinito de técnicas y manifiesto de marca con orbe holográfico.
+
+### 2. Editor de Diseño Interactivo sobre Canvas
+- Personalización en tiempo real sobre prendas y drinkware.
+- Herramientas de texto enriquecido, selección tipográfica, paleta de colores, carga de logotipos / vectores y lápiz de dibujo.
+- Cálculo de cotización en vivo y guardado de proyectos exportables.
+
+### 3. Catálogo Facetado con Filtros Dinámicos
+- **Líneas & Colecciones Reales:** Sincronización directa desde base de datos (`/api/lineas/`).
+- **Filtro de Precio 'Entre' (Desde / Hasta):** Casillas numéricas editables con presets rápidos (`< $15k`, `$15k - $30k`, `$30k - $50k`, `> $50k`) y filtrado reactivo.
+- **Scrollbar Independiente:** Barra lateral con desplazamiento interno para navegar fácilmente filtros extensos sin depender del scroll de la página.
+- Filtros por categorías, tallas con stock disponible, colores y materiales.
+
+### 4. Panel de Control y Administración Integral
+- **Dashboard de Estadísticas:** Métricas clave en tiempo real (volumen de ventas, pedidos activos, alertas de stock bajo y ticket promedio).
+- **CRUD de Ropa & Drinkware:** Creación y edición con modal instantáneo, control de múltiples variantes (talla, color, stock, SKU) y galería de fotos.
+- **Gestión de Líneas y Colecciones:** Creación, edición y eliminación de líneas con regla de seguridad (al menos 1 línea activa) y reasignación automática a *"Ropa sin categoría"*.
+- **Exportación a Excel Corporativo:** Generación automatizada de reportes `.xlsx` con paleta corporativa y hojas organizadas por categoría para ropa y drinkware.
+- **Trazabilidad de Pedidos:** Modal interactivo para actualizar estados de pedidos con historial de auditoría y notas internas.
+
+### 5. Checkout y Pasarela de Pagos
+- Carrito de compras persistente con cálculo automático de totales.
+- Flujo de compra con soporte para **MercadoPago** y **Transferencia Bancaria**.
+- Seguimiento de pedidos con código único de tracking y notificaciones por correo/WhatsApp.
+
+### 6. Sistema de Diseño Dual (Light / Dark)
+- Arquitectura de variables y tokens SCSS accesibles con alto contraste para insignias, tipografías y contenedores.
+- Conmutador instantáneo sin recarga con persistencia en `localStorage`.
+
+### 7. Suite Completa de SEO & AI-Readiness
+- **Hook [`useSEO.ts`](frontend/src/hooks/useSEO.ts):** Metadatos dinámicos por vista y canonical tags automáticas.
+- **Datos Estructurados Schema.org:** `LocalBusiness`, `FAQPage` y marcado semántico de productos para Google Rich Snippets.
+- **Estándar para Agentes de IA:** Archivo [`llms.txt`](frontend/public/llms.txt), `robots.txt` optimizado y `sitemap.xml` automatizado.
+
+---
+
+## 📁 Estructura del Monorepo
 
 ```
 .
-├── frontend/                     # SPA React + TypeScript
+├── frontend/                     # SPA React 18 + TypeScript + Vite
 │   ├── public/
-│   │   ├── Logo_RCEstampa.png    # Logotipo oficial
-│   │   ├── robots.txt            # Reglas de rastreo SEO y bots de IA
-│   │   ├── sitemap.xml           # Mapa del sitio XML
-│   │   └── llms.txt              # Estándar para LLMs y agentes de IA
+│   │   ├── Logo_RCEstampa.png    # Logotipo oficial de la marca
+│   │   ├── robots.txt            # Directivas de rastreo SEO y bots de IA
+│   │   ├── sitemap.xml           # Mapa del sitio XML indexable
+│   │   └── llms.txt              # Estándar para indexación por LLMs y agentes IA
 │   ├── src/
-│   │   ├── api/                  # Cliente Axios + servicios tipados + hooks asíncronos
-│   │   ├── components/           # Layout (Navbar, Footer, MobileStickyBar) y compartidos
-│   │   ├── hooks/                # Hooks personalizados (useSEO)
-│   │   ├── pages/                # Landing, Catalogo, Drinkware, Disenador, Personalizado, Panel
-│   │   ├── store/                # Zustand (cartStore, authStore, themeStore)
-│   │   ├── styles/               # theme.scss (tokens de color Light/Dark y estilos escénicos)
+│   │   ├── api/                  # Clientes Axios tipados y hooks asíncronos
+│   │   ├── components/           # Layout, Diseñador Canvas, Filtros y Badges
+│   │   ├── hooks/                # Hooks personalizados (useSEO, useIntersectionObserver)
+│   │   ├── pages/                # Landing, Catalogo, Drinkware, Disenador, Panel, Checkout
+│   │   ├── store/                # Stores Zustand (cartStore, authStore, themeStore)
+│   │   ├── styles/               # theme.scss (tokens de color Light/Dark y estilos)
 │   │   └── types/                # Interfaces TypeScript sincronizadas con DRF
-│   ├── Dockerfile                # Multi-stage build (Node -> Nginx Alpine)
-│   └── nginx.conf                # Fallback SPA + proxy a /api, /media, /admin
-├── backend/                      # API Django 5 + DRF
-│   ├── config/                   # Settings, URLs, paginación y seguridad
-│   ├── cuentas/                  # Gestión de usuarios, roles (admin/cliente) y JWT
-│   ├── catalogo/                 # Modelos y vistas de Ropa, Drinkware, Variantes e Imágenes
-│   ├── pedidos/                  # Pedidos, Carrito y Checkout
+│   ├── Dockerfile                # Multi-stage build (Node Alpine -> Nginx Alpine)
+│   └── nginx.conf                # Fallback SPA + proxy inverso a /api, /media y /admin
+├── backend/                      # API Django 5 + Django REST Framework
+│   ├── config/                   # Configuración global, URLs, settings y seguridad
+│   ├── cuentas/                  # Gestión de usuarios, autenticación JWT y roles
+│   ├── catalogo/                 # Modelos, vistas, filtros y exportación Excel (Ropa/Drinkware)
+│   ├── pedidos/                  # Órdenes, ítems de compra y checkout
 │   ├── disenos/                  # Almacenamiento de diseños generados en canvas
 │   ├── manage.py, requirements.txt, Dockerfile, entrypoint.sh
-├── docker-compose.yml            # Orquestación de db (Postgres), backend y frontend
-├── Guia_Maestra_SEO_CRO_Estandar_Web.pdf # Manual de auditoría SEO/CRO en PDF
+├── docker-compose.yml            # Orquestación de contenedores (DB Postgres, Backend, Frontend)
 ├── .env.example                  # Plantilla de variables de entorno
-└── .github/workflows/ci.yml      # Integración continua
+└── .github/workflows/ci.yml      # Pipeline de Integración Continua (CI/CD)
 ```
 
 ---
 
-## Inicio Rápido (Docker)
+## ⚙️ Inicio Rápido con Docker
 
-Con Docker instalado y corriendo:
+Con Docker y Docker Compose instalados:
 
 ```bash
-# 1. Configurar variables de entorno
+# 1. Clonar el repositorio y copiar variables de entorno
 cp .env.example .env
 
-# 2. Levantar los contenedores
+# 2. Construir e iniciar los servicios en segundo plano
 docker compose up --build -d
 ```
 
-El backend ejecuta automáticamente las migraciones, realiza el sembrado de catálogo inicial (`seed_catalogo`) y queda operativo:
+El contenedor de backend ejecutará automáticamente las migraciones, recolectará estáticos y sembrará el catálogo inicial:
 
-- **Tienda Web:** `http://localhost:8088` (o la IP/dominio de tu servidor)
-- **API REST:** `http://localhost:8088/api/productos/`
-- **Panel Web de Administración:** `http://localhost:8088/panel`
+- **Frontend / Tienda Web:** `http://localhost:8088`
+- **API REST Pública:** `http://localhost:8088/api/lineas/`
+- **Panel de Administración:** `http://localhost:8088/panel`
 - **Django Admin:** `http://localhost:8088/admin/`
 
-### Crear Superusuario Administrador
-
+### Crear Cuenta Administrador
 ```bash
 docker compose exec backend python manage.py createsuperuser
 ```
 
 ---
 
-## Despliegue en Servidor VPS (Sin colisiones de puertos)
+## 🌐 Despliegue en Servidor VPS
 
-Para desplegar en un servidor que ya aloja otros proyectos:
+Para desplegar en un servidor VPS junto a otros proyectos:
 
-1. **Aislamiento de Puertos:** Solo el servicio `frontend` publica un puerto hacia el host (ej. `8088`); `backend` y `db` quedan en la red interna aislada de Docker.
-2. **Configuración en `.env`:**
+1. **Aislamiento de Puertos:** Únicamente el contenedor `frontend` (Nginx) expone puerto hacia el exterior (por defecto `8088`); `backend` y `db` operan en la red privada interna de Docker.
+2. **Variables de Entorno (`.env`):**
    ```env
    FRONTEND_PORT=8088
-   ALLOWED_HOSTS=localhost,127.0.0.1,backend,<IP_SERVIDOR>,<DOMINIO>
-   CSRF_TRUSTED_ORIGINS=http://<IP_SERVIDOR>:8088,https://<DOMINIO>
-   CORS_ALLOWED_ORIGINS=http://<IP_SERVIDOR>:8088,https://<DOMINIO>
+   DEBUG=False
+   SECRET_KEY=tu_clave_secreta_de_produccion
+   ALLOWED_HOSTS=localhost,127.0.0.1,backend,tu_dominio.cl,ip_del_servidor
+   CSRF_TRUSTED_ORIGINS=http://localhost:8088,https://tu_dominio.cl,http://ip_del_servidor:8088
+   CORS_ALLOWED_ORIGINS=http://localhost:8088,https://tu_dominio.cl,http://ip_del_servidor:8088
    ```
-3. **Acceso Seguro con Tailscale Funnel (Opcional):**
+3. **Reconstrucción y Actualización en Servidor:**
    ```bash
-   tailscale funnel --bg --https=8443 http://127.0.0.1:8088
+   git pull origin main
+   docker compose build frontend backend
+   docker compose up -d
    ```
 
 ---
 
-## Desarrollo Local (Sin Docker)
+## 🛠️ Desarrollo Local (Sin Docker)
 
 ### Backend (Django)
 ```bash
 cd backend
 python -m venv .venv
-source .venv/bin/activate       # En Windows PowerShell: .\.venv\Scripts\Activate.ps1
+# En Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py seed_catalogo
-python manage.py runserver      # http://localhost:8000
+python manage.py runserver 0.0.0.0:8000
 ```
 
 ### Frontend (React + Vite)
 ```bash
 cd frontend
 npm install
-npm run dev                     # http://localhost:5173 (proxya /api y /media a :8000)
+npm run dev # Disponible en http://localhost:5173 (con proxy inverso a :8000)
 ```
 
 ---
 
-## Scripts Disponibles
+## 📋 Comandos y Scripts de Validación
 
 * **Frontend:**
-  * `npm run dev`: Inicia el servidor de desarrollo local.
-  * `npm run build`: Genera el build optimizado de producción en `dist/`.
-  * `npm run typecheck`: Validación estricta de tipos TypeScript sin emitir código.
-  * `npm run lint`: Análisis estático de código con ESLint.
+  * `npm run dev`: Servidor de desarrollo con Hot Module Replacement (HMR).
+  * `npm run build`: Compilación optimizada para producción con Vite.
+  * `npm run typecheck`: Verificación estricta de tipos (`tsc --noEmit`).
+  * `npx eslint . --quiet`: Análisis estático de código sin advertencias.
 * **Backend:**
-  * `python manage.py migrate`: Aplica las migraciones de base de datos.
-  * `python manage.py seed_catalogo`: Carga el catálogo inicial de prendas y drinkware.
-  * `python manage.py test`: Ejecuta la suite de pruebas unitarias.
+  * `python manage.py migrate`: Ejecución de migraciones de base de datos.
+  * `python manage.py test`: Ejecución de pruebas unitarias automatizadas.
+  * `python manage.py seed_catalogo`: Carga del catálogo inicial predeterminado.
