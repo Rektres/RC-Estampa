@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, X, Check, Search, Filter } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Search, Filter } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 export interface FilterConfig {

@@ -1,7 +1,7 @@
 import { api } from './client';
 import type {
   Producto, ProductoVajilla, FotoCliente, User,
-  ProductoInput, Categoria, Favorito, DireccionEnvio,
+  Categoria, Favorito, DireccionEnvio,
 } from '../types';
 
 export interface Paginated<T> {
@@ -266,6 +266,10 @@ export interface EstadisticasData {
     numero: string;
     nombre: string;
     email: string;
+    telefono?: string;
+    direccion?: string;
+    comuna?: string;
+    region?: string;
     total: number;
     monto_neto?: number | null;
     comision_mp?: number;
@@ -275,6 +279,9 @@ export interface EstadisticasData {
     card_last_four?: string;
     pagado_en?: string;
     creado_en: string;
+    items?: any[];
+    historial_estados?: any[];
+    [key: string]: any;
   }[];
 }
 

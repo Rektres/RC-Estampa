@@ -6,17 +6,12 @@ import {
   Trash2,
   Upload,
   Check,
-  Sparkles,
   Shirt,
   Coffee,
   Package,
-  Layers,
   Image as ImageIcon,
-  DollarSign,
   Tag,
   AlertCircle,
-  Star,
-  Flame,
 } from 'lucide-react';
 import { panelApi } from '../../api';
 import type { Producto, ProductoVajilla, ProductoInput, Categoria } from '../../types';
@@ -136,8 +131,6 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
       setPrecio('');
       setPrecioOferta('');
       setLinea(esRopa ? 'urbana' : 'drinkware');
-      setIsCustomLinea(false);
-      setCustomLineaName('');
       setCategoriaId('');
       setMaterial('');
       setCapacidadMl('');
@@ -160,16 +153,6 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
       setSlug(generated);
-    }
-  }
-
-  function handleLineaChange(val: string) {
-    if (val === 'custom') {
-      setIsCustomLinea(true);
-      setLinea('custom');
-    } else {
-      setIsCustomLinea(false);
-      setLinea(val);
     }
   }
 
@@ -263,9 +246,9 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
     try {
       const recurso = esRopa ? panelApi.productos : panelApi.drinkware;
       if (esEdicion && productoId) {
-        await recurso.update(productoId, payload);
+        await (recurso as any).update(productoId, payload);
       } else {
-        await recurso.create(payload);
+        await (recurso as any).create(payload);
       }
       onSuccess();
       onHide();

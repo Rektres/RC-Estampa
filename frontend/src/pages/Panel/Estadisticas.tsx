@@ -1,10 +1,9 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import {
   TrendingUp,
   DollarSign,
   ShoppingBag,
   CreditCard,
-  MapPin,
   PackageCheck,
   RefreshCw,
   Clock,
@@ -12,14 +11,8 @@ import {
   Sparkles,
   Search,
   FileSpreadsheet,
-  Filter,
-  CheckCircle2,
-  XCircle,
   Eye,
   X,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
   Plus,
   History,
   Phone,
@@ -32,7 +25,6 @@ import {
   Square,
   ChevronLeft,
   ChevronRight,
-  ListFilter,
   Calendar,
 } from 'lucide-react';
 import { Modal } from 'react-bootstrap';
@@ -231,7 +223,7 @@ export default function Estadisticas() {
     setIsExporting(true);
     try {
       await panelApi.exportarExcel(periodo);
-    } catch (err) {
+    } catch {
       alert('Error al generar el archivo Excel. Revisa tu conexión o permisos.');
     } finally {
       setIsExporting(false);

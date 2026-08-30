@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import {
-  Plus,
   Pencil,
   Trash2,
   X,
@@ -9,15 +8,13 @@ import {
   Package,
   Layers,
   Search,
-  Sparkles,
   AlertCircle,
   Tag,
 } from 'lucide-react';
 import { Modal } from 'react-bootstrap';
-import { panelApi, type LineaInfo } from '../../api';
+import { panelApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import LineaBadge from '../../components/shared/LineaBadge';
-import { getLinaLabel } from '../../utils';
 import type { Categoria } from '../../types';
 
 const VACIA = { nombre: '', slug: '', linea: 'urbana' as Categoria['linea'] };

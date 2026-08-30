@@ -165,8 +165,8 @@ export default function PanelProductoForm() {
       imagenes: data.imagenes.map((img, i) => ({ ...img, orden: i })),
     };
     try {
-      if (esEdicion) await recurso.update(Number(id), payload);
-      else await recurso.create(payload);
+      if (esEdicion) await (recurso as any).update(Number(id), payload);
+      else await (recurso as any).create(payload);
       navigate('/panel');
     } catch (e) {
       const detail = (e as { response?: { data?: Record<string, unknown> } })?.response?.data;

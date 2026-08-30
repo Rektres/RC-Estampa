@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import {
   Package, Heart, User as UserIcon, LogOut, CheckCircle2,
   MessageCircle, ShoppingBag, Trash2, ShieldCheck, ChevronDown, ChevronUp,
-  Calendar, Filter, X
+  Calendar, X
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { authApi, pedidosApi, favoritosApi, type Pedido } from '../../api';

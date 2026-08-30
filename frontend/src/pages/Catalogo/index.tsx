@@ -5,7 +5,6 @@ import {
   X,
   ShoppingBag,
   Sparkles,
-  Layers,
   LayoutList,
   LayoutGrid,
   ArrowRight,
@@ -17,7 +16,6 @@ import { catalogoApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { useSEO } from '../../hooks/useSEO';
 import { formatPrice } from '../../utils';
-import type { Producto, ProductoVajilla } from '../../types';
 
 const ORDENES = [
   { value: '-creado_en', label: 'Más reciente' },
@@ -25,16 +23,6 @@ const ORDENES = [
   { value: '-precio', label: 'Precio: Mayor a Menor' },
   { value: 'nombre', label: 'Nombre (A-Z)' },
   { value: 'destacado', label: 'Destacados' },
-];
-
-const COLORES = [
-  { nombre: 'Negro', hex: '#111111' },
-  { nombre: 'Blanco', hex: '#FFFFFF' },
-  { nombre: 'Gris', hex: '#888888' },
-  { nombre: 'Azul marino', hex: '#1B2A4A' },
-  { nombre: 'Beige', hex: '#D4C5A9' },
-  { nombre: 'Plata', hex: '#C0C0C0' },
-  { nombre: 'Transparente', hex: '#E8F4F8' },
 ];
 
 const MATERIALES = ['Algodón peinado', 'Poliéster', 'Cerámica', 'Acero inoxidable 304', 'Vidrio', 'Aluminio'];

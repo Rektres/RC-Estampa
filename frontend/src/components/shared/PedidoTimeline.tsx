@@ -1,5 +1,4 @@
-import React from 'react';
-import { CheckCircle2, Clock, Package, Truck, Award, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Package, Truck, Award, AlertCircle } from 'lucide-react';
 
 interface Props {
   estado: string;
@@ -8,7 +7,7 @@ interface Props {
   className?: string;
 }
 
-export default function PedidoTimeline({ estado, fechaCreacion, fechaPago, className = '' }: Props) {
+export default function PedidoTimeline({ estado, fechaPago, className = '' }: Props) {
   const st = (estado || '').toLowerCase();
   const isCancelado = st === 'cancelado';
 
@@ -98,7 +97,6 @@ export default function PedidoTimeline({ estado, fechaCreacion, fechaPago, class
           const stepNum = idx + 1;
           const isDone = activeStepIndex > stepNum;
           const isCurrent = activeStepIndex === stepNum;
-          const isPending = activeStepIndex < stepNum;
 
           return (
             <div

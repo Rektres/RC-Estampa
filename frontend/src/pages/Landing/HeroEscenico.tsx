@@ -12,7 +12,6 @@ import {
 import { catalogoApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { getLinaLabel } from '../../utils';
-import type { Producto, ProductoVajilla } from '../../types';
 
 // Fallback por si la base de datos está cargando
 const SAMPLE_CARDS = [

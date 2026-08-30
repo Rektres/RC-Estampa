@@ -17,13 +17,6 @@ import {
   X,
   FileSpreadsheet,
   ShoppingBag,
-  Filter,
-  CheckCircle2,
-  Package,
-  Layers,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
 } from 'lucide-react';
 import { panelApi } from '../../api';
 import { useAsync } from '../../api/hooks';

@@ -13,7 +13,6 @@ import {
   X,
   AlertCircle,
   Search,
-  Lock,
   EyeOff,
 } from 'lucide-react';
 import { panelApi, type LineaInfo } from '../../api';
@@ -36,7 +35,7 @@ export default function Lineas() {
     [reload]
   );
 
-  const lineas = Array.isArray(lineasData) ? lineasData : [];
+  const lineas = useMemo(() => (Array.isArray(lineasData) ? lineasData : []), [lineasData]);
 
   const lineasActivasCount = useMemo(() => {
     return lineas.filter((l) => !l.es_sin_categoria && l.linea !== 'sin_categoria').length;

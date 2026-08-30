@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Cookie, X, Check, Shield, ChevronDown, ChevronUp, Info, CheckCircle2, Lock } from 'lucide-react';
+import { Cookie, Check, Shield, ChevronDown, ChevronUp, Info, CheckCircle2, Lock } from 'lucide-react';
 
 export default function CookieBanner() {
   const [isVisible, setIsVisible] = useState(false);

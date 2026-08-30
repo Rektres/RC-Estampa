@@ -28,6 +28,10 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    env:
+      DEBUG: "True"
+      USE_SQLITE: "True"
+      SECRET_KEY: "ci-secret-key-for-testing"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

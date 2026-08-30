@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Eye, Sparkles, Heart } from 'lucide-react';
+import { ShoppingBag, Eye, Heart } from 'lucide-react';
 import LineaBadge from './LineaBadge';
 import { formatPrice } from '../../utils';
 import type { Producto, ProductoVajilla, VarianteProducto } from '../../types';
@@ -30,10 +30,11 @@ export default function HoverSwapCard({ producto, item, prefixPath, onOpenSpecs 
 
   const prod = producto ?? item;
   if (!prod) return null;
+  const validProd: Producto | ProductoVajilla = prod;
 
-  const path = prefixPath ?? (isVajilla(prod) ? '/drinkware' : '/catalogo');
+  const path = prefixPath ?? (isVajilla(validProd) ? '/drinkware' : '/catalogo');
 
-  const imagenes = prod.imagenes || [];
+  const imagenes = validProd.imagenes || [];
   const frente = imagenes.find((i) => i.es_frente) ?? imagenes[0];
   const reverso = imagenes.find((i) => i.es_reverso) ?? imagenes[1] ?? frente;
 
@@ -58,7 +59,7 @@ export default function HoverSwapCard({ producto, item, prefixPath, onOpenSpecs 
         setIsFav(false);
         setFavId(null);
       } else {
-        const payload = isVajilla(prod) ? { drinkware: prod.id } : { producto: prod.id };
+        const payload = isVajilla(validProd) ? { drinkware: validProd.id } : { producto: validProd.id };
         const res = await favoritosApi.agregar(payload);
         setIsFav(true);
         setFavId(res.id);
@@ -71,26 +72,26 @@ export default function HoverSwapCard({ producto, item, prefixPath, onOpenSpecs 
   function handleQuickAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const variantes = prod.variantes || [];
+    const variantes = validProd.variantes || [];
     const variante = variantes[0];
     if (!variante || variante.stock === 0) return;
     const imagen = frente?.imagen ?? '';
-    if (isVajilla(prod)) {
+    if (isVajilla(validProd)) {
       addItem({
         tipo: 'catalogo',
-        id: `vajilla-${prod.id}-${variante.id}`,
-        productoId: prod.id,
+        id: `vajilla-${validProd.id}-${variante.id}`,
+        productoId: validProd.id,
         varianteId: variante.id,
-        nombre: prod.nombre,
+        nombre: validProd.nombre,
         imagen,
         talla: '-',
         color: variante.color,
-        precio: prod.precio_oferta ?? prod.precio,
+        precio: validProd.precio_oferta ?? validProd.precio,
         cantidad: 1,
         linea: 'drinkware',
       });
     } else {
-      const p = prod as Producto;
+      const p = validProd as Producto;
       const v = variante as VarianteProducto;
       addItem({
         tipo: 'catalogo',
@@ -113,7 +114,7 @@ export default function HoverSwapCard({ producto, item, prefixPath, onOpenSpecs 
     if (onOpenSpecs) {
       e.preventDefault();
       e.stopPropagation();
-      onOpenSpecs(prod);
+      onOpenSpecs(validProd);
     }
   }
 
