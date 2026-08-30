@@ -398,6 +398,13 @@ p {
     }
   }
 
+  .stage-card-image-wrap {
+    height: 17.5rem !important;
+    min-height: 260px !important;
+    width: 100% !important;
+    position: relative !important;
+  }
+
   .stage-card-img {
     transition: transform 0.5s ease;
   }

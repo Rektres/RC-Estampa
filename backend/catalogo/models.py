@@ -6,7 +6,7 @@ LINEAS = (('urbana', 'Urbana'), ('formal', 'Formal'), ('drinkware', 'Drinkware')
 class Categoria(models.Model):
     nombre = models.CharField(max_length=100)
     slug = models.SlugField(max_length=120, unique=True)
-    linea = models.CharField(max_length=10, choices=LINEAS, blank=True)
+    linea = models.CharField(max_length=50, blank=True)
 
     class Meta:
         verbose_name_plural = 'categorias'
@@ -35,7 +35,7 @@ class ProductoBase(models.Model):
 
 
 class Producto(ProductoBase):
-    linea = models.CharField(max_length=10, choices=LINEAS)
+    linea = models.CharField(max_length=50, default='urbana')
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, related_name='productos')
 
 
@@ -67,7 +67,7 @@ class ImagenProducto(models.Model):
 class ProductoVajilla(ProductoBase):
     material = models.CharField(max_length=100)
     capacidad_ml = models.PositiveIntegerField(null=True, blank=True)
-    linea = models.CharField(max_length=10, default='drinkware')
+    linea = models.CharField(max_length=50, default='drinkware')
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, related_name='vajilla')
 
 

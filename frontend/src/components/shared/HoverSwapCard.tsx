@@ -130,7 +130,10 @@ export default function HoverSwapCard({ producto, item, prefixPath, onOpenSpecs 
         onTouchEnd={handleTouch}
       >
         {/* Contenedor de Imagen con Efecto Swap */}
-        <div className="position-relative overflow-hidden stage-card-image-wrap bg-elevated rounded-top-3">
+        <div
+          className="position-relative overflow-hidden stage-card-image-wrap bg-elevated rounded-top-3"
+          style={{ height: '17.5rem', minHeight: '260px', width: '100%' }}
+        >
           {/* Badges superiores */}
           <div
             className="position-absolute top-0 start-0 m-2 d-flex flex-column gap-1"

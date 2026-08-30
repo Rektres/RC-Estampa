@@ -396,16 +396,37 @@ export default function Categorias() {
             </div>
 
             <div className="mb-4">
-              <label className="form-label text-muted small fw-semibold">Línea de Producto</label>
+              <label className="form-label text-muted small fw-semibold">Línea de Producto / Colección</label>
               <select
-                value={draft.linea}
-                onChange={(e) => setDraft({ ...draft, linea: e.target.value as Categoria['linea'] })}
-                className="form-select bg-elevated text-text border-border"
+                value={['urbana', 'formal', 'drinkware', 'corporativa', 'accesorios', 'deportiva'].includes(draft.linea) ? draft.linea : 'custom'}
+                onChange={(e) => {
+                  if (e.target.value === 'custom') {
+                    setDraft({ ...draft, linea: 'nueva_linea' });
+                  } else {
+                    setDraft({ ...draft, linea: e.target.value as any });
+                  }
+                }}
+                className="form-select bg-elevated text-text border-border mb-2"
               >
-                <option value="urbana">Urbana (Ropa Textil Casual/Oversize)</option>
-                <option value="formal">Formal (Camisas / Chaquetas)</option>
-                <option value="drinkware">Drinkware (Vasos, Tazones, Shottings)</option>
+                <option value="urbana">Urbana (Ropa Textil Casual / Oversize)</option>
+                <option value="formal">Formal (Camisas / Chaquetas Luxury)</option>
+                <option value="drinkware">Drinkware (Vasos, Botellas & Shottings)</option>
+                <option value="corporativa">Corporativa (Empresas / Merchandising)</option>
+                <option value="accesorios">Accesorios & Complementos</option>
+                <option value="deportiva">Deportiva & Training</option>
+                <option value="custom">✨ + Otra línea personalizada...</option>
               </select>
+
+              {!['urbana', 'formal', 'drinkware', 'corporativa', 'accesorios', 'deportiva'].includes(draft.linea) && (
+                <input
+                  type="text"
+                  value={draft.linea}
+                  onChange={(e) => setDraft({ ...draft, linea: e.target.value })}
+                  placeholder="Escribe el nombre de la nueva línea (ej. Edicion Limitada)"
+                  className="form-control form-control-sm bg-elevated text-primary border-primary"
+                  required
+                />
+              )}
             </div>
 
             <div className="d-flex justify-content-end gap-2 pt-2 border-top border-border">

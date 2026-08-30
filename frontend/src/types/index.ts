@@ -1,4 +1,4 @@
-export type Linea = 'urbana' | 'formal' | 'drinkware';
+export type Linea = 'urbana' | 'formal' | 'drinkware' | string;
 
 export interface Talla {
   nombre: string;
