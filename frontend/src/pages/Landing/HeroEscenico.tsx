@@ -166,77 +166,116 @@ export default function HeroEscenico() {
             </div>
           </div>
 
-          {/* Columna Derecha: Stack de Tarjetas Apiladas como Archivos Navegables */}
+          {/* Columna Derecha: Cover Flow 3D de Productos Destacados */}
           <div className="col-12 col-lg-5">
-            <div className="position-relative" style={{ minHeight: '520px', paddingTop: '30px' }}>
+            <div className="position-relative cover-flow-wrapper" style={{ minHeight: '540px', paddingTop: '15px' }}>
               {/* Halo de iluminación exterior */}
               <div
                 className="position-absolute top-50 start-50 translate-middle pointer-events-none"
                 style={{
-                  width: '110%',
-                  height: '110%',
-                  background: 'radial-gradient(circle, rgba(201, 168, 76, 0.18) 0%, transparent 70%)',
-                  filter: 'blur(35px)',
+                  width: '120%',
+                  height: '120%',
+                  background: 'radial-gradient(circle, rgba(201, 168, 76, 0.22) 0%, transparent 70%)',
+                  filter: 'blur(45px)',
                   zIndex: 0,
                 }}
               />
 
-              {/* Barrita superior de pestañas tipo archivador */}
-              <div className="d-flex align-items-center justify-content-between mb-2 px-2 position-relative" style={{ zIndex: 12 }}>
-                <div className="d-flex align-items-center gap-1">
-                  <FolderKanban size={15} className="text-primary" />
-                  <span className="font-montserrat fw-bold text-text text-uppercase" style={{ fontSize: '0.72rem', letterSpacing: '0.08em' }}>
-                    Archivo Portada ({activeIndex + 1}/{totalCards})
+              {/* Barra superior de Cover Flow con controles */}
+              <div className="d-flex align-items-center justify-content-between mb-3 px-2 position-relative" style={{ zIndex: 35 }}>
+                <div className="d-flex align-items-center gap-2">
+                  <FolderKanban size={16} className="text-primary" />
+                  <span className="font-montserrat fw-bold text-text text-uppercase" style={{ fontSize: '0.74rem', letterSpacing: '0.1em' }}>
+                    Cover Flow Portada ({activeIndex + 1}/{totalCards})
                   </span>
                 </div>
 
-                {/* Controles de navegación en el archivador */}
-                <div className="d-flex align-items-center gap-1">
+                {/* Botones de Navegación 3D */}
+                <div className="d-flex align-items-center gap-2">
                   <button
                     onClick={prevCard}
-                    className="btn btn-sm btn-outline-secondary p-1 rounded-circle d-flex align-items-center justify-content-center"
-                    style={{ width: '28px', height: '28px' }}
-                    title="Prenda anterior"
+                    className="btn btn-sm btn-outline-secondary p-0 rounded-circle d-flex align-items-center justify-content-center hover-lift"
+                    style={{ width: '32px', height: '32px' }}
+                    title="Anterior (Cover Flow)"
                   >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={18} />
                   </button>
                   <button
                     onClick={nextCard}
-                    className="btn btn-sm btn-outline-primary p-1 rounded-circle d-flex align-items-center justify-content-center"
-                    style={{ width: '28px', height: '28px' }}
-                    title="Siguiente prenda destacada"
+                    className="btn btn-sm btn-outline-primary p-0 rounded-circle d-flex align-items-center justify-content-center hover-lift"
+                    style={{ width: '32px', height: '32px' }}
+                    title="Siguiente (Cover Flow)"
                   >
-                    <ChevronRight size={16} />
+                    <ChevronRight size={18} />
                   </button>
                 </div>
               </div>
 
-              {/* Contenedor del Stack 3D */}
-              <div className="position-relative w-100" style={{ height: '470px' }}>
+              {/* Escenario 3D Cover Flow */}
+              <div
+                className="position-relative w-100 d-flex justify-content-center align-items-center"
+                style={{
+                  height: '470px',
+                  perspective: '1100px',
+                  perspectiveOrigin: '50% 50%',
+                  transformStyle: 'preserve-3d',
+                  touchAction: 'pan-y',
+                }}
+              >
                 {stackCards.map((card, idx) => {
-                  // Calcular posición relativa al activeIndex
-                  const diff = (idx - activeIndex + totalCards) % totalCards;
+                  let diff = idx - activeIndex;
+                  if (diff > totalCards / 2) diff -= totalCards;
+                  if (diff < -totalCards / 2) diff += totalCards;
 
-                  // Renderizar solo las primeras 3 capas del stack
-                  if (diff > 2) return null;
+                  // Mostrar solo las 5 tarjetas visibles más cercanas
+                  const isVisible = Math.abs(diff) <= 2;
+                  if (!isVisible) return null;
 
-                  const translateY = -diff * 14;
-                  const scale = 1 - diff * 0.05;
-                  const zIndex = 10 - diff;
-                  const opacity = diff === 0 ? 1 : diff === 1 ? 0.75 : 0.45;
+                  const isCenter = diff === 0;
+                  const isLeft = diff < 0;
+                  const isRight = diff > 0;
+
+                  let transformStyle = '';
+                  const zIndex = 30 - Math.abs(diff) * 5;
+                  let opacity = 1;
+                  let filter = 'none';
+
+                  if (isCenter) {
+                    transformStyle = 'translateX(0px) translateZ(0px) rotateY(0deg) scale(1)';
+                    opacity = 1;
+                    filter = 'none';
+                  } else if (isLeft) {
+                    const offsetPx = Math.abs(diff) === 1 ? -120 : -210;
+                    const zOffset = Math.abs(diff) === 1 ? -120 : -220;
+                    transformStyle = `translateX(${offsetPx}px) translateZ(${zOffset}px) rotateY(38deg) scale(${1 - Math.abs(diff) * 0.12})`;
+                    opacity = Math.abs(diff) === 1 ? 0.72 : 0.35;
+                    filter = 'brightness(0.7) blur(0.5px)';
+                  } else if (isRight) {
+                    const offsetPx = diff === 1 ? 120 : 210;
+                    const zOffset = diff === 1 ? -120 : -220;
+                    transformStyle = `translateX(${offsetPx}px) translateZ(${zOffset}px) rotateY(-38deg) scale(${1 - diff * 0.12})`;
+                    opacity = diff === 1 ? 0.72 : 0.35;
+                    filter = 'brightness(0.7) blur(0.5px)';
+                  }
 
                   return (
                     <div
                       key={card.id}
-                      onClick={() => diff !== 0 && setActiveIndex(idx)}
-                      className="hero-preview-card p-3 shadow-2xl position-absolute top-0 start-0 w-100"
+                      onClick={() => !isCenter && setActiveIndex(idx)}
+                      className="hero-preview-card p-3 shadow-2xl position-absolute top-0 w-100"
                       style={{
-                        transform: `translateY(${translateY}px) scale(${scale})`,
+                        maxWidth: '410px',
+                        transform: transformStyle,
                         zIndex,
                         opacity,
-                        transition: 'all 0.45s cubic-bezier(0.34, 1.3, 0.64, 1)',
-                        cursor: diff !== 0 ? 'pointer' : 'default',
-                        pointerEvents: diff === 0 ? 'auto' : 'auto',
+                        filter,
+                        transformStyle: 'preserve-3d',
+                        transition: 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease, filter 0.45s ease',
+                        cursor: isCenter ? 'default' : 'pointer',
+                        pointerEvents: 'auto',
+                        boxShadow: isCenter
+                          ? '0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 25px rgba(201, 168, 76, 0.25)'
+                          : '0 15px 30px rgba(0,0,0,0.5)',
                       }}
                     >
                       {/* Header with Live Indicator */}
@@ -253,7 +292,7 @@ export default function HeroEscenico() {
                       </div>
 
                       {/* Hero Feature Image */}
-                      <div className="position-relative rounded-3 overflow-hidden mb-3" style={{ height: '310px' }}>
+                      <div className="position-relative rounded-3 overflow-hidden mb-3" style={{ height: '300px' }}>
                         <img
                           src={card.imagen}
                           alt={card.nombre}
@@ -273,7 +312,7 @@ export default function HeroEscenico() {
                           <span className="font-montserrat text-muted d-block" style={{ fontSize: '0.7rem' }}>
                             Acabado & Soporte
                           </span>
-                          <span className="font-montserrat fw-semibold text-text small text-truncate d-block" style={{ maxWidth: '200px' }}>
+                          <span className="font-montserrat fw-semibold text-text small text-truncate d-block" style={{ maxWidth: '180px' }}>
                             {card.materialText}
                           </span>
                         </div>
@@ -294,21 +333,21 @@ export default function HeroEscenico() {
                 })}
               </div>
 
-              {/* Indicadores de bolitas inferiores */}
-              <div className="d-flex justify-content-center align-items-center gap-2 mt-4">
+              {/* Indicadores de Paginación Cover Flow */}
+              <div className="d-flex justify-content-center align-items-center gap-2 mt-4 position-relative" style={{ zIndex: 35 }}>
                 {stackCards.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveIndex(i)}
                     className="p-0 border-0 rounded-circle transition-all"
                     style={{
-                      width: i === activeIndex ? '20px' : '7px',
+                      width: i === activeIndex ? '22px' : '7px',
                       height: '7px',
                       borderRadius: '999px',
                       backgroundColor: i === activeIndex ? 'var(--brand-primary)' : 'rgba(255, 255, 255, 0.2)',
                       cursor: 'pointer',
                     }}
-                    title={`Ficha ${i + 1}`}
+                    title={`Prenda ${i + 1}`}
                   />
                 ))}
               </div>

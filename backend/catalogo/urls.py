@@ -7,6 +7,7 @@ from .views import (
     PanelCategoriaViewSet,
     PanelExportarProductosExcelView,
     PanelLineasView,
+    LineasPublicView,
     PanelProductoVajillaViewSet,
     PanelProductoViewSet,
     PanelUploadView,
@@ -25,6 +26,7 @@ router.register('panel/drinkware', PanelProductoVajillaViewSet, basename='panel-
 router.register('panel/categorias', PanelCategoriaViewSet, basename='panel-categoria')
 
 urlpatterns = [
+    path('lineas/', LineasPublicView.as_view(), name='catalogo-lineas'),
     path('editor/', editor_config, name='editor-config'),
     path('panel/upload/', PanelUploadView.as_view(), name='panel-upload'),
     path('panel/lineas/', PanelLineasView.as_view(), name='panel-lineas'),

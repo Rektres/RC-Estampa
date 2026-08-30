@@ -79,7 +79,6 @@ export default function FilterSidebar({ config }: Props) {
   const categorias = params.get('categoria')?.split(',').filter(Boolean) ?? [];
   const materiales = params.get('material')?.split(',').filter(Boolean) ?? [];
   const colores = params.get('color')?.split(',').filter(Boolean) ?? [];
-  const precioMax = Number(params.get('precio_max') ?? config.maxPrecio ?? 80000);
   const soloDestacados = params.get('destacado') === '1';
   const soloNuevos = params.get('nuevo') === '1';
   const soloOferta = params.get('oferta') === '1';
@@ -289,23 +288,103 @@ export default function FilterSidebar({ config }: Props) {
         </Section>
       )}
 
-      {/* Rango de Precio */}
+      {/* Rango de Precio Editable con 'Entre' */}
       {config.showPrecio && (
-        <Section title="Precio Máximo">
-          <div className="d-flex flex-column gap-2">
-            <input
-              type="range"
-              min={5000}
-              max={config.maxPrecio ?? 80000}
-              step={1000}
-              value={precioMax}
-              onChange={(e) => set('precio_max', e.target.value)}
-              className="form-range"
-            />
-            <div className="d-flex justify-content-between small text-muted">
-              <span>$5.000</span>
-              <span className="text-primary fw-bold">Hasta ${precioMax.toLocaleString('es-CL')}</span>
+        <Section title="Rango de Precios">
+          <div className="d-flex flex-column gap-3">
+            {/* Presets Rápidos */}
+            <div className="d-flex flex-wrap gap-1">
+              {[
+                { label: 'Todo', min: '', max: '' },
+                { label: '< $15k', min: '0', max: '15000' },
+                { label: '$15k - $30k', min: '15000', max: '30000' },
+                { label: '$30k - $50k', min: '30000', max: '50000' },
+                { label: '> $50k', min: '50000', max: '' },
+              ].map((preset, idx) => {
+                const isActive = (params.get('precio_min') || '') === preset.min && (params.get('precio_max') || '') === preset.max;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      const updated = new URLSearchParams(params);
+                      if (preset.min && preset.min !== '0') updated.set('precio_min', preset.min);
+                      else updated.delete('precio_min');
+                      if (preset.max) updated.set('precio_max', preset.max);
+                      else updated.delete('precio_max');
+                      setParams(updated);
+                    }}
+                    className={`btn btn-sm ${isActive ? 'btn-primary text-black fw-bold' : 'btn-outline-secondary'}`}
+                    style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem' }}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Inputs Editables 'Entre $Min y $Max' */}
+            <div>
+              <span className="small text-muted d-block mb-1" style={{ fontSize: '0.72rem' }}>
+                Entre montos específicos (CLP):
+              </span>
+              <div className="d-flex align-items-center gap-2">
+                <div className="position-relative flex-grow-1">
+                  <span className="position-absolute start-0 top-50 translate-middle-y ps-2 text-muted small">$</span>
+                  <input
+                    type="number"
+                    placeholder="Mínimo"
+                    value={params.get('precio_min') ?? ''}
+                    onChange={(e) => {
+                      const updated = new URLSearchParams(params);
+                      if (e.target.value) updated.set('precio_min', e.target.value);
+                      else updated.delete('precio_min');
+                      setParams(updated);
+                    }}
+                    className="form-control form-control-sm bg-elevated text-text border-border ps-4"
+                    style={{ fontSize: '0.8rem' }}
+                  />
+                </div>
+                <span className="text-muted small">y</span>
+                <div className="position-relative flex-grow-1">
+                  <span className="position-absolute start-0 top-50 translate-middle-y ps-2 text-muted small">$</span>
+                  <input
+                    type="number"
+                    placeholder="Máximo"
+                    value={params.get('precio_max') ?? ''}
+                    onChange={(e) => {
+                      const updated = new URLSearchParams(params);
+                      if (e.target.value) updated.set('precio_max', e.target.value);
+                      else updated.delete('precio_max');
+                      setParams(updated);
+                    }}
+                    className="form-control form-control-sm bg-elevated text-text border-border ps-4"
+                    style={{ fontSize: '0.8rem' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {(params.get('precio_min') || params.get('precio_max')) && (
+              <div className="d-flex justify-content-between align-items-center pt-1">
+                <span className="text-primary fw-semibold" style={{ fontSize: '0.72rem' }}>
+                  Filtrando: {params.get('precio_min') ? `$${Number(params.get('precio_min')).toLocaleString('es-CL')}` : '$0'} — {params.get('precio_max') ? `$${Number(params.get('precio_max')).toLocaleString('es-CL')}` : 'Sin límite'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = new URLSearchParams(params);
+                    updated.delete('precio_min');
+                    updated.delete('precio_max');
+                    setParams(updated);
+                  }}
+                  className="btn btn-sm btn-link text-muted p-0 text-decoration-none"
+                  style={{ fontSize: '0.7rem' }}
+                >
+                  Restablecer
+                </button>
+              </div>
+            )}
           </div>
         </Section>
       )}

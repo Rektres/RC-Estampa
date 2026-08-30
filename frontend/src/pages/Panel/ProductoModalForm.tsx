@@ -123,8 +123,8 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
           }
         })
         .catch(() => setError('No se pudo cargar la información del producto.'))
-        .finally(() => setLoadingInitial(false));
     } else {
+      setLoadingInitial(false);
       setNombre('');
       setSlug('');
       setDescripcion('');
@@ -137,7 +137,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
       setActivo(true);
       setDestacado(false);
       setNuevo(false);
-      setVariantes([{ ...VARIANTE_DEFAULT, sku: `SKU-${Date.now().toString().slice(-5)}` }]);
+      setVariantes([{ ...VARIANTE_DEFAULT, talla: esRopa ? 'M' : '', sku: `SKU-${Date.now().toString().slice(-5)}` }]);
       setImagenes([{ ...IMAGEN_DEFAULT }]);
       setError(null);
     }
@@ -349,9 +349,9 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                     required
                   >
                     <option value="">Selecciona una categoría...</option>
-                    {categorias.map((c) => (
+                    {(categorias.length > 0 ? categorias.filter((c) => (esRopa ? c.linea !== 'drinkware' : c.linea === 'drinkware')) : []).map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.nombre} ({c.linea})
+                        {c.nombre} {c.linea ? `(${c.linea})` : ''}
                       </option>
                     ))}
                   </select>
@@ -366,7 +366,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                     className="form-select bg-elevated text-text border-border"
                     required
                   >
-                    {lineasDisponibles.map((l) => (
+                    {(lineasDisponibles.length > 0 ? lineasDisponibles : (esRopa ? [{ linea: 'urbana', nombre: 'Urbana' }, { linea: 'formal', nombre: 'Formal' }] : [{ linea: 'drinkware', nombre: 'Drinkware' }])).map((l) => (
                       <option key={l.linea} value={l.linea}>
                         {l.nombre} {l.es_sin_categoria ? '(🔒 Sin categoría)' : ''}
                       </option>

@@ -40,6 +40,7 @@ export default function Catalogo() {
   const { data: productosRopa, loading: loadingRopa } = useAsync(() => catalogoApi.productosAll(), []);
   const { data: productosDrinkware, loading: loadingDrink } = useAsync(() => catalogoApi.drinkwareAll(), []);
   const { data: categoriasData } = useAsync(() => catalogoApi.categorias(), []);
+  const { data: lineasDb } = useAsync(() => catalogoApi.lineas(), []);
 
   const loading = loadingRopa || loadingDrink;
 
@@ -50,7 +51,8 @@ export default function Catalogo() {
   const categorias = params.get('categoria')?.split(',').filter(Boolean) ?? [];
   const colores = params.get('color')?.split(',').filter(Boolean) ?? [];
   const materiales = params.get('material')?.split(',').filter(Boolean) ?? [];
-  const precioMax = Number(params.get('precio_max') ?? 100000);
+  const precioMin = Number(params.get('precio_min') ?? 0);
+  const precioMax = Number(params.get('precio_max') ?? 0);
   const soloDestacados = params.get('destacado') === '1';
   const soloNuevos = params.get('nuevo') === '1';
   const soloOferta = params.get('oferta') === '1';
@@ -74,7 +76,7 @@ export default function Catalogo() {
     return ['Poleras', 'Hoodies', 'Camisas', 'Polos', 'Chaquetas', 'Tazas', 'Termos', 'Vasos', 'Botellas'];
   }, [categoriasData]);
 
-  // Líneas existentes en la tienda (excluyendo sin_categoria)
+  // Líneas existentes en la tienda con los nombres reales de base de datos (excluyendo sin_categoria)
   const lineasDisponibles = useMemo(() => {
     const listRopa = Array.isArray(productosRopa) ? productosRopa : [];
     const listDrink = Array.isArray(productosDrinkware) ? productosDrinkware : [];
@@ -87,18 +89,16 @@ export default function Catalogo() {
       }
     });
 
+    const dbMap = new Map<string, string>();
+    (Array.isArray(lineasDb) ? lineasDb : []).forEach((l) => {
+      dbMap.set(l.linea, l.nombre);
+    });
+
     return Array.from(setLineas).map((l) => {
-      const label =
-        l === 'urbana'
-          ? 'Ropa Urbana / Streetwear'
-          : l === 'formal'
-          ? 'Ropa Formal / Corporativa'
-          : l === 'drinkware'
-          ? 'Drinkware (Botellas & Mugs)'
-          : l.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      const label = dbMap.get(l) || l.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
       return { key: l, label };
     });
-  }, [productosRopa, productosDrinkware]);
+  }, [productosRopa, productosDrinkware, lineasDb]);
 
   // Tallas disponibles con STOCK > 0
   const tallasDisponibles = useMemo(() => {
@@ -193,8 +193,11 @@ export default function Catalogo() {
       list = list.filter((item) => item.material && materiales.includes(item.material));
     }
 
-    // 6. Filtro Precio Máximo
-    if (precioMax < 100000) {
+    // 6. Filtro Precio 'Entre' (Desde / Hasta)
+    if (precioMin > 0) {
+      list = list.filter((item) => (item.precio_oferta ?? item.precio) >= precioMin);
+    }
+    if (precioMax > 0) {
       list = list.filter((item) => (item.precio_oferta ?? item.precio) <= precioMax);
     }
 
@@ -220,7 +223,7 @@ export default function Catalogo() {
     else list.sort((a, b) => (b.id || 0) - (a.id || 0));
 
     return list;
-  }, [productosRopa, productosDrinkware, linea, categorias, tallas, colores, materiales, precioMax, soloDestacados, soloNuevos, soloOferta, q, orden]);
+  }, [productosRopa, productosDrinkware, linea, categorias, tallas, colores, materiales, precioMin, precioMax, soloDestacados, soloNuevos, soloOferta, q, orden]);
 
   const totalPages = Math.ceil(filtered.length / perPage) || 1;
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
@@ -237,7 +240,8 @@ export default function Catalogo() {
     showMaterial: (linea === 'drinkware' || !linea) && (materialesDisponibles.length > 0 || MATERIALES.length > 0),
     materiales: materialesDisponibles.length > 0 ? materialesDisponibles : MATERIALES,
     showPrecio: true,
-    maxPrecio: 80000,
+    minPrecio: precioMin,
+    maxPrecio: precioMax,
   };
 
   function setOrder(val: string) {
@@ -291,7 +295,7 @@ export default function Catalogo() {
               { key: '', label: 'Todo' },
               ...lineasDisponibles.map((l) => ({
                 key: l.key,
-                label: l.key === 'urbana' ? 'Urbana' : l.key === 'formal' ? 'Formal' : l.key === 'drinkware' ? 'Drinkware' : l.label,
+                label: l.label,
               })),
             ].map((tab) => (
               <button
@@ -317,9 +321,17 @@ export default function Catalogo() {
 
       {/* Contenido Principal con Sidebar a la Izquierda */}
       <div className="row g-4">
-        {/* Sidebar Lateral Izquierdo (Desktop) */}
+        {/* Sidebar Lateral Izquierdo (Desktop) con Scrollbar Independiente */}
         <div className="col-12 col-lg-3 d-none d-lg-block">
-          <div className="p-4 rounded-4 bg-card border border-border shadow-sm position-sticky" style={{ top: '6rem' }}>
+          <div
+            className="p-3 p-xl-4 rounded-4 bg-card border border-border shadow-sm position-sticky"
+            style={{
+              top: '5.5rem',
+              maxHeight: 'calc(100vh - 6.5rem)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+            }}
+          >
             <FilterSidebar config={filterConfig} />
           </div>
         </div>

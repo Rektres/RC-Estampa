@@ -81,6 +81,18 @@ class FotoClienteViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     pagination_class = None
 
 
+class LineasPublicView(APIView):
+    """Líneas activas públicas disponibles para catálogo y filtros."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        lineas = Linea.objects.filter(es_sin_categoria=False).order_by('nombre')
+        return Response([
+            {'linea': l.slug, 'nombre': l.nombre, 'es_sin_categoria': False}
+            for l in lineas
+        ])
+
+
 # ---------------------------------------------------------------------------
 # Panel de administración (CRUD completo, solo rol admin)
 # ---------------------------------------------------------------------------

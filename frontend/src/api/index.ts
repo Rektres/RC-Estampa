@@ -102,6 +102,15 @@ export const catalogoApi = {
     }),
   fotos: () => api.get<FotoCliente[]>('/fotos-clientes/').then((r) => r.data),
   editor: () => api.get<EditorConfig>('/editor/').then((r) => r.data),
+  lineas: () =>
+    api.get<LineaInfo[] | { results: LineaInfo[] }>('/lineas/').then((r) => {
+      const data = r.data;
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray((data as { results: LineaInfo[] }).results)) {
+        return (data as { results: LineaInfo[] }).results;
+      }
+      return [];
+    }),
 };
 
 export interface RegisterInput {
