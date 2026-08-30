@@ -86,11 +86,89 @@ export default function Catalogo() {
     return ['Poleras', 'Hoodies', 'Camisas', 'Polos', 'Chaquetas', 'Tazas', 'Termos', 'Vasos', 'Botellas'];
   }, [categoriasData]);
 
+  // Líneas existentes en la tienda (excluyendo sin_categoria)
+  const lineasDisponibles = useMemo(() => {
+    const listRopa = Array.isArray(productosRopa) ? productosRopa : [];
+    const listDrink = Array.isArray(productosDrinkware) ? productosDrinkware : [];
+    const allProds = [...listRopa, ...listDrink];
+    const setLineas = new Set<string>();
+
+    allProds.forEach((p) => {
+      if (p.linea && p.linea !== 'sin_categoria') {
+        setLineas.add(p.linea);
+      }
+    });
+
+    return Array.from(setLineas).map((l) => {
+      const label =
+        l === 'urbana'
+          ? 'Ropa Urbana / Streetwear'
+          : l === 'formal'
+          ? 'Ropa Formal / Corporativa'
+          : l === 'drinkware'
+          ? 'Drinkware (Botellas & Mugs)'
+          : l.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      return { key: l, label };
+    });
+  }, [productosRopa, productosDrinkware]);
+
+  // Tallas disponibles con STOCK > 0
+  const tallasDisponibles = useMemo(() => {
+    const setTallas = new Set<string>();
+    const listRopa = Array.isArray(productosRopa) ? productosRopa : [];
+    listRopa.forEach((p) => {
+      p.variantes?.forEach((v: any) => {
+        if (v.talla && Number(v.stock) > 0) {
+          setTallas.add(v.talla.toUpperCase());
+        }
+      });
+    });
+    const order = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+    return Array.from(setTallas).sort((a, b) => {
+      const idxA = order.indexOf(a);
+      const idxB = order.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [productosRopa]);
+
+  // Colores disponibles con STOCK > 0
+  const coloresDisponibles = useMemo(() => {
+    const mapColores = new Map<string, string>();
+    const listRopa = Array.isArray(productosRopa) ? productosRopa : [];
+    const listDrink = Array.isArray(productosDrinkware) ? productosDrinkware : [];
+    const allProds = [...listRopa, ...listDrink];
+
+    allProds.forEach((p) => {
+      p.variantes?.forEach((v: any) => {
+        if (v.color && Number(v.stock) > 0) {
+          if (!mapColores.has(v.color)) {
+            mapColores.set(v.color, v.color_hex || '#333333');
+          }
+        }
+      });
+    });
+
+    return Array.from(mapColores.entries()).map(([nombre, hex]) => ({ nombre, hex }));
+  }, [productosRopa, productosDrinkware]);
+
+  // Materiales existentes en Drinkware
+  const materialesDisponibles = useMemo(() => {
+    const setMat = new Set<string>();
+    const listDrink = Array.isArray(productosDrinkware) ? productosDrinkware : [];
+    listDrink.forEach((p) => {
+      if (p.material) setMat.add(p.material);
+    });
+    return Array.from(setMat);
+  }, [productosDrinkware]);
+
   // Lista unificada y filtrado multi-coincidencia
   const filtered = useMemo(() => {
     const listRopa = (Array.isArray(productosRopa) ? productosRopa : []).map((p) => ({ ...p, tipoItem: 'ropa' as const }));
     const listDrink = (Array.isArray(productosDrinkware) ? productosDrinkware : []).map((d) => ({ ...d, tipoItem: 'drinkware' as const }));
-    let list: any[] = [...listRopa, ...listDrink];
+    let list: any[] = [...listRopa, ...listDrink].filter((item) => item.linea !== 'sin_categoria');
 
     // 1. Filtro por Línea / Colección
     if (linea) {
@@ -108,17 +186,17 @@ export default function Catalogo() {
       list = list.filter((item) => categorias.includes(item.categoria?.nombre));
     }
 
-    // 3. Filtro Tallas (Ropa)
+    // 3. Filtro Tallas con Stock > 0 (Ropa)
     if (tallas.length > 0) {
       list = list.filter((item) =>
-        item.variantes?.some((v: any) => tallas.includes(v.talla) && v.stock > 0)
+        item.variantes?.some((v: any) => tallas.includes(v.talla?.toUpperCase()) && Number(v.stock) > 0)
       );
     }
 
-    // 4. Filtro Colores
+    // 4. Filtro Colores con Stock > 0
     if (colores.length > 0) {
       list = list.filter((item) =>
-        item.variantes?.some((v: any) => colores.includes(v.color))
+        item.variantes?.some((v: any) => colores.includes(v.color) && Number(v.stock) > 0)
       );
     }
 
@@ -161,13 +239,15 @@ export default function Catalogo() {
 
   const filterConfig = {
     showLinea: true,
+    lineas: lineasDisponibles,
     showCategoria: true,
     categorias: listaCategorias,
-    showTalla: linea !== 'drinkware',
-    showColor: true,
-    colores: COLORES,
-    showMaterial: linea === 'drinkware' || !linea,
-    materiales: MATERIALES,
+    showTalla: linea !== 'drinkware' && tallasDisponibles.length > 0,
+    tallas: tallasDisponibles,
+    showColor: coloresDisponibles.length > 0,
+    colores: coloresDisponibles,
+    showMaterial: (linea === 'drinkware' || !linea) && (materialesDisponibles.length > 0 || MATERIALES.length > 0),
+    materiales: materialesDisponibles.length > 0 ? materialesDisponibles : MATERIALES,
     showPrecio: true,
     maxPrecio: 80000,
   };
@@ -218,11 +298,13 @@ export default function Catalogo() {
           </div>
 
           {/* Selector de Colección Rápido */}
-          <div className="btn-group bg-elevated rounded-3 p-1 border border-border font-montserrat align-self-start align-self-md-center">
+          <div className="btn-group bg-elevated rounded-3 p-1 border border-border font-montserrat align-self-start align-self-md-center flex-wrap">
             {[
               { key: '', label: 'Todo' },
-              { key: 'ropa', label: 'Ropa Textil' },
-              { key: 'drinkware', label: 'Drinkware' },
+              ...lineasDisponibles.map((l) => ({
+                key: l.key,
+                label: l.key === 'urbana' ? 'Urbana' : l.key === 'formal' ? 'Formal' : l.key === 'drinkware' ? 'Drinkware' : l.label,
+              })),
             ].map((tab) => (
               <button
                 key={tab.key}

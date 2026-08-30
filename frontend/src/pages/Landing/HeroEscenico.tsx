@@ -281,7 +281,7 @@ export default function HeroEscenico() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`${card.tipoItem === 'drinkware' ? '/drinkware' : '/ropa'}/${card.slug}`);
+                            navigate(`${card.tipoItem === 'drinkware' ? '/drinkware' : '/catalogo'}/${card.slug}`);
                           }}
                           className="btn btn-primary btn-sm px-3 py-2 rounded-3 d-flex align-items-center gap-1 font-montserrat fw-semibold"
                           style={{ fontSize: '0.78rem' }}

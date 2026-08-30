@@ -1232,7 +1232,7 @@ export default function Estadisticas() {
                         <div className="p-3 bg-elevated rounded-3 border border-border small">
                           <div className="d-flex align-items-center justify-content-between mb-1">
                             <span className="fw-semibold text-text">1. Creación de Orden</span>
-                            <span className="badge bg-secondary bg-opacity-20 text-secondary border border-secondary text-uppercase">Inicio</span>
+                            <span className="badge badge-status-inicio text-uppercase">Inicio</span>
                           </div>
                           <div className="text-muted" style={{ fontSize: '0.75rem' }}>
                             Fecha: {new Date(activeModalTx.creado_en).toLocaleString('es-CL')} | Autor: Cliente ({activeModalTx.nombre})

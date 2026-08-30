@@ -17,6 +17,7 @@ from .models import (
     Categoria,
     ColorEditor,
     FotoCliente,
+    Linea,
     PrecioEditor,
     Producto,
     ProductoVajilla,
@@ -44,6 +45,7 @@ class ProductoViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     def get_queryset(self):
         return (
             Producto.objects.filter(activo=True)
+            .exclude(linea='sin_categoria')
             .select_related('categoria')
             .prefetch_related('variantes', 'imagenes')
             .distinct()
@@ -60,6 +62,7 @@ class ProductoVajillaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, v
     def get_queryset(self):
         return (
             ProductoVajilla.objects.filter(activo=True)
+            .exclude(linea='sin_categoria')
             .select_related('categoria')
             .prefetch_related('variantes', 'imagenes')
             .distinct()
@@ -155,27 +158,48 @@ class PanelUploadView(APIView):
 
 
 class PanelLineasView(APIView):
-    """Gestión completa de Líneas / Colecciones de productos."""
+    """Gestión completa de Líneas / Colecciones de productos con persistencia en BD."""
 
     permission_classes = [IsAdminRol]
 
     def get(self, request):
-        lineas_ropa = list(Producto.objects.values_list('linea', flat=True).distinct())
-        lineas_vajilla = list(ProductoVajilla.objects.values_list('linea', flat=True).distinct())
-        lineas_cats = list(Categoria.objects.values_list('linea', flat=True).distinct())
+        # 1. Inicializar líneas estándar si la tabla está vacía
+        if Linea.objects.count() == 0:
+            Linea.objects.create(nombre='Urbana', slug='urbana')
+            Linea.objects.create(nombre='Formal', slug='formal')
+            Linea.objects.create(nombre='Drinkware', slug='drinkware')
 
-        todas_lineas = sorted(list(set(lineas_ropa + lineas_vajilla + lineas_cats + ['urbana', 'formal', 'drinkware'])))
+        # 2. Asegurar siempre la línea 'Ropa sin categoría' para prendas desasignadas
+        Linea.objects.get_or_create(
+            slug='sin_categoria',
+            defaults={'nombre': 'Ropa sin categoría', 'es_sin_categoria': True}
+        )
 
+        # 3. Sincronizar cualquier línea existente en productos/categorías que no esté en la tabla
+        lineas_usadas = set(
+            list(Producto.objects.values_list('linea', flat=True).distinct()) +
+            list(ProductoVajilla.objects.values_list('linea', flat=True).distinct()) +
+            list(Categoria.objects.values_list('linea', flat=True).distinct())
+        )
+        for slug_usado in lineas_usadas:
+            if slug_usado and not Linea.objects.filter(slug=slug_usado).exists():
+                Linea.objects.create(
+                    slug=slug_usado,
+                    nombre=slug_usado.replace('_', ' ').replace('-', ' ').title(),
+                    es_sin_categoria=(slug_usado == 'sin_categoria')
+                )
+
+        lineas = Linea.objects.all().order_by('es_sin_categoria', 'nombre')
         datos = []
-        for l in todas_lineas:
-            if not l:
-                continue
-            count_ropa = Producto.objects.filter(linea=l).count()
-            count_vajilla = ProductoVajilla.objects.filter(linea=l).count()
-            count_cats = Categoria.objects.filter(linea=l).count()
+        for l in lineas:
+            count_ropa = Producto.objects.filter(linea=l.slug).count()
+            count_vajilla = ProductoVajilla.objects.filter(linea=l.slug).count()
+            count_cats = Categoria.objects.filter(linea=l.slug).count()
             datos.append({
-                'linea': l,
-                'nombre': l.capitalize(),
+                'id': l.id,
+                'linea': l.slug,
+                'nombre': l.nombre,
+                'es_sin_categoria': l.es_sin_categoria,
                 'total_productos': count_ropa + count_vajilla,
                 'total_ropa': count_ropa,
                 'total_drinkware': count_vajilla,
@@ -186,27 +210,61 @@ class PanelLineasView(APIView):
     def post(self, request):
         old_linea = request.data.get('old_linea', '').strip().lower()
         new_linea = request.data.get('new_linea', '').strip().lower()
+        nombre = request.data.get('nombre', '').strip()
 
         if not new_linea:
-            return Response({'detail': 'El nombre de la línea es obligatorio.'}, status=400)
+            return Response({'detail': 'El identificador de la línea es obligatorio.'}, status=400)
 
-        if old_linea and old_linea != new_linea:
-            Producto.objects.filter(linea=old_linea).update(linea=new_linea)
-            ProductoVajilla.objects.filter(linea=old_linea).update(linea=new_linea)
-            Categoria.objects.filter(linea=old_linea).update(linea=new_linea)
+        if not nombre:
+            nombre = new_linea.replace('_', ' ').replace('-', ' ').title()
 
-        return Response({'success': True, 'linea': new_linea}, status=status.HTTP_200_OK)
+        if old_linea:
+            linea_obj = Linea.objects.filter(slug=old_linea).first()
+            if linea_obj:
+                linea_obj.slug = new_linea
+                linea_obj.nombre = nombre
+                linea_obj.save()
+            else:
+                Linea.objects.get_or_create(slug=new_linea, defaults={'nombre': nombre})
+
+            # Actualizar referencias en productos y categorías si cambió el slug
+            if old_linea != new_linea:
+                Producto.objects.filter(linea=old_linea).update(linea=new_linea)
+                ProductoVajilla.objects.filter(linea=old_linea).update(linea=new_linea)
+                Categoria.objects.filter(linea=old_linea).update(linea=new_linea)
+        else:
+            # Crear nueva línea en base de datos
+            Linea.objects.get_or_create(slug=new_linea, defaults={'nombre': nombre})
+
+        return Response({'success': True, 'linea': new_linea, 'nombre': nombre}, status=status.HTTP_200_OK)
 
     def delete(self, request):
         linea = request.query_params.get('linea', '').strip().lower()
-        reassign_to = request.query_params.get('reassign_to', 'urbana').strip().lower()
+        reassign_to = request.query_params.get('reassign_to', '').strip().lower() or 'sin_categoria'
 
-        if linea in ['urbana', 'formal', 'drinkware']:
-            return Response({'detail': 'Las líneas estándar principales no se pueden eliminar.'}, status=400)
+        if not linea:
+            return Response({'detail': 'Debes especificar la línea a eliminar.'}, status=400)
 
+        # Regla del sistema: Siempre debe existir al menos 1 línea activa
+        lineas_activas_restantes = Linea.objects.filter(es_sin_categoria=False).exclude(slug=linea).count()
+        if lineas_activas_restantes < 1:
+            return Response({
+                'detail': 'No puedes eliminar la última línea activa. Como regla del sistema, siempre debe existir al menos 1 línea disponible.'
+            }, status=400)
+
+        # Asegurar que la línea 'sin_categoria' exista en la BD
+        Linea.objects.get_or_create(
+            slug='sin_categoria',
+            defaults={'nombre': 'Ropa sin categoría', 'es_sin_categoria': True}
+        )
+
+        # Traspasar todos los productos y categorías asociados
         Producto.objects.filter(linea=linea).update(linea=reassign_to)
         ProductoVajilla.objects.filter(linea=linea).update(linea=reassign_to)
         Categoria.objects.filter(linea=linea).update(linea=reassign_to)
+
+        # Eliminar el registro de la línea
+        Linea.objects.filter(slug=linea).delete()
 
         return Response({'success': True, 'reassigned_to': reassign_to})
 

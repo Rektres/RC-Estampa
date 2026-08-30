@@ -3,6 +3,20 @@ from django.db import models
 LINEAS = (('urbana', 'Urbana'), ('formal', 'Formal'), ('drinkware', 'Drinkware'))
 
 
+class Linea(models.Model):
+    nombre = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=120, unique=True)
+    es_sin_categoria = models.BooleanField(default=False)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('nombre',)
+        verbose_name_plural = 'lineas'
+
+    def __str__(self):
+        return self.nombre
+
+
 class Categoria(models.Model):
     nombre = models.CharField(max_length=100)
     slug = models.SlugField(max_length=120, unique=True)

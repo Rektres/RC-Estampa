@@ -65,6 +65,7 @@ export default function PanelProductoForm() {
   const [subiendo, setSubiendo] = useState<number | null>(null);
 
   const { data: categorias } = useAsync(() => panelApi.categorias.list(), []);
+  const { data: lineas } = useAsync(() => panelApi.lineas.list(), []);
   const { data: existente } = useAsync<Producto | ProductoVajilla | null>(
     () => (esEdicion ? recurso.get(Number(id)) : Promise.resolve(null)),
     [id, tipo]
@@ -218,8 +219,11 @@ export default function PanelProductoForm() {
               <div className="col-6 col-sm-3">
                 <label className={labelCls} style={labelStyle}>Línea *</label>
                 <select {...register('linea')} className="form-select form-select-sm bg-elevated font-montserrat">
-                  <option value="urbana">Urbana</option>
-                  <option value="formal">Formal</option>
+                  {(lineas ?? []).map((l) => (
+                    <option key={l.linea} value={l.linea}>
+                      {l.nombre}
+                    </option>
+                  ))}
                 </select>
               </div>
             ) : (

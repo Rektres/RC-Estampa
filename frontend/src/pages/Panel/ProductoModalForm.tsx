@@ -32,20 +32,12 @@ interface Props {
 const VARIANTE_DEFAULT = { talla: 'M', color: 'Negro', color_hex: '#111111', stock: '10', sku: '' };
 const IMAGEN_DEFAULT = { imagen: '', es_principal: true, es_frente: true, es_reverso: false };
 
-const LINEAS_PRESET = [
-  { key: 'urbana', label: 'Urbana (Streetwear / Casual)' },
-  { key: 'formal', label: 'Formal (Camisas / Chaquetas Luxury)' },
-  { key: 'drinkware', label: 'Drinkware (Botellas & Vasos Térmicos)' },
-  { key: 'corporativa', label: 'Corporativa / Empresas' },
-  { key: 'accesorios', label: 'Accesorios & Merchandising' },
-  { key: 'deportiva', label: 'Deportiva & Training' },
-];
-
 export default function ProductoModalForm({ show, tipo, productoId, onHide, onSuccess }: Props) {
   const esRopa = tipo === 'ropa';
   const esEdicion = !!productoId;
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [lineasDisponibles, setLineasDisponibles] = useState<{ linea: string; nombre: string; es_sin_categoria?: boolean }[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(false);
   const [saving, setSaving] = useState(false);
   const [subiendoIdx, setSubiendoIdx] = useState<number | null>(null);
@@ -58,8 +50,6 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
   const [precio, setPrecio] = useState('');
   const [precioOferta, setPrecioOferta] = useState('');
   const [linea, setLinea] = useState(esRopa ? 'urbana' : 'drinkware');
-  const [isCustomLinea, setIsCustomLinea] = useState(false);
-  const [customLineaName, setCustomLineaName] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
   const [material, setMaterial] = useState('');
   const [capacidadMl, setCapacidadMl] = useState('');
@@ -75,7 +65,17 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
     panelApi.categorias.list().then((cats) => {
       setCategorias(Array.isArray(cats) ? cats : []);
     }).catch(() => setCategorias([]));
-  }, [show]);
+
+    panelApi.lineas.list().then((lins) => {
+      if (Array.isArray(lins)) {
+        setLineasDisponibles(lins);
+        if (!productoId && lins.length > 0) {
+          const primera = esRopa ? (lins.find((l) => l.linea === 'urbana') || lins[0]) : (lins.find((l) => l.linea === 'drinkware') || lins[0]);
+          setLinea(primera.linea);
+        }
+      }
+    }).catch(() => setLineasDisponibles([]));
+  }, [show, esRopa, productoId]);
 
   useEffect(() => {
     if (!show) return;
@@ -90,18 +90,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
           setDescripcion(prod.descripcion || '');
           setPrecio(String(prod.precio || ''));
           setPrecioOferta(prod.precio_oferta ? String(prod.precio_oferta) : '');
-
-          const prodLinea = prod.linea || (esRopa ? 'urbana' : 'drinkware');
-          const isPreset = LINEAS_PRESET.some((p) => p.key === prodLinea);
-          if (isPreset) {
-            setLinea(prodLinea);
-            setIsCustomLinea(false);
-            setCustomLineaName('');
-          } else {
-            setLinea('custom');
-            setIsCustomLinea(true);
-            setCustomLineaName(prodLinea);
-          }
+          setLinea(prod.linea || (esRopa ? 'urbana' : 'drinkware'));
 
           const catId = typeof prod.categoria === 'object' && prod.categoria ? prod.categoria.id : prod.categoria;
           setCategoriaId(catId ? String(catId) : '');
@@ -233,8 +222,6 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
     if (!precio || isNaN(Number(precio))) { setError('Ingresa un precio normal válido.'); return; }
     if (!categoriaId) { setError('Selecciona una categoría.'); return; }
 
-    const finalLinea = isCustomLinea ? customLineaName.trim() || 'urbana' : linea;
-
     const payload: ProductoInput = {
       nombre: nombre.trim(),
       slug: slug.trim() || undefined,
@@ -244,7 +231,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
       activo,
       destacado,
       nuevo,
-      linea: finalLinea as any,
+      linea: linea as any,
       categoria: Number(categoriaId),
       ...(esRopa ? {} : {
         material: material.trim() || undefined,
@@ -387,32 +374,21 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                   </select>
                 </div>
 
-                {/* Selección y Creación de Línea */}
+                {/* Selección de Línea Existente */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label small fw-semibold text-muted">Línea de Producto / Colección</label>
+                  <label className="form-label small fw-semibold text-muted">Línea de Producto / Colección *</label>
                   <select
-                    value={isCustomLinea ? 'custom' : linea}
-                    onChange={(e) => handleLineaChange(e.target.value)}
-                    className="form-select bg-elevated text-text border-border mb-2"
+                    value={linea}
+                    onChange={(e) => setLinea(e.target.value)}
+                    className="form-select bg-elevated text-text border-border"
+                    required
                   >
-                    {LINEAS_PRESET.map((lp) => (
-                      <option key={lp.key} value={lp.key}>
-                        {lp.label}
+                    {lineasDisponibles.map((l) => (
+                      <option key={l.linea} value={l.linea}>
+                        {l.nombre} {l.es_sin_categoria ? '(🔒 Sin categoría)' : ''}
                       </option>
                     ))}
-                    <option value="custom">✨ + Otra línea personalizada...</option>
                   </select>
-
-                  {isCustomLinea && (
-                    <input
-                      type="text"
-                      value={customLineaName}
-                      onChange={(e) => setCustomLineaName(e.target.value)}
-                      placeholder="Escribe el nombre de la nueva línea"
-                      className="form-control form-control-sm bg-elevated text-primary border-primary"
-                      required
-                    />
-                  )}
                 </div>
 
                 {/* Precios y Atributos Específicos */}

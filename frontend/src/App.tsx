@@ -38,6 +38,7 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/catalogo" element={<Catalogo />} />
           <Route path="/ropa" element={<Navigate to="/catalogo?linea=ropa" replace />} />
+          <Route path="/ropa/:slug" element={<ProductoDetalle />} />
           <Route path="/catalogo/:slug" element={<ProductoDetalle />} />
           <Route path="/drinkware" element={<Navigate to="/catalogo?linea=drinkware" replace />} />
           <Route path="/drinkware/:slug" element={<VajillaDetalle />} />

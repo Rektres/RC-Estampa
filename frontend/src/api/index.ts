@@ -279,8 +279,10 @@ export interface EstadisticasData {
 }
 
 export interface LineaInfo {
+  id?: number;
   linea: string;
   nombre: string;
+  es_sin_categoria?: boolean;
   total_productos: number;
   total_ropa: number;
   total_drinkware: number;
@@ -292,9 +294,9 @@ export const panelApi = {
   drinkware: crudPanel<ProductoVajilla>('drinkware'),
   lineas: {
     list: () => api.get<LineaInfo[]>('/panel/lineas/').then((r) => r.data),
-    save: (data: { old_linea?: string; new_linea: string }) =>
-      api.post<{ success: boolean; linea: string }>('/panel/lineas/', data).then((r) => r.data),
-    remove: (linea: string, reassign_to: string = 'urbana') =>
+    save: (data: { old_linea?: string; new_linea: string; nombre?: string }) =>
+      api.post<{ success: boolean; linea: string; nombre: string }>('/panel/lineas/', data).then((r) => r.data),
+    remove: (linea: string, reassign_to: string = 'sin_categoria') =>
       api.delete('/panel/lineas/', { params: { linea, reassign_to } }).then((r) => r.data),
   },
   categorias: {

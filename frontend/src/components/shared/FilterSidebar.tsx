@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { ChevronDown, ChevronUp, X, Check, Search, Filter } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
-interface FilterConfig {
+export interface FilterConfig {
   showLinea?: boolean;
+  lineas?: { key: string; label: string }[];
   showCategoria?: boolean;
   categorias?: string[];
   showTalla?: boolean;
+  tallas?: string[];
   showColor?: boolean;
   colores?: { nombre: string; hex: string }[];
   showMaterial?: boolean;
@@ -35,8 +37,6 @@ function Section({ title, defaultOpen = true, children }: { title: string; defau
     </div>
   );
 }
-
-const TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export default function FilterSidebar({ config }: Props) {
   const [params, setParams] = useSearchParams();
@@ -83,6 +83,18 @@ export default function FilterSidebar({ config }: Props) {
   const soloDestacados = params.get('destacado') === '1';
   const soloNuevos = params.get('nuevo') === '1';
   const soloOferta = params.get('oferta') === '1';
+
+  // Líneas dinámicas existentes
+  const lineasOpciones = config.lineas && config.lineas.length > 0
+    ? [{ key: '', label: 'Todas las Colecciones' }, ...config.lineas]
+    : [
+        { key: '', label: 'Todas las Colecciones' },
+        { key: 'ropa', label: 'Ropa Textil' },
+        { key: 'drinkware', label: 'Drinkware' },
+      ];
+
+  // Tallas con stock > 0
+  const tallasOpciones = config.tallas ?? ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
   return (
     <aside className="w-100 font-montserrat">
@@ -131,17 +143,11 @@ export default function FilterSidebar({ config }: Props) {
         </div>
       </form>
 
-      {/* Colección / Línea de Producto */}
+      {/* Colección / Líneas Existentes */}
       {config.showLinea && (
         <Section title="Colección / Línea">
           <div className="d-flex flex-column gap-2">
-            {[
-              { key: '', label: 'Todas las Colecciones' },
-              { key: 'ropa', label: 'Ropa Textil (Urbana & Formal)' },
-              { key: 'urbana', label: '— Ropa Urbana / Streetwear' },
-              { key: 'formal', label: '— Ropa Formal / Corporativa' },
-              { key: 'drinkware', label: 'Drinkware (Botellas & Vasos)' },
-            ].map((item) => (
+            {lineasOpciones.map((item) => (
               <label
                 key={item.key}
                 className="d-flex align-items-center gap-2 small text-muted user-select-none cursor-pointer"
@@ -191,11 +197,11 @@ export default function FilterSidebar({ config }: Props) {
         </Section>
       )}
 
-      {/* Tallas (Ropa) */}
-      {config.showTalla && (
-        <Section title="Tallas">
+      {/* Tallas con Stock > 0 */}
+      {config.showTalla && tallasOpciones.length > 0 && (
+        <Section title="Tallas en Stock">
           <div className="d-flex flex-wrap gap-1">
-            {TALLAS.map((t) => {
+            {tallasOpciones.map((t) => {
               const isSelected = tallas.includes(t);
               return (
                 <button
@@ -215,9 +221,9 @@ export default function FilterSidebar({ config }: Props) {
         </Section>
       )}
 
-      {/* Colores */}
+      {/* Colores con Stock > 0 */}
       {config.showColor && config.colores && config.colores.length > 0 && (
-        <Section title="Colores">
+        <Section title="Colores Disponibles">
           <div className="d-flex flex-wrap gap-2">
             {config.colores.map((c) => {
               const isSelected = colores.includes(c.nombre);
@@ -296,50 +302,38 @@ export default function FilterSidebar({ config }: Props) {
               onChange={(e) => set('precio_max', e.target.value)}
               className="form-range"
             />
-            <div className="d-flex justify-content-between text-muted small" style={{ fontSize: '0.75rem' }}>
+            <div className="d-flex justify-content-between small text-muted">
               <span>$5.000</span>
-              <span className="text-primary fw-bold">${precioMax.toLocaleString('es-CL')}</span>
+              <span className="text-primary fw-bold">Hasta ${precioMax.toLocaleString('es-CL')}</span>
             </div>
           </div>
         </Section>
       )}
 
-      {/* Opciones Especiales */}
-      <Section title="Otras Características">
+      {/* Filtros Especiales */}
+      <Section title="Estado & Ofertas">
         <div className="d-flex flex-column gap-2">
-          <label className="d-flex align-items-center gap-2 small user-select-none cursor-pointer">
-            <input
-              type="checkbox"
-              checked={soloDestacados}
-              onChange={() => set('destacado', soloDestacados ? '' : '1')}
-              className="form-check-input mt-0"
-            />
-            <span className={soloDestacados ? 'text-primary fw-bold' : 'text-text'}>
-              ★ Solo Destacados
-            </span>
-          </label>
-          <label className="d-flex align-items-center gap-2 small user-select-none cursor-pointer">
-            <input
-              type="checkbox"
-              checked={soloNuevos}
-              onChange={() => set('nuevo', soloNuevos ? '' : '1')}
-              className="form-check-input mt-0"
-            />
-            <span className={soloNuevos ? 'text-primary fw-bold' : 'text-text'}>
-              ✨ Nuevos Lanzamientos
-            </span>
-          </label>
-          <label className="d-flex align-items-center gap-2 small user-select-none cursor-pointer">
-            <input
-              type="checkbox"
-              checked={soloOferta}
-              onChange={() => set('oferta', soloOferta ? '' : '1')}
-              className="form-check-input mt-0"
-            />
-            <span className={soloOferta ? 'text-primary fw-bold' : 'text-text'}>
-              🏷️ Con Descuento / Oferta
-            </span>
-          </label>
+          {[
+            { key: 'destacado', label: '★ Solo Destacados', checked: soloDestacados },
+            { key: 'nuevo', label: '✨ Novedades & Recientes', checked: soloNuevos },
+            { key: 'oferta', label: '🔥 En Oferta Especial', checked: soloOferta },
+          ].map((item) => (
+            <label
+              key={item.key}
+              className="d-flex align-items-center gap-2 small text-muted user-select-none cursor-pointer"
+              style={{ cursor: 'pointer' }}
+            >
+              <input
+                type="checkbox"
+                checked={item.checked}
+                onChange={() => toggle(item.key, '1')}
+                className="form-check-input mt-0"
+              />
+              <span className={item.checked ? 'text-primary fw-bold' : 'text-text'}>
+                {item.label}
+              </span>
+            </label>
+          ))}
         </div>
       </Section>
     </aside>
