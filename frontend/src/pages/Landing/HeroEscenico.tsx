@@ -7,7 +7,6 @@ import {
   Layers,
   ChevronLeft,
   ChevronRight,
-  FolderKanban,
 } from 'lucide-react';
 import { catalogoApi } from '../../api';
 import { useAsync } from '../../api/hooks';
@@ -181,30 +180,25 @@ export default function HeroEscenico() {
                 }}
               />
 
-              {/* Barra superior de Cover Flow con controles */}
-              <div className="d-flex align-items-center justify-content-between mb-3 px-2 position-relative" style={{ zIndex: 35 }}>
-                <div className="d-flex align-items-center gap-2">
-                  <FolderKanban size={16} className="text-primary" />
-                  <span className="font-montserrat fw-bold text-text text-uppercase" style={{ fontSize: '0.74rem', letterSpacing: '0.1em' }}>
-                    Cover Flow Portada ({activeIndex + 1}/{totalCards})
-                  </span>
-                </div>
-
-                {/* Botones de Navegación 3D */}
+              {/* Barra superior de Cover Flow: Solo flechas de navegación */}
+              <div className="d-flex align-items-center justify-content-end mb-3 px-2 position-relative" style={{ zIndex: 35 }}>
+                {/* Botones de Navegación 3D (Flechas) */}
                 <div className="d-flex align-items-center gap-2">
                   <button
                     onClick={prevCard}
                     className="btn btn-sm btn-outline-secondary p-0 rounded-circle d-flex align-items-center justify-content-center hover-lift"
-                    style={{ width: '32px', height: '32px' }}
-                    title="Anterior (Cover Flow)"
+                    style={{ width: '34px', height: '34px', backgroundColor: 'var(--surface-card)' }}
+                    title="Anterior"
+                    aria-label="Anterior"
                   >
                     <ChevronLeft size={18} />
                   </button>
                   <button
                     onClick={nextCard}
                     className="btn btn-sm btn-outline-primary p-0 rounded-circle d-flex align-items-center justify-content-center hover-lift"
-                    style={{ width: '32px', height: '32px' }}
-                    title="Siguiente (Cover Flow)"
+                    style={{ width: '34px', height: '34px', backgroundColor: 'var(--surface-card)' }}
+                    title="Siguiente"
+                    aria-label="Siguiente"
                   >
                     <ChevronRight size={18} />
                   </button>
@@ -237,25 +231,22 @@ export default function HeroEscenico() {
 
                   let transformStyle = '';
                   const zIndex = 30 - Math.abs(diff) * 5;
-                  let opacity = 1;
+                  const opacity = 1; // Tarjetas 100% sólidas sin traslucidez
                   let filter = 'none';
 
                   if (isCenter) {
                     transformStyle = 'translateX(0px) translateZ(0px) rotateY(0deg) scale(1)';
-                    opacity = 1;
                     filter = 'none';
                   } else if (isLeft) {
                     const offsetPx = Math.abs(diff) === 1 ? -120 : -210;
                     const zOffset = Math.abs(diff) === 1 ? -120 : -220;
                     transformStyle = `translateX(${offsetPx}px) translateZ(${zOffset}px) rotateY(38deg) scale(${1 - Math.abs(diff) * 0.12})`;
-                    opacity = Math.abs(diff) === 1 ? 0.72 : 0.35;
-                    filter = 'brightness(0.7) blur(0.5px)';
+                    filter = Math.abs(diff) === 1 ? 'brightness(0.65)' : 'brightness(0.35) blur(0.8px)';
                   } else if (isRight) {
                     const offsetPx = diff === 1 ? 120 : 210;
                     const zOffset = diff === 1 ? -120 : -220;
                     transformStyle = `translateX(${offsetPx}px) translateZ(${zOffset}px) rotateY(-38deg) scale(${1 - diff * 0.12})`;
-                    opacity = diff === 1 ? 0.72 : 0.35;
-                    filter = 'brightness(0.7) blur(0.5px)';
+                    filter = diff === 1 ? 'brightness(0.65)' : 'brightness(0.35) blur(0.8px)';
                   }
 
                   return (
