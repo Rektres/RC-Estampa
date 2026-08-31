@@ -28,26 +28,26 @@ $enable-negative-margins: true;
   --brand-accent: #e6c66e;         // Tono de luz y brillo
   --brand-accent-cyan: #22d3ee;    // Láser cian para indicadores en vivo / badges activos
 
-  // Capa 2: Tokens de Superficie (Dark Mode por defecto con contraste nítido)
-  --surface-base: #070814;         // Fondo principal del viewport
-  --surface-card: #101227;         // Superficie contrastada para tarjetas, modales y paneles
-  --surface-alt: #161a38;          // Secciones alternadas, inputs y sub-contenedores
-  --surface-elevated: #161a38;
+  // Capa 2: Tokens de Superficie (Dark Mode con contraste nítido y congruencia tonal)
+  --surface-base: #070814;         // Fondo principal del viewport (Obsidiana profundo)
+  --surface-card: #141732;         // Superficie contrastada para tarjetas, modales y paneles (Azul medianoche elegante)
+  --surface-alt: #1c2146;          // Secciones anidadas, inputs y sub-contenedores
+  --surface-elevated: #1c2146;
 
   // Capa 3: Delimitación Física y Profundidad
-  --card-border: rgba(255, 255, 255, 0.08);
-  --card-border-gold: rgba(201, 168, 76, 0.28);
-  --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-  --card-shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.7);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --card-border-gold: rgba(201, 168, 76, 0.35);
+  --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+  --card-shadow-hover: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(201, 168, 76, 0.18);
 
   // Capa 4: Texto y Contraste (Tonos Light de Alto Contraste)
   --text-main: #FFFFFF;
   --text-muted: #CBD5E1;
   --text-ghost: #94A3B8;
 
-  --stage-card-overlay-bg: linear-gradient(to top, rgba(12, 14, 30, 0.95) 0%, rgba(12, 14, 30, 0.6) 60%, transparent 100%);
+  --stage-card-overlay-bg: linear-gradient(to top, rgba(14, 16, 36, 0.95) 0%, rgba(14, 16, 36, 0.6) 60%, transparent 100%);
   --platform-path-overlay-bg: rgba(7, 8, 20, 0.85);
-  --preview-card-bg: linear-gradient(145deg, #12152e 0%, #0c0e1e 100%);
+  --preview-card-bg: linear-gradient(145deg, #161a38 0%, #101228 100%);
   --modal-backdrop-bg: rgba(7, 8, 20, 0.85);
 
   // Compatibilidad con selectores heredados
@@ -73,22 +73,22 @@ $enable-negative-margins: true;
   --brand-accent-cyan: #22d3ee;
 
   --surface-base: #070814;
-  --surface-card: #101227;
-  --surface-alt: #161a38;
-  --surface-elevated: #161a38;
+  --surface-card: #141732;
+  --surface-alt: #1c2146;
+  --surface-elevated: #1c2146;
 
-  --card-border: rgba(255, 255, 255, 0.08);
-  --card-border-gold: rgba(201, 168, 76, 0.28);
-  --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-  --card-shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.7);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --card-border-gold: rgba(201, 168, 76, 0.35);
+  --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+  --card-shadow-hover: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(201, 168, 76, 0.18);
 
   --text-main: #FFFFFF;
   --text-muted: #CBD5E1;
   --text-ghost: #94A3B8;
 
-  --stage-card-overlay-bg: linear-gradient(to top, rgba(12, 14, 30, 0.95) 0%, rgba(12, 14, 30, 0.6) 60%, transparent 100%);
+  --stage-card-overlay-bg: linear-gradient(to top, rgba(14, 16, 36, 0.95) 0%, rgba(14, 16, 36, 0.6) 60%, transparent 100%);
   --platform-path-overlay-bg: rgba(7, 8, 20, 0.85);
-  --preview-card-bg: linear-gradient(145deg, #12152e 0%, #0c0e1e 100%);
+  --preview-card-bg: linear-gradient(145deg, #161a38 0%, #101228 100%);
   --modal-backdrop-bg: rgba(7, 8, 20, 0.85);
 
   --badge-pill-bg: rgba(201, 168, 76, 0.08);
@@ -513,6 +513,34 @@ $rc-solid: (
 
 .font-italiana { font-family: 'Italiana', serif; }
 .font-montserrat { font-family: 'Montserrat', sans-serif; }
+
+// Cards Generales & Stage Cards (Alto Contraste y Congruencia en Dark Mode)
+.stage-card {
+  background-color: var(--surface-card) !important;
+  border: 1px solid var(--card-border) !important;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: var(--card-border-gold) !important;
+    box-shadow: var(--card-shadow-hover);
+  }
+}
+
+.card,
+.bg-card,
+.bg-surface {
+  background-color: var(--surface-card) !important;
+  border-color: var(--card-border) !important;
+}
+
+.bg-elevated {
+  background-color: var(--surface-alt) !important;
+  border-color: var(--card-border) !important;
+}
 
 [data-bs-theme='light'] {
   .stage-card {
