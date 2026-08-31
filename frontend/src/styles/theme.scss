@@ -530,6 +530,12 @@ $rc-solid: (
   }
 }
 
+// Fondo principal de la web / viewport (Obsidiana #070814)
+.bg-base {
+  background-color: var(--surface-base) !important;
+}
+
+// Superficie elevada para tarjetas, paneles y contenedores (Azul medianoche #141732)
 .card,
 .bg-card,
 .bg-surface {
@@ -537,6 +543,7 @@ $rc-solid: (
   border-color: var(--card-border) !important;
 }
 
+// Superficie aún más elevada para sub-bloques, inputs y métricas (#1c2146)
 .bg-elevated {
   background-color: var(--surface-alt) !important;
   border-color: var(--card-border) !important;
@@ -552,6 +559,10 @@ $rc-solid: (
       border-color: rgba(184, 147, 61, 0.45) !important;
       box-shadow: 0 16px 36px rgba(18, 19, 36, 0.12);
     }
+  }
+
+  .bg-base {
+    background-color: #faf8f5 !important;
   }
 
   .bg-card {

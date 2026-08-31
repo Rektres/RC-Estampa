@@ -19,7 +19,7 @@ export default function Landing() {
   });
 
   return (
-    <div className="bg-surface">
+    <div className="bg-base">
       {/* 1. Hero con Cover Flow 3D + Titular + Doble CTA + Preview */}
       <HeroEscenico />
 

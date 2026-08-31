@@ -9,7 +9,7 @@ import CookieBanner from '../shared/CookieBanner';
 
 export default function Layout() {
   return (
-    <div className="min-vh-100 bg-surface d-flex flex-column">
+    <div className="min-vh-100 bg-base d-flex flex-column">
       <Navbar />
       <main className="flex-grow-1">
         <Outlet />

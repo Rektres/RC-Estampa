@@ -14,7 +14,7 @@ export default function MarqueeTicker() {
   ];
 
   return (
-    <div className="py-3 bg-surface border-bottom border-border overflow-hidden">
+    <div className="py-3 bg-base border-bottom border-border overflow-hidden">
       <div className="marquee-container">
         <div className="marquee-track">
           {/* First loop */}
