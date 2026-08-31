@@ -12,8 +12,10 @@ import {
   Image as ImageIcon,
   Tag,
   AlertCircle,
+  Info,
 } from 'lucide-react';
 import { panelApi } from '../../api';
+import { startProductoModalTour } from '../../utils/panelTour';
 import type { Producto, ProductoVajilla, ProductoInput, Categoria } from '../../types';
 
 interface Props {
@@ -269,7 +271,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
     <Modal show={show} onHide={onHide} size="lg" centered backdrop="static">
       <Modal.Body className="p-4 p-md-5 bg-surface border border-border rounded-4 font-montserrat text-text shadow-2xl" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
         {/* Header */}
-        <div className="d-flex align-items-center justify-content-between pb-3 border-bottom border-border mb-4">
+        <div id="tour-modal-prod-header" className="d-flex align-items-center justify-content-between pb-3 border-bottom border-border mb-4">
           <div className="d-flex align-items-center gap-3">
             <div className="rounded-circle p-2 bg-primary bg-opacity-15 text-primary border border-primary">
               {esRopa ? <Shirt size={22} /> : <Coffee size={22} />}
@@ -283,9 +285,21 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
               </p>
             </div>
           </div>
-          <button onClick={onHide} className="btn btn-sm btn-outline-secondary p-1 rounded-circle">
-            <X size={18} />
-          </button>
+          <div className="d-flex align-items-center gap-2">
+            <button
+              type="button"
+              onClick={() => startProductoModalTour(esRopa)}
+              className="btn btn-sm btn-outline-primary p-1 rounded-circle d-flex align-items-center justify-content-center hover-lift"
+              style={{ width: '32px', height: '32px' }}
+              title="Guía informativa de campos"
+              aria-label="Guía informativa de campos"
+            >
+              <Info size={17} />
+            </button>
+            <button onClick={onHide} className="btn btn-sm btn-outline-secondary p-1 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -300,7 +314,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
         ) : (
           <form onSubmit={handleSubmit} className="d-flex flex-column gap-4">
             {/* SECCIÓN 1: DATOS GENERALES */}
-            <div className="p-3 p-md-4 bg-card rounded-3 border border-border">
+            <div id="tour-modal-prod-general" className="p-3 p-md-4 bg-card rounded-3 border border-border">
               <h4 className="fs-6 fw-bold text-text mb-3 d-flex align-items-center gap-2 pb-2 border-bottom border-border">
                 <Tag size={16} className="text-primary" /> Datos Generales
               </h4>
@@ -341,96 +355,99 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                   />
                 </div>
 
-                <div className="col-12 col-md-6">
-                  <label className="form-label small fw-semibold text-muted">Categoría *</label>
-                  <select
-                    value={categoriaId}
-                    onChange={(e) => setCategoriaId(e.target.value)}
-                    className="form-select bg-elevated text-text border-border"
-                    required
-                  >
-                    <option value="">Selecciona una categoría...</option>
-                    {(categorias.length > 0 ? categorias.filter((c) => (esRopa ? c.linea !== 'drinkware' : c.linea === 'drinkware')) : []).map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nombre} {c.linea ? `(${c.linea})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Subsección: Taxonomía y Precios */}
+                <div id="tour-modal-prod-taxonomy" className="col-12 row g-3 mt-1 pt-2 border-top border-border">
+                  <div className="col-12 col-md-6">
+                    <label className="form-label small fw-semibold text-muted">Categoría *</label>
+                    <select
+                      value={categoriaId}
+                      onChange={(e) => setCategoriaId(e.target.value)}
+                      className="form-select bg-elevated text-text border-border"
+                      required
+                    >
+                      <option value="">Selecciona una categoría...</option>
+                      {(categorias.length > 0 ? categorias.filter((c) => (esRopa ? c.linea !== 'drinkware' : c.linea === 'drinkware')) : []).map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nombre} {c.linea ? `(${c.linea})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                {/* Selección de Línea Existente */}
-                <div className="col-12 col-md-6">
-                  <label className="form-label small fw-semibold text-muted">Línea de Producto / Colección *</label>
-                  <select
-                    value={linea}
-                    onChange={(e) => setLinea(e.target.value)}
-                    className="form-select bg-elevated text-text border-border"
-                    required
-                  >
-                    {(lineasDisponibles.length > 0 ? lineasDisponibles : (esRopa ? [{ linea: 'urbana', nombre: 'Urbana' }, { linea: 'formal', nombre: 'Formal' }] : [{ linea: 'drinkware', nombre: 'Drinkware' }])).map((l) => (
-                      <option key={l.linea} value={l.linea}>
-                        {l.nombre} {l.es_sin_categoria ? '(🔒 Sin categoría)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  {/* Selección de Línea Existente */}
+                  <div className="col-12 col-md-6">
+                    <label className="form-label small fw-semibold text-muted">Línea de Producto / Colección *</label>
+                    <select
+                      value={linea}
+                      onChange={(e) => setLinea(e.target.value)}
+                      className="form-select bg-elevated text-text border-border"
+                      required
+                    >
+                      {(lineasDisponibles.length > 0 ? lineasDisponibles : (esRopa ? [{ linea: 'urbana', nombre: 'Urbana' }, { linea: 'formal', nombre: 'Formal' }] : [{ linea: 'drinkware', nombre: 'Drinkware' }])).map((l) => (
+                        <option key={l.linea} value={l.linea}>
+                          {l.nombre} {l.es_sin_categoria ? '(🔒 Sin categoría)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                {/* Precios y Atributos Específicos */}
-                <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
-                  <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
-                    Precio Normal (CLP) <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={precio}
-                    onChange={(e) => setPrecio(e.target.value)}
-                    placeholder="25990"
-                    className="form-control bg-elevated text-text border-border"
-                    required
-                  />
-                </div>
+                  {/* Precios y Atributos Específicos */}
+                  <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
+                    <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                      Precio Normal (CLP) <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={precio}
+                      onChange={(e) => setPrecio(e.target.value)}
+                      placeholder="25990"
+                      className="form-control bg-elevated text-text border-border"
+                      required
+                    />
+                  </div>
 
-                <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
-                  <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
-                    Precio Oferta (CLP)
-                  </label>
-                  <input
-                    type="number"
-                    value={precioOferta}
-                    onChange={(e) => setPrecioOferta(e.target.value)}
-                    placeholder="19990"
-                    className="form-control bg-elevated text-text border-border"
-                  />
-                </div>
+                  <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
+                    <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                      Precio Oferta (CLP)
+                    </label>
+                    <input
+                      type="number"
+                      value={precioOferta}
+                      onChange={(e) => setPrecioOferta(e.target.value)}
+                      placeholder="19990"
+                      className="form-control bg-elevated text-text border-border"
+                    />
+                  </div>
 
-                {!esRopa && (
-                  <>
-                    <div className="col-12 col-sm-6 col-md-3">
-                      <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
-                        Material
-                      </label>
-                      <input
-                        type="text"
-                        value={material}
-                        onChange={(e) => setMaterial(e.target.value)}
-                        placeholder="Acero 304, Cerámica..."
-                        className="form-control bg-elevated text-text border-border"
-                      />
-                    </div>
-                    <div className="col-12 col-sm-6 col-md-3">
-                      <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
-                        Capacidad (ml)
-                      </label>
-                      <input
-                        type="number"
-                        value={capacidadMl}
-                        onChange={(e) => setCapacidadMl(e.target.value)}
-                        placeholder="500"
-                        className="form-control bg-elevated text-text border-border"
-                      />
-                    </div>
-                  </>
-                )}
+                  {!esRopa && (
+                    <>
+                      <div className="col-12 col-sm-6 col-md-3">
+                        <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                          Material
+                        </label>
+                        <input
+                          type="text"
+                          value={material}
+                          onChange={(e) => setMaterial(e.target.value)}
+                          placeholder="Acero 304, Cerámica..."
+                          className="form-control bg-elevated text-text border-border"
+                        />
+                      </div>
+                      <div className="col-12 col-sm-6 col-md-3">
+                        <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                          Capacidad (ml)
+                        </label>
+                        <input
+                          type="number"
+                          value={capacidadMl}
+                          onChange={(e) => setCapacidadMl(e.target.value)}
+                          placeholder="500"
+                          className="form-control bg-elevated text-text border-border"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Toggles de Estado Espaciados y Ordenados */}
@@ -483,7 +500,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
             </div>
 
             {/* SECCIÓN 2: VARIANTES & STOCK */}
-            <div className="p-3 p-md-4 bg-card rounded-3 border border-border">
+            <div id="tour-modal-prod-variantes" className="p-3 p-md-4 bg-card rounded-3 border border-border">
               <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-border">
                 <h4 className="fs-6 fw-bold text-text mb-0 d-flex align-items-center gap-2">
                   <Package size={16} className="text-primary" /> Variantes de Stock & Color
@@ -518,22 +535,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                       </div>
                     )}
 
-                    <div style={{ width: '130px' }}>
-                      <input
-                        type="text"
-                        value={v.color}
-                        onChange={(e) => {
-                          const next = [...variantes];
-                          next[idx].color = e.target.value;
-                          setVariantes(next);
-                        }}
-                        placeholder="Color (ej. Negro)"
-                        className="form-control form-control-sm bg-surface text-text border-border"
-                        required
-                      />
-                    </div>
-
-                    <div className="d-flex align-items-center gap-1" style={{ width: '75px' }}>
+                    <div className="d-flex align-items-center gap-2" style={{ flex: '1 1 140px' }}>
                       <input
                         type="color"
                         value={v.color_hex || '#111111'}
@@ -542,11 +544,22 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                           next[idx].color_hex = e.target.value;
                           setVariantes(next);
                         }}
-                        className="form-control form-control-color form-control-sm p-0 border-0"
-                        title="Seleccionar color"
+                        className="form-control form-control-color form-control-sm bg-transparent border-0 p-0"
+                        title="Elegir color visual"
                         style={{ width: '28px', height: '28px', cursor: 'pointer' }}
                       />
-                      <span className="text-muted" style={{ fontSize: '0.65rem' }}>{v.color_hex}</span>
+                      <input
+                        type="text"
+                        value={v.color}
+                        onChange={(e) => {
+                          const next = [...variantes];
+                          next[idx].color = e.target.value;
+                          setVariantes(next);
+                        }}
+                        placeholder="Nombre color (Negro)"
+                        className="form-control form-control-sm bg-surface text-text border-border"
+                        required
+                      />
                     </div>
 
                     <div style={{ width: '90px' }}>
@@ -566,7 +579,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                       />
                     </div>
 
-                    <div className="flex-grow-1" style={{ minWidth: '120px' }}>
+                    <div style={{ flex: '1 1 120px' }}>
                       <input
                         type="text"
                         value={v.sku}
@@ -575,8 +588,9 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                           next[idx].sku = e.target.value;
                           setVariantes(next);
                         }}
-                        placeholder="SKU (código)"
-                        className="form-control form-control-sm bg-surface text-text border-border"
+                        placeholder="SKU (opcional)"
+                        className="form-control form-control-sm bg-surface text-text border-border font-monospace"
+                        style={{ fontSize: '0.75rem' }}
                       />
                     </div>
 
@@ -596,7 +610,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
             </div>
 
             {/* SECCIÓN 3: FOTOS DEL PRODUCTO */}
-            <div className="p-3 p-md-4 bg-card rounded-3 border border-border">
+            <div id="tour-modal-prod-imagenes" className="p-3 p-md-4 bg-card rounded-3 border border-border">
               <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-border">
                 <h4 className="fs-6 fw-bold text-text mb-0 d-flex align-items-center gap-2">
                   <ImageIcon size={16} className="text-primary" /> Fotos & Vistas (Hover Swap)

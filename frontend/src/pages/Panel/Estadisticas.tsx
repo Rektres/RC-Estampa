@@ -26,11 +26,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
+  Info,
 } from 'lucide-react';
 import { Modal } from 'react-bootstrap';
 import { panelApi, pedidosApi, type EstadisticasData } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { formatPrice } from '../../utils';
+import { startOrderModalTour } from '../../utils/panelTour';
 import PedidoTimeline from '../../components/shared/PedidoTimeline';
 
 const PERIODOS = [
@@ -1081,7 +1083,7 @@ export default function Estadisticas() {
       >
         {activeModalTx && (
           <>
-            <Modal.Header className="bg-surface border-bottom border-border px-4 py-3 d-flex align-items-center justify-content-between">
+            <Modal.Header id="tour-modal-order-header" className="bg-surface border-bottom border-border px-4 py-3 d-flex align-items-center justify-content-between">
               <div className="d-flex align-items-center gap-3">
                 <div className="rounded-circle p-2 bg-primary bg-opacity-15 text-primary border border-primary">
                   {modalTab === 'trazabilidad' ? <Eye size={18} /> : <History size={18} />}
@@ -1127,15 +1129,27 @@ export default function Estadisticas() {
                 </div>
 
                 <button
+                  type="button"
+                  onClick={startOrderModalTour}
+                  className="btn btn-sm btn-outline-primary p-1 rounded-circle d-flex align-items-center justify-content-center hover-lift"
+                  style={{ width: '30px', height: '30px' }}
+                  title="Guía informativa de trazabilidad"
+                  aria-label="Guía informativa de trazabilidad"
+                >
+                  <Info size={16} />
+                </button>
+
+                <button
                   onClick={() => setActiveModalTx(null)}
-                  className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
+                  className="btn btn-sm btn-outline-secondary p-1 rounded-circle d-flex align-items-center justify-content-center"
+                  style={{ width: '30px', height: '30px' }}
                 >
                   <X size={18} />
                 </button>
               </div>
             </Modal.Header>
 
-            <Modal.Body className="p-4 bg-surface text-text">
+            <Modal.Body id="tour-modal-order-body" className="p-4 bg-surface text-text">
               {modalTab === 'trazabilidad' ? (
                 <div className="d-flex flex-column gap-3">
                   {/* Timeline Interactivo */}

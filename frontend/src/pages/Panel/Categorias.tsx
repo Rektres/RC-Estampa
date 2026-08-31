@@ -10,10 +10,12 @@ import {
   Search,
   AlertCircle,
   Tag,
+  Info,
 } from 'lucide-react';
 import { Modal } from 'react-bootstrap';
 import { panelApi } from '../../api';
 import { useAsync } from '../../api/hooks';
+import { startCategoriaModalTour } from '../../utils/panelTour';
 import LineaBadge from '../../components/shared/LineaBadge';
 import type { Categoria } from '../../types';
 
@@ -151,7 +153,7 @@ export default function Categorias() {
   }, [categorias, busqueda, filtroLinea, sortColumn, sortDirection]);
 
   return (
-    <div className="d-flex flex-column gap-4 animate-tab-fade font-montserrat">
+    <div id="tour-categorias-container" className="d-flex flex-column gap-4 animate-tab-fade font-montserrat">
       {/* Header & Controles de Categorías */}
       <div className="p-3 p-md-4 rounded-4 bg-surface border border-border d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm">
         <div className="d-flex align-items-center gap-3">
@@ -336,7 +338,7 @@ export default function Categorias() {
       {/* Modal Crear / Editar Categoría */}
       <Modal show={modalOpen} onHide={() => setModalOpen(false)} centered backdrop="static">
         <Modal.Body className="p-4 bg-surface border border-border rounded-4 font-montserrat">
-          <div className="d-flex align-items-center justify-content-between pb-3 border-bottom border-border mb-4">
+          <div id="tour-modal-cat-header" className="d-flex align-items-center justify-content-between pb-3 border-bottom border-border mb-4">
             <div className="d-flex align-items-center gap-2">
               <div className="p-2 rounded-circle bg-primary bg-opacity-15 text-primary border border-primary">
                 <Tag size={18} />
@@ -345,12 +347,25 @@ export default function Categorias() {
                 {editando === 'nueva' ? 'Crear Nueva Categoría' : 'Editar Categoría'}
               </h4>
             </div>
-            <button
-              onClick={() => setModalOpen(false)}
-              className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
-            >
-              <X size={18} />
-            </button>
+            <div className="d-flex align-items-center gap-2">
+              <button
+                type="button"
+                onClick={startCategoriaModalTour}
+                className="btn btn-sm btn-outline-primary p-1 rounded-circle d-flex align-items-center justify-content-center hover-lift"
+                style={{ width: '30px', height: '30px' }}
+                title="Guía informativa de categoría"
+                aria-label="Guía informativa de categoría"
+              >
+                <Info size={16} />
+              </button>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="btn btn-sm btn-outline-secondary p-1 rounded-circle d-flex align-items-center justify-content-center"
+                style={{ width: '30px', height: '30px' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -360,7 +375,7 @@ export default function Categorias() {
             </div>
           )}
 
-          <form onSubmit={guardar} className="d-flex flex-column gap-3">
+          <form id="tour-modal-cat-form" onSubmit={guardar} className="d-flex flex-column gap-3">
             <div>
               <label className="form-label text-muted small fw-semibold">Nombre de la Categoría *</label>
               <input

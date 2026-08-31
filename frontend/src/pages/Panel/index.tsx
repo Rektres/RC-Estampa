@@ -27,7 +27,7 @@ import Categorias from './Categorias';
 import Lineas from './Lineas';
 import Estadisticas from './Estadisticas';
 import ProductoModalForm from './ProductoModalForm';
-import { startPanelTour } from '../../utils/panelTour';
+import { startPanelTabTour } from '../../utils/panelTour';
 import type { Producto, ProductoVajilla } from '../../types';
 
 type Tab = 'estadisticas' | 'ropa' | 'drinkware' | 'categorias' | 'lineas';
@@ -195,11 +195,14 @@ export default function Panel() {
   }
 
   useEffect(() => {
-    // Iniciar el tour automáticamente en la primera visita
-    const timer = setTimeout(() => {
-      startPanelTour(false);
-    }, 700);
-    return () => clearTimeout(timer);
+    const TOUR_STORAGE_KEY = 'rc_panel_tour_completed';
+    if (localStorage.getItem(TOUR_STORAGE_KEY) !== 'true') {
+      const timer = setTimeout(() => {
+        startPanelTabTour('estadisticas');
+        localStorage.setItem(TOUR_STORAGE_KEY, 'true');
+      }, 700);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   return (
@@ -216,12 +219,12 @@ export default function Panel() {
         <div className="d-flex align-items-center gap-2 flex-wrap">
           <button
             id="tour-btn-guiado"
-            onClick={() => startPanelTour(true)}
+            onClick={() => startPanelTabTour(tab)}
             className="btn btn-outline-primary font-montserrat fw-semibold d-inline-flex align-items-center gap-2 px-3 py-2 hover-lift"
-            title="Iniciar Tour Guiado Interactivo"
+            title="Iniciar Guía del Módulo Actual"
           >
             <HelpCircle size={16} />
-            <span>Tour Guiado</span>
+            <span>Guía de Pestaña</span>
           </button>
 
           {(tab === 'ropa' || tab === 'drinkware') && (

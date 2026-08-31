@@ -1135,16 +1135,29 @@ dialog::backdrop {
 // ===========================================================================
 // 12. Estilos Personalizados para Shepherd.js Tour Guiado (Luxury Dark & Light)
 // ===========================================================================
+@keyframes shepherdFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .shepherd-element {
   background: var(--surface-card) !important;
   border: 1px solid var(--card-border-gold) !important;
   border-radius: 16px !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 1px 1px var(--card-border-gold) !important;
   color: var(--text-main) !important;
   font-family: 'Montserrat', sans-serif !important;
-  max-width: 420px !important;
-  padding: 1.25rem !important;
-  z-index: 9999 !important;
+  max-width: 440px !important;
+  padding: 1.35rem !important;
+  z-index: 99999 !important;
+  animation: shepherdFadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  transition: all 0.25s ease-out !important;
 
   .shepherd-header {
     background: transparent !important;
@@ -1160,23 +1173,37 @@ dialog::backdrop {
       color: var(--brand-primary) !important;
       font-weight: 700 !important;
       margin: 0 !important;
+      letter-spacing: 0.02em !important;
     }
 
     .shepherd-cancel-icon {
       color: var(--text-muted) !important;
-      font-size: 1.2rem !important;
-      transition: color 0.2s ease !important;
+      font-size: 1.25rem !important;
+      transition: all 0.2s ease !important;
+      cursor: pointer !important;
       &:hover {
-        color: var(--text-main) !important;
+        color: var(--brand-primary) !important;
+        transform: rotate(90deg) !important;
       }
     }
   }
 
   .shepherd-text {
     color: var(--text-muted) !important;
-    font-size: 0.875rem !important;
-    line-height: 1.6 !important;
+    font-size: 0.885rem !important;
+    line-height: 1.65 !important;
     padding: 1rem 0 !important;
+
+    strong {
+      color: var(--text-main) !important;
+      font-weight: 600 !important;
+    }
+
+    em {
+      color: var(--brand-primary) !important;
+      font-style: normal !important;
+      font-weight: 600 !important;
+    }
   }
 
   .shepherd-footer {
@@ -1190,8 +1217,8 @@ dialog::backdrop {
       border-radius: 8px !important;
       font-weight: 600 !important;
       font-size: 0.8rem !important;
-      padding: 0.45rem 1rem !important;
-      transition: all 0.2s ease !important;
+      padding: 0.45rem 1.1rem !important;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 
       &.shepherd-button-secondary {
         background: var(--surface-alt) !important;
@@ -1200,16 +1227,19 @@ dialog::backdrop {
         &:hover {
           background: var(--card-border) !important;
           color: var(--text-main) !important;
+          transform: translateY(-1px) !important;
         }
       }
 
       &.shepherd-button-primary {
-        background: linear-gradient(135deg, #d9be6a 0%, var(--brand-primary) 60%, #a8873a 100%) !important;
-        color: #070814 !important;
+        background: linear-gradient(135deg, #e4cd7c 0%, var(--brand-primary) 50%, #9a7625 100%) !important;
+        color: #05060c !important;
         border: none !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 12px rgba(201, 168, 76, 0.25) !important;
         &:hover {
-          transform: translateY(-1px) !important;
-          box-shadow: 0 4px 15px rgba(201, 168, 76, 0.35) !important;
+          transform: translateY(-1.5px) !important;
+          box-shadow: 0 6px 20px rgba(201, 168, 76, 0.45) !important;
         }
       }
     }
@@ -1222,6 +1252,17 @@ dialog::backdrop {
 }
 
 .shepherd-modal-overlay-container {
-  opacity: 0.75 !important;
+  opacity: 0.78 !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  transition: opacity 0.3s ease !important;
+
+  path {
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+}
+
+.shepherd-target {
+  transition: all 0.3s ease !important;
 }
 

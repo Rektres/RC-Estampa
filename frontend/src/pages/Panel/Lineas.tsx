@@ -14,9 +14,11 @@ import {
   AlertCircle,
   Search,
   EyeOff,
+  Info,
 } from 'lucide-react';
 import { panelApi, type LineaInfo } from '../../api';
 import { useAsync } from '../../api/hooks';
+import { startLineaModalTour } from '../../utils/panelTour';
 import LineaBadge from '../../components/shared/LineaBadge';
 
 export default function Lineas() {
@@ -125,7 +127,7 @@ export default function Lineas() {
   }
 
   return (
-    <div className="d-flex flex-column gap-4 font-montserrat">
+    <div id="tour-lineas-container" className="d-flex flex-column gap-4 font-montserrat">
       {/* Barra superior de controles */}
       <div className="p-3 bg-surface rounded-4 border border-border d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
         <div className="d-flex align-items-center gap-3">
@@ -269,19 +271,32 @@ export default function Lineas() {
       {/* Modal Crear / Editar Línea */}
       <Modal show={modalOpen} onHide={() => setModalOpen(false)} centered>
         <Modal.Body className="p-4 bg-surface border border-border rounded-4 font-montserrat">
-          <div className="d-flex align-items-center justify-content-between pb-3 border-bottom border-border mb-3">
+          <div id="tour-modal-linea-header" className="d-flex align-items-center justify-content-between pb-3 border-bottom border-border mb-3">
             <h4 className="fs-5 fw-bold text-text mb-0">
               {editingLinea ? `Editar Línea: ${editingLinea.nombre}` : 'Crear Nueva Línea / Colección'}
             </h4>
-            <button
-              onClick={() => setModalOpen(false)}
-              className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
-            >
-              <X size={18} />
-            </button>
+            <div className="d-flex align-items-center gap-2">
+              <button
+                type="button"
+                onClick={startLineaModalTour}
+                className="btn btn-sm btn-outline-primary p-1 rounded-circle d-flex align-items-center justify-content-center hover-lift"
+                style={{ width: '30px', height: '30px' }}
+                title="Guía informativa de líneas"
+                aria-label="Guía informativa de líneas"
+              >
+                <Info size={16} />
+              </button>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="btn btn-sm btn-outline-secondary p-1 rounded-circle d-flex align-items-center justify-content-center"
+                style={{ width: '30px', height: '30px' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
-          <form onSubmit={handleGuardar}>
+          <form id="tour-modal-linea-form" onSubmit={handleGuardar}>
             <div className="mb-3">
               <label className="form-label small fw-semibold text-muted">Nombre de la Línea *</label>
               <input
