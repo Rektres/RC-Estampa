@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Table, Modal } from 'react-bootstrap';
 import {
   Plus,
@@ -17,6 +17,7 @@ import {
   X,
   FileSpreadsheet,
   ShoppingBag,
+  HelpCircle,
 } from 'lucide-react';
 import { panelApi } from '../../api';
 import { useAsync } from '../../api/hooks';
@@ -26,6 +27,7 @@ import Categorias from './Categorias';
 import Lineas from './Lineas';
 import Estadisticas from './Estadisticas';
 import ProductoModalForm from './ProductoModalForm';
+import { startPanelTour } from '../../utils/panelTour';
 import type { Producto, ProductoVajilla } from '../../types';
 
 type Tab = 'estadisticas' | 'ropa' | 'drinkware' | 'categorias' | 'lineas';
@@ -192,10 +194,18 @@ export default function Panel() {
     }
   }
 
+  useEffect(() => {
+    // Iniciar el tour automáticamente en la primera visita
+    const timer = setTimeout(() => {
+      startPanelTour(false);
+    }, 700);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="container-xxl py-5 animate-tab-fade">
       {/* Header del Panel */}
-      <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 pb-2 border-bottom border-border">
+      <div id="tour-panel-header" className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 pb-2 border-bottom border-border">
         <div>
           <h1 className="font-italiana text-text mb-1 fs-2">Panel de Administración</h1>
           <p className="font-montserrat small text-muted mb-0">
@@ -203,31 +213,45 @@ export default function Panel() {
           </p>
         </div>
 
-        {(tab === 'ropa' || tab === 'drinkware') && (
-          <div className="d-flex align-items-center gap-2">
-            <button
-              onClick={handleExportExcel}
-              disabled={isExporting}
-              className="btn btn-outline-success font-montserrat fw-semibold d-inline-flex align-items-center gap-2 px-3 py-2"
-              title="Exportar a Excel con hojas por categoría"
-            >
-              <FileSpreadsheet size={16} />
-              <span>{isExporting ? 'Exportando...' : 'Exportar Excel'}</span>
-            </button>
+        <div className="d-flex align-items-center gap-2 flex-wrap">
+          <button
+            id="tour-btn-guiado"
+            onClick={() => startPanelTour(true)}
+            className="btn btn-outline-primary font-montserrat fw-semibold d-inline-flex align-items-center gap-2 px-3 py-2 hover-lift"
+            title="Iniciar Tour Guiado Interactivo"
+          >
+            <HelpCircle size={16} />
+            <span>Tour Guiado</span>
+          </button>
 
-            <button
-              onClick={openNuevoProducto}
-              className="btn btn-primary font-montserrat fw-bold d-inline-flex align-items-center gap-2 px-3 py-2"
-            >
-              <Plus size={16} />
-              <span>Nuevo Producto</span>
-            </button>
-          </div>
-        )}
+          {(tab === 'ropa' || tab === 'drinkware') && (
+            <>
+              <button
+                id="tour-btn-export-excel"
+                onClick={handleExportExcel}
+                disabled={isExporting}
+                className="btn btn-outline-success font-montserrat fw-semibold d-inline-flex align-items-center gap-2 px-3 py-2 hover-lift"
+                title="Exportar a Excel con hojas por categoría"
+              >
+                <FileSpreadsheet size={16} />
+                <span>{isExporting ? 'Exportando...' : 'Exportar Excel'}</span>
+              </button>
+
+              <button
+                id="tour-btn-nuevo-producto"
+                onClick={openNuevoProducto}
+                className="btn btn-primary font-montserrat fw-bold d-inline-flex align-items-center gap-2 px-3 py-2 hover-lift"
+              >
+                <Plus size={16} />
+                <span>Nuevo Producto</span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Selector de Pestañas Principales con Separador Limpio */}
-      <div className="d-flex gap-2 border-bottom border-border pb-3 mb-4 overflow-x-auto font-montserrat">
+      <div id="tour-panel-tabs" className="d-flex gap-2 border-bottom border-border pb-3 mb-4 overflow-x-auto font-montserrat">
         {TABS.map((t) => {
           const Icon = t.icon;
           const isActive = tab === t.key;
@@ -267,7 +291,7 @@ export default function Panel() {
         ) : (
           <div className="d-flex flex-column gap-3">
             {/* Barra de Filtros y Selector de Modo de Vista */}
-            <div className="p-3 bg-surface rounded-4 border border-border d-flex flex-column gap-3 font-montserrat shadow-sm">
+            <div id="tour-catalog-filters" className="p-3 bg-surface rounded-4 border border-border d-flex flex-column gap-3 font-montserrat shadow-sm">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 {/* Buscador Multi-palabra */}
                 <div className="position-relative flex-grow-1" style={{ minWidth: '220px', maxWidth: '340px' }}>

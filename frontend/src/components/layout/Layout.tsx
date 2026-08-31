@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
+import ScrollToTopButton from './ScrollToTopButton';
 import CartDrawer from './CartDrawer';
 import MobileStickyBar from './MobileStickyBar';
 import CookieBanner from '../shared/CookieBanner';
@@ -14,6 +15,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <ScrollToTopButton />
       <WhatsAppButton />
       <MobileStickyBar />
       <CartDrawer />

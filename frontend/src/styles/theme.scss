@@ -1132,3 +1132,96 @@ dialog::backdrop {
   backdrop-filter: blur(4px);
 }
 
+// ===========================================================================
+// 12. Estilos Personalizados para Shepherd.js Tour Guiado (Luxury Dark & Light)
+// ===========================================================================
+.shepherd-element {
+  background: var(--surface-card) !important;
+  border: 1px solid var(--card-border-gold) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65) !important;
+  color: var(--text-main) !important;
+  font-family: 'Montserrat', sans-serif !important;
+  max-width: 420px !important;
+  padding: 1.25rem !important;
+  z-index: 9999 !important;
+
+  .shepherd-header {
+    background: transparent !important;
+    padding: 0 0 0.75rem 0 !important;
+    border-bottom: 1px solid var(--card-border) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    .shepherd-title {
+      font-family: 'Italiana', serif !important;
+      font-size: 1.35rem !important;
+      color: var(--brand-primary) !important;
+      font-weight: 700 !important;
+      margin: 0 !important;
+    }
+
+    .shepherd-cancel-icon {
+      color: var(--text-muted) !important;
+      font-size: 1.2rem !important;
+      transition: color 0.2s ease !important;
+      &:hover {
+        color: var(--text-main) !important;
+      }
+    }
+  }
+
+  .shepherd-text {
+    color: var(--text-muted) !important;
+    font-size: 0.875rem !important;
+    line-height: 1.6 !important;
+    padding: 1rem 0 !important;
+  }
+
+  .shepherd-footer {
+    padding: 0.75rem 0 0 0 !important;
+    border-top: 1px solid var(--card-border) !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 0.5rem !important;
+
+    .shepherd-button {
+      border-radius: 8px !important;
+      font-weight: 600 !important;
+      font-size: 0.8rem !important;
+      padding: 0.45rem 1rem !important;
+      transition: all 0.2s ease !important;
+
+      &.shepherd-button-secondary {
+        background: var(--surface-alt) !important;
+        color: var(--text-muted) !important;
+        border: 1px solid var(--card-border) !important;
+        &:hover {
+          background: var(--card-border) !important;
+          color: var(--text-main) !important;
+        }
+      }
+
+      &.shepherd-button-primary {
+        background: linear-gradient(135deg, #d9be6a 0%, var(--brand-primary) 60%, #a8873a 100%) !important;
+        color: #070814 !important;
+        border: none !important;
+        &:hover {
+          transform: translateY(-1px) !important;
+          box-shadow: 0 4px 15px rgba(201, 168, 76, 0.35) !important;
+        }
+      }
+    }
+  }
+
+  .shepherd-arrow::before {
+    background-color: var(--surface-card) !important;
+    border-color: var(--card-border-gold) !important;
+  }
+}
+
+.shepherd-modal-overlay-container {
+  opacity: 0.75 !important;
+}
+

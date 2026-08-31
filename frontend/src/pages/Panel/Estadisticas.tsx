@@ -361,7 +361,7 @@ export default function Estadisticas() {
       {data && kpis && (
         <>
           {/* Fila 1: KPIs Principales */}
-          <div className="row g-3">
+          <div className="row g-3" id="tour-stats-kpis">
             {/* Total Ventas Bruto */}
             <div className="col-12 col-sm-6 col-lg-3">
               <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden hover-lift">
@@ -659,7 +659,7 @@ export default function Estadisticas() {
           </div>
 
           {/* Fila 4: Búsqueda, Ordenamiento, Paginación y Gestión de Pedidos */}
-          <div className="p-4 rounded-4 bg-surface border border-border">
+          <div className="p-4 rounded-4 bg-surface border border-border" id="tour-stats-orders">
             {/* Barra de Controles Superiores */}
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
               <div className="d-flex align-items-center gap-2 flex-wrap">

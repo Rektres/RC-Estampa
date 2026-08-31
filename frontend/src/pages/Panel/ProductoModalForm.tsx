@@ -123,6 +123,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
           }
         })
         .catch(() => setError('No se pudo cargar la información del producto.'))
+        .finally(() => setLoadingInitial(false));
     } else {
       setLoadingInitial(false);
       setNombre('');
