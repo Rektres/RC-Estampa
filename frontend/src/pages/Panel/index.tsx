@@ -297,7 +297,7 @@ export default function Panel() {
             <div id="tour-catalog-filters" className="p-3 bg-surface rounded-4 border border-border d-flex flex-column gap-3 font-montserrat shadow-sm">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 {/* Buscador Multi-palabra */}
-                <div className="position-relative flex-grow-1" style={{ minWidth: '220px', maxWidth: '340px' }}>
+                <div id="tour-catalog-search" className="position-relative flex-grow-1" style={{ minWidth: '220px', maxWidth: '340px' }}>
                   <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '10px' }} />
                   <input
                     value={q}
@@ -318,7 +318,7 @@ export default function Panel() {
                 </div>
 
                 {/* Switcher de Vista: Tabla vs Cards */}
-                <div className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
+                <div id="tour-catalog-view-toggle" className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
                   <button
                     onClick={() => setModoVista('tabla')}
                     className={`btn btn-sm border-0 d-inline-flex align-items-center gap-1 ${
@@ -346,6 +346,7 @@ export default function Panel() {
               <div className="d-flex flex-wrap align-items-center gap-2 pt-2 border-top border-border">
                 {/* Categoría */}
                 <select
+                  id="tour-catalog-filter-categoria"
                   value={catFilter}
                   onChange={(e) => setCatFilter(e.target.value)}
                   className="form-select form-select-sm bg-elevated text-text border-border w-auto"
@@ -359,6 +360,7 @@ export default function Panel() {
 
                 {/* Estado */}
                 <select
+                  id="tour-catalog-filter-estado"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
                   className="form-select form-select-sm bg-elevated text-text border-border w-auto"
@@ -371,6 +373,7 @@ export default function Panel() {
 
                 {/* Stock */}
                 <select
+                  id="tour-catalog-filter-stock"
                   value={stockFilter}
                   onChange={(e) => setStockFilter(e.target.value as any)}
                   className="form-select form-select-sm bg-elevated text-text border-border w-auto"
@@ -383,6 +386,7 @@ export default function Panel() {
 
                 {/* Características */}
                 <select
+                  id="tour-catalog-filter-features"
                   value={charFilter}
                   onChange={(e) => setCharFilter(e.target.value as any)}
                   className="form-select form-select-sm bg-elevated text-text border-border w-auto"
@@ -403,7 +407,7 @@ export default function Panel() {
                       setStockFilter('todos');
                       setCharFilter('todos');
                     }}
-                    className="btn btn-sm btn-link text-primary p-0 ms-2 text-decoration-none small fw-semibold"
+                    className="btn btn-sm btn-link text-warning p-0 ms-2 text-decoration-none font-montserrat small"
                   >
                     Limpiar Filtros
                   </button>
@@ -420,7 +424,7 @@ export default function Panel() {
               loading ? (
                 <div className="p-5 text-center text-muted font-montserrat">Cargando productos...</div>
               ) : (
-                <div className="table-responsive bg-surface rounded-4 border border-border shadow-sm">
+                <div id="tour-catalog-table" className="table-responsive bg-surface rounded-4 border border-border shadow-sm">
                   <Table hover className="align-middle font-montserrat mb-0" style={{ fontSize: '0.875rem' }}>
                     <thead>
                       <tr className="text-muted text-uppercase user-select-none border-bottom border-border" style={{ fontSize: '0.75rem' }}>

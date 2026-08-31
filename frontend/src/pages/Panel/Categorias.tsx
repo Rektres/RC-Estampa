@@ -155,7 +155,7 @@ export default function Categorias() {
   return (
     <div id="tour-categorias-container" className="d-flex flex-column gap-4 animate-tab-fade font-montserrat">
       {/* Header & Controles de Categorías */}
-      <div className="p-3 p-md-4 rounded-4 bg-surface border border-border d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm">
+      <div id="tour-categorias-header" className="p-3 p-md-4 rounded-4 bg-surface border border-border d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-sm">
         <div className="d-flex align-items-center gap-3">
           <div className="rounded-circle p-2 bg-primary bg-opacity-15 text-primary border border-primary">
             <Layers size={22} />
@@ -169,6 +169,7 @@ export default function Categorias() {
         </div>
 
         <button
+          id="tour-categorias-btn-nueva"
           onClick={openNueva}
           className="btn btn-primary fw-bold d-inline-flex align-items-center gap-2 px-3 py-2"
         >
@@ -188,7 +189,7 @@ export default function Categorias() {
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3 rounded-3 bg-surface border border-border">
         <div className="d-flex align-items-center gap-2 flex-wrap">
           {/* Buscador */}
-          <div className="position-relative" style={{ minWidth: '200px' }}>
+          <div id="tour-categorias-search" className="position-relative" style={{ minWidth: '200px' }}>
             <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '10px' }} />
             <input
               type="text"
@@ -210,7 +211,7 @@ export default function Categorias() {
           </div>
 
           {/* Filtro por Líneas Existentes */}
-          <div className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
+          <div id="tour-categorias-filter-linea" className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
             <button
               onClick={() => setFiltroLinea('todas')}
               className={`btn btn-sm border-0 ${
@@ -376,7 +377,7 @@ export default function Categorias() {
           )}
 
           <form id="tour-modal-cat-form" onSubmit={guardar} className="d-flex flex-column gap-3">
-            <div>
+            <div id="tour-modal-cat-nombre">
               <label className="form-label text-muted small fw-semibold">Nombre de la Categoría *</label>
               <input
                 type="text"
@@ -389,7 +390,7 @@ export default function Categorias() {
               />
             </div>
 
-            <div>
+            <div id="tour-modal-cat-slug">
               <label className="form-label text-muted small fw-semibold">Slug URL (Identificador único) *</label>
               <input
                 type="text"
@@ -401,7 +402,7 @@ export default function Categorias() {
               />
             </div>
 
-            <div>
+            <div id="tour-modal-cat-linea">
               <label className="form-label text-muted small fw-semibold">Línea / Colección Existente *</label>
               <select
                 value={draft.linea}
@@ -417,7 +418,7 @@ export default function Categorias() {
               </select>
             </div>
 
-            <div className="d-flex justify-content-end gap-2 pt-3 border-top border-border mt-2">
+            <div id="tour-modal-cat-actions" className="d-flex justify-content-end gap-2 pt-3 border-top border-border mt-2">
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}

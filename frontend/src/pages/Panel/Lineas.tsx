@@ -129,7 +129,7 @@ export default function Lineas() {
   return (
     <div id="tour-lineas-container" className="d-flex flex-column gap-4 font-montserrat">
       {/* Barra superior de controles */}
-      <div className="p-3 bg-surface rounded-4 border border-border d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
+      <div id="tour-lineas-header" className="p-3 bg-surface rounded-4 border border-border d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
         <div className="d-flex align-items-center gap-3">
           <div className="rounded-circle p-2 bg-primary bg-opacity-15 text-primary border border-primary">
             <Sparkles size={20} />
@@ -144,7 +144,7 @@ export default function Lineas() {
 
         <div className="d-flex align-items-center gap-2">
           {/* Buscador */}
-          <div className="position-relative" style={{ minWidth: '180px' }}>
+          <div id="tour-lineas-search" className="position-relative" style={{ minWidth: '180px' }}>
             <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '10px' }} />
             <input
               value={busqueda}
@@ -156,6 +156,7 @@ export default function Lineas() {
           </div>
 
           <button
+            id="tour-lineas-btn-nueva"
             onClick={openNueva}
             className="btn btn-primary btn-sm fw-bold d-inline-flex align-items-center gap-2 px-3 py-2"
           >
@@ -297,7 +298,7 @@ export default function Lineas() {
           </div>
 
           <form id="tour-modal-linea-form" onSubmit={handleGuardar}>
-            <div className="mb-3">
+            <div id="tour-modal-linea-nombre" className="mb-3">
               <label className="form-label small fw-semibold text-muted">Nombre de la Línea *</label>
               <input
                 type="text"
@@ -313,7 +314,7 @@ export default function Lineas() {
               </p>
             </div>
 
-            <div className="d-flex justify-content-end gap-2 pt-2 border-top border-border">
+            <div id="tour-modal-linea-actions" className="d-flex justify-content-end gap-2 pt-2 border-top border-border">
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}

@@ -1133,31 +1133,31 @@ dialog::backdrop {
 }
 
 // ===========================================================================
-// 12. Estilos Personalizados para Shepherd.js Tour Guiado (Luxury Dark & Light)
+// 12. Estilos Personalizados para Shepherd.js Tour Guiado (Burbuja Flotante Luxury)
 // ===========================================================================
-@keyframes shepherdFadeUp {
-  from {
+@keyframes shepherdBubbleEntrance {
+  0% {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+    transform: scale(0.92) translateY(6px);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 
 .shepherd-element {
   background: var(--surface-card) !important;
   border: 1px solid var(--card-border-gold) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 1px 1px var(--card-border-gold) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 25px rgba(201, 168, 76, 0.15) !important;
   color: var(--text-main) !important;
   font-family: 'Montserrat', sans-serif !important;
   max-width: 440px !important;
-  padding: 1.35rem !important;
+  padding: 1.35rem 1.4rem !important;
   z-index: 99999 !important;
-  animation: shepherdFadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-  transition: all 0.25s ease-out !important;
+  animation: shepherdBubbleEntrance 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) forwards !important;
+  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.25s ease !important;
 
   .shepherd-header {
     background: transparent !important;
@@ -1214,11 +1214,11 @@ dialog::backdrop {
     gap: 0.5rem !important;
 
     .shepherd-button {
-      border-radius: 8px !important;
+      border-radius: 10px !important;
       font-weight: 600 !important;
       font-size: 0.8rem !important;
-      padding: 0.45rem 1.1rem !important;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      padding: 0.48rem 1.15rem !important;
+      transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
 
       &.shepherd-button-secondary {
         background: var(--surface-alt) !important;
@@ -1236,10 +1236,10 @@ dialog::backdrop {
         color: #05060c !important;
         border: none !important;
         font-weight: 700 !important;
-        box-shadow: 0 4px 12px rgba(201, 168, 76, 0.25) !important;
+        box-shadow: 0 4px 14px rgba(201, 168, 76, 0.3) !important;
         &:hover {
           transform: translateY(-1.5px) !important;
-          box-shadow: 0 6px 20px rgba(201, 168, 76, 0.45) !important;
+          box-shadow: 0 6px 22px rgba(201, 168, 76, 0.5) !important;
         }
       }
     }
@@ -1258,11 +1258,13 @@ dialog::backdrop {
   transition: opacity 0.3s ease !important;
 
   path {
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition: all 0.4s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
   }
 }
 
 .shepherd-target {
-  transition: all 0.3s ease !important;
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.5) !important;
+  border-radius: 8px !important;
+  transition: box-shadow 0.3s ease !important;
 }
 

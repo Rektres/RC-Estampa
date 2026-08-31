@@ -320,7 +320,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
               </h4>
 
               <div className="row g-3">
-                <div className="col-12 col-md-7">
+                <div id="tour-modal-prod-nombre" className="col-12 col-md-7">
                   <label className="form-label small fw-semibold text-muted">Nombre del Producto *</label>
                   <input
                     type="text"
@@ -332,7 +332,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                   />
                 </div>
 
-                <div className="col-12 col-md-5">
+                <div id="tour-modal-prod-slug" className="col-12 col-md-5">
                   <label className="form-label small fw-semibold text-muted">Slug URL (Identificador)</label>
                   <input
                     type="text"
@@ -343,7 +343,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                   />
                 </div>
 
-                <div className="col-12">
+                <div id="tour-modal-prod-desc" className="col-12">
                   <label className="form-label small fw-semibold text-muted">Descripción *</label>
                   <textarea
                     value={descripcion}
@@ -357,7 +357,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
 
                 {/* Subsección: Taxonomía y Precios */}
                 <div id="tour-modal-prod-taxonomy" className="col-12 row g-3 mt-1 pt-2 border-top border-border">
-                  <div className="col-12 col-md-6">
+                  <div id="tour-modal-prod-categoria" className="col-12 col-md-6">
                     <label className="form-label small fw-semibold text-muted">Categoría *</label>
                     <select
                       value={categoriaId}
@@ -375,7 +375,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                   </div>
 
                   {/* Selección de Línea Existente */}
-                  <div className="col-12 col-md-6">
+                  <div id="tour-modal-prod-linea" className="col-12 col-md-6">
                     <label className="form-label small fw-semibold text-muted">Línea de Producto / Colección *</label>
                     <select
                       value={linea}
@@ -392,66 +392,68 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                   </div>
 
                   {/* Precios y Atributos Específicos */}
-                  <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
-                    <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
-                      Precio Normal (CLP) <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={precio}
-                      onChange={(e) => setPrecio(e.target.value)}
-                      placeholder="25990"
-                      className="form-control bg-elevated text-text border-border"
-                      required
-                    />
-                  </div>
+                  <div id="tour-modal-prod-precios" className="col-12 row g-2 p-0 m-0">
+                    <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
+                      <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                        Precio Normal (CLP) <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={precio}
+                        onChange={(e) => setPrecio(e.target.value)}
+                        placeholder="25990"
+                        className="form-control bg-elevated text-text border-border"
+                        required
+                      />
+                    </div>
 
-                  <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
-                    <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
-                      Precio Oferta (CLP)
-                    </label>
-                    <input
-                      type="number"
-                      value={precioOferta}
-                      onChange={(e) => setPrecioOferta(e.target.value)}
-                      placeholder="19990"
-                      className="form-control bg-elevated text-text border-border"
-                    />
-                  </div>
+                    <div className={`col-12 col-sm-6 ${esRopa ? 'col-md-6' : 'col-md-3'}`}>
+                      <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                        Precio Oferta (CLP)
+                      </label>
+                      <input
+                        type="number"
+                        value={precioOferta}
+                        onChange={(e) => setPrecioOferta(e.target.value)}
+                        placeholder="19990"
+                        className="form-control bg-elevated text-text border-border"
+                      />
+                    </div>
 
-                  {!esRopa && (
-                    <>
-                      <div className="col-12 col-sm-6 col-md-3">
-                        <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
-                          Material
-                        </label>
-                        <input
-                          type="text"
-                          value={material}
-                          onChange={(e) => setMaterial(e.target.value)}
-                          placeholder="Acero 304, Cerámica..."
-                          className="form-control bg-elevated text-text border-border"
-                        />
+                    {!esRopa && (
+                      <div id="tour-modal-prod-atributos" className="col-12 col-md-6 row g-2 p-0 m-0">
+                        <div className="col-6">
+                          <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                            Material
+                          </label>
+                          <input
+                            type="text"
+                            value={material}
+                            onChange={(e) => setMaterial(e.target.value)}
+                            placeholder="Acero 304, Cerámica..."
+                            className="form-control bg-elevated text-text border-border"
+                          />
+                        </div>
+                        <div className="col-6">
+                          <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
+                            Capacidad (ml)
+                          </label>
+                          <input
+                            type="number"
+                            value={capacidadMl}
+                            onChange={(e) => setCapacidadMl(e.target.value)}
+                            placeholder="500"
+                            className="form-control bg-elevated text-text border-border"
+                          />
+                        </div>
                       </div>
-                      <div className="col-12 col-sm-6 col-md-3">
-                        <label className="form-label small fw-semibold text-muted text-nowrap d-block mb-1">
-                          Capacidad (ml)
-                        </label>
-                        <input
-                          type="number"
-                          value={capacidadMl}
-                          onChange={(e) => setCapacidadMl(e.target.value)}
-                          placeholder="500"
-                          className="form-control bg-elevated text-text border-border"
-                        />
-                      </div>
-                    </>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Toggles de Estado Espaciados y Ordenados */}
-              <div className="row g-2 mt-3 pt-3 border-top border-border">
+              <div id="tour-modal-prod-toggles" className="row g-2 mt-3 pt-3 border-top border-border">
                 <div className="col-12 col-md-4">
                   <label className="p-2 bg-elevated rounded-3 border border-border d-flex align-items-center gap-2 user-select-none cursor-pointer h-100 mb-0">
                     <input
@@ -728,7 +730,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
             </div>
 
             {/* Footer Botones */}
-            <div className="d-flex align-items-center justify-content-end gap-2 pt-3 border-top border-border">
+            <div id="tour-modal-prod-actions" className="d-flex align-items-center justify-content-end gap-2 pt-3 border-top border-border">
               <button type="button" onClick={onHide} className="btn btn-secondary px-3 py-2">
                 Cancelar
               </button>

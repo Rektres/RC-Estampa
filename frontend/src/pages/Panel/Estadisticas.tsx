@@ -304,7 +304,7 @@ export default function Estadisticas() {
 
         <div className="d-flex align-items-center gap-2 flex-wrap">
           {/* Selector de Período */}
-          <div className="btn-group bg-elevated rounded-3 p-1 border border-border">
+          <div id="tour-stats-period-selector" className="btn-group bg-elevated rounded-3 p-1 border border-border">
             {PERIODOS.map((p) => (
               <button
                 key={p.key}
@@ -323,6 +323,7 @@ export default function Estadisticas() {
 
           {/* Botón Exportar Excel */}
           <button
+            id="tour-stats-export-excel"
             onClick={handleExportExcel}
             disabled={isExporting || loading}
             className="btn btn-sm btn-outline-success font-montserrat fw-semibold d-flex align-items-center gap-1 px-3 py-2"
@@ -365,7 +366,7 @@ export default function Estadisticas() {
           {/* Fila 1: KPIs Principales */}
           <div className="row g-3" id="tour-stats-kpis">
             {/* Total Ventas Bruto */}
-            <div className="col-12 col-sm-6 col-lg-3">
+            <div id="tour-stats-kpi-bruto" className="col-12 col-sm-6 col-lg-3">
               <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden hover-lift">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <span className="font-montserrat small text-muted text-uppercase fw-semibold" style={{ fontSize: '0.72rem', letterSpacing: '0.08em' }}>
@@ -385,7 +386,7 @@ export default function Estadisticas() {
             </div>
 
             {/* Ingreso Neto Líquido */}
-            <div className="col-12 col-sm-6 col-lg-3">
+            <div id="tour-stats-kpi-neto" className="col-12 col-sm-6 col-lg-3">
               <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden hover-lift">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <span className="font-montserrat small text-muted text-uppercase fw-semibold" style={{ fontSize: '0.72rem', letterSpacing: '0.08em' }}>
@@ -405,7 +406,7 @@ export default function Estadisticas() {
             </div>
 
             {/* Comisiones Mercado Pago */}
-            <div className="col-12 col-sm-6 col-lg-3">
+            <div id="tour-stats-kpi-mp" className="col-12 col-sm-6 col-lg-3">
               <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden hover-lift">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <span className="font-montserrat small text-muted text-uppercase fw-semibold" style={{ fontSize: '0.72rem', letterSpacing: '0.08em' }}>
@@ -425,7 +426,7 @@ export default function Estadisticas() {
             </div>
 
             {/* Ticket Promedio */}
-            <div className="col-12 col-sm-6 col-lg-3">
+            <div id="tour-stats-kpi-ticket" className="col-12 col-sm-6 col-lg-3">
               <div className="p-3 rounded-4 bg-surface border border-border h-100 position-relative overflow-hidden hover-lift">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <span className="font-montserrat small text-muted text-uppercase fw-semibold" style={{ fontSize: '0.72rem', letterSpacing: '0.08em' }}>
@@ -446,7 +447,7 @@ export default function Estadisticas() {
           </div>
 
           {/* Fila 2: Embudo Dinámico con Multi-Filtro por Estado */}
-          <div className="p-4 rounded-4 bg-surface border border-border">
+          <div id="tour-stats-funnel" className="p-4 rounded-4 bg-surface border border-border">
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
               <div className="d-flex align-items-center gap-2">
                 <PackageCheck size={18} className="text-primary" />
@@ -520,7 +521,7 @@ export default function Estadisticas() {
           {/* Fila 3: Top Productos (Orden por Monto & Unidades) & Ventas por Línea */}
           <div className="row g-3">
             {/* Top Productos Ranking */}
-            <div className="col-12 col-lg-7">
+            <div id="tour-stats-top-products" className="col-12 col-lg-7">
               <div className="p-4 rounded-4 bg-surface border border-border h-100 d-flex flex-column justify-content-between">
                 <div>
                   <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -615,7 +616,7 @@ export default function Estadisticas() {
             </div>
 
             {/* Ventas por Línea & Canales */}
-            <div className="col-12 col-lg-5">
+            <div id="tour-stats-sales-line" className="col-12 col-lg-5">
               <div className="p-4 rounded-4 bg-surface border border-border h-100 d-flex flex-column justify-content-between">
                 <div>
                   <div className="d-flex align-items-center gap-2 mb-3">
@@ -680,7 +681,7 @@ export default function Estadisticas() {
               {/* Controles de Búsqueda y Modo de Carga */}
               <div className="d-flex align-items-center gap-2 flex-wrap">
                 {/* Selector de Modo: Paginación vs Lazy Load */}
-                <div className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
+                <div id="tour-stats-orders-mode" className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
                   <button
                     onClick={() => setModoCarga('paginacion')}
                     className={`btn btn-sm border-0 font-montserrat ${
@@ -718,7 +719,7 @@ export default function Estadisticas() {
                 )}
 
                 {/* Input Buscador */}
-                <div className="position-relative" style={{ minWidth: '240px', maxWidth: '340px' }}>
+                <div id="tour-stats-orders-search" className="position-relative" style={{ minWidth: '240px', maxWidth: '340px' }}>
                   <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '9px' }} />
                   <input
                     type="text"
@@ -742,7 +743,7 @@ export default function Estadisticas() {
             </div>
 
             {/* Fila de Filtros de Fecha para la Tabla */}
-            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 p-2 bg-elevated rounded-3 border border-border font-montserrat">
+            <div id="tour-stats-orders-date" className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 p-2 bg-elevated rounded-3 border border-border font-montserrat">
               <div className="d-flex align-items-center gap-2">
                 <Calendar size={15} className="text-primary" />
                 <span className="small text-muted fw-semibold" style={{ fontSize: '0.78rem' }}>Filtrar por Fecha:</span>
@@ -1104,7 +1105,7 @@ export default function Estadisticas() {
 
               <div className="d-flex align-items-center gap-2">
                 {/* Switcher entre Trazabilidad e Historial */}
-                <div className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
+                <div id="tour-modal-order-tab-switcher" className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
                   <button
                     onClick={() => setModalTab('trazabilidad')}
                     className={`btn btn-sm border-0 d-inline-flex align-items-center gap-1 ${
@@ -1153,7 +1154,7 @@ export default function Estadisticas() {
               {modalTab === 'trazabilidad' ? (
                 <div className="d-flex flex-column gap-3">
                   {/* Timeline Interactivo */}
-                  <div className="p-3 bg-elevated rounded-3 border border-border">
+                  <div id="tour-modal-order-timeline" className="p-3 bg-elevated rounded-3 border border-border">
                     <h6 className="fw-bold text-text small mb-3">Línea de Tiempo de Fabricación & Entrega:</h6>
                     <PedidoTimeline
                       estado={activeModalTx.estado}
@@ -1163,7 +1164,7 @@ export default function Estadisticas() {
                   </div>
 
                   {/* Modificar Estado Rápido */}
-                  <div className="p-3 bg-elevated rounded-3 border border-border d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                  <div id="tour-modal-order-status-select" className="p-3 bg-elevated rounded-3 border border-border d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
                     <div>
                       <span className="fw-bold text-text small d-block">Modificar Estado Actual:</span>
                       <span className="text-muted" style={{ fontSize: '0.75rem' }}>
@@ -1185,7 +1186,7 @@ export default function Estadisticas() {
 
                   {/* Datos de Despacho */}
                   {activeModalTx.direccion && (
-                    <div className="p-3 bg-elevated rounded-3 border border-border small">
+                    <div id="tour-modal-order-shipping" className="p-3 bg-elevated rounded-3 border border-border small">
                       <span className="fw-bold text-text d-block mb-1">📍 Datos de Envío & Contacto:</span>
                       <div className="text-muted">
                         {activeModalTx.direccion}, {activeModalTx.comuna}, {activeModalTx.ciudad} ({activeModalTx.region})
@@ -1197,7 +1198,7 @@ export default function Estadisticas() {
                   )}
 
                   {/* Desglose Financiero */}
-                  <div className="row g-2 small">
+                  <div id="tour-modal-order-financial" className="row g-2 small">
                     <div className="col-4">
                       <div className="p-2 rounded-2 bg-elevated border border-border text-center">
                         <span className="text-muted d-block" style={{ fontSize: '0.72rem' }}>Total Bruto</span>
@@ -1220,7 +1221,7 @@ export default function Estadisticas() {
                 </div>
               ) : (
                 /* Contenido de Historial */
-                <div className="d-flex flex-column gap-3">
+                <div id="tour-modal-order-history-section" className="d-flex flex-column gap-3">
                   <div className="mb-2">
                     <h6 className="fw-bold text-text small mb-3">Registro Cronológico de Eventos:</h6>
                     {(!activeModalTx.historial_estados || activeModalTx.historial_estados.length === 0) ? (
