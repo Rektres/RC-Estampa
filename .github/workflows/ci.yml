@@ -43,4 +43,4 @@ jobs:
       - name: Check migrations
         run: python manage.py makemigrations --check --dry-run
       - name: Run tests
-        run: python manage.py test
+        run: python manage.py test cuentas catalogo pedidos disenos
