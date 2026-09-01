@@ -139,6 +139,7 @@ if USE_R2:
                 "file_overwrite": False,
                 "querystring_auth": False,
                 "default_acl": None,
+                "region_name": "auto",
             },
         },
         "staticfiles": {

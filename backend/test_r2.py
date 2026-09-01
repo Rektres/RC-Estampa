@@ -1,4 +1,4 @@
-﻿import os
+import os
 import django
 from pathlib import Path
 
@@ -31,16 +31,25 @@ try:
         aws_secret_access_key=secret,
         region_name='auto'
     )
-    buckets = s3.list_buckets()
-    print("Buckets encontrados:", [b['Name'] for b in buckets.get('Buckets', [])])
+    
+    print(f"Probando subida directa a bucket '{bucket_name}'...")
+    s3.put_object(
+        Bucket=bucket_name,
+        Key='test_conexion.txt',
+        Body=b'Conexion exitosa con Cloudflare R2 desde RC Estampa!',
+        ContentType='text/plain'
+    )
+    print(" -> put_object exitoso!")
 
+    print(f"Listando objetos en '{bucket_name}'...")
     objs = s3.list_objects_v2(Bucket=bucket_name)
-    print("KeyCount en bucket", bucket_name, ":", objs.get('KeyCount', 0))
+    key_count = objs.get('KeyCount', 0)
+    print(" -> KeyCount en bucket:", key_count)
     if 'Contents' in objs:
-        print("Total de archivos encontrados:", len(objs['Contents']))
+        print(f"Total de archivos listados: {len(objs['Contents'])}")
         for item in objs['Contents'][:10]:
-            print(" -", item['Key'], f"({item['Size']} bytes)")
+            print("   -", item['Key'], f"({item['Size']} bytes)")
     else:
-        print("No se encontraron objetos ('Contents' no presente en respuesta S3)")
+        print(" -> Bucket actualmente vacio.")
 except Exception as e:
-    print("ERROR AL CONECTAR CON R2:", type(e), e)
+    print("ERROR AL OPERAR EN R2:", type(e), e)
