@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_filters',
+    'storages',
     # Local
     'cuentas',
     'catalogo',
@@ -114,10 +115,52 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Configuración de Almacenamiento de Media (Cloudflare R2 vs Local)
+USE_R2 = env.bool('USE_R2', default=False)
+
+if USE_R2:
+    R2_ACCESS_KEY_ID = env('R2_ACCESS_KEY_ID')
+    R2_SECRET_ACCESS_KEY = env('R2_SECRET_ACCESS_KEY')
+    R2_BUCKET_NAME = env('R2_BUCKET_NAME')
+    R2_ENDPOINT_URL = env('R2_ENDPOINT_URL')
+    R2_CUSTOM_DOMAIN = env('R2_CUSTOM_DOMAIN', default='').strip().replace('https://', '').replace('http://', '').rstrip('/')
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "access_key": R2_ACCESS_KEY_ID,
+                "secret_key": R2_SECRET_ACCESS_KEY,
+                "bucket_name": R2_BUCKET_NAME,
+                "endpoint_url": R2_ENDPOINT_URL,
+                "custom_domain": R2_CUSTOM_DOMAIN if R2_CUSTOM_DOMAIN else None,
+                "signature_version": "s3v4",
+                "file_overwrite": False,
+                "querystring_auth": False,
+                "default_acl": None,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+
+    if R2_CUSTOM_DOMAIN:
+        MEDIA_URL = f"https://{R2_CUSTOM_DOMAIN}/"
+    else:
+        MEDIA_URL = f"{R2_ENDPOINT_URL.rstrip('/')}/{R2_BUCKET_NAME}/"
+else:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
