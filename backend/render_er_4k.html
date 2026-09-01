@@ -1,0 +1,380 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>RC Estampa - Diagrama ER 4K</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      background-color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 4800px;
+      min-height: 2800px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      font-size: 48px;
+      color: #141732;
+      margin: 0 0 10px 0;
+      letter-spacing: 0.05em;
+    }
+    .header p {
+      font-size: 24px;
+      color: #c9a84c;
+      font-weight: 600;
+      margin: 0;
+    }
+    #diagram {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    svg {
+      width: 100% !important;
+      max-width: 4600px !important;
+      height: auto !important;
+    }
+    .er.entityBox {
+      stroke-width: 2.5px !important;
+    }
+    .er.entityLabel {
+      font-size: 20px !important;
+      font-weight: bold !important;
+    }
+    .er.attributeBoxOdd, .er.attributeBoxEven {
+      stroke-width: 1.5px !important;
+    }
+    text {
+      font-family: 'Segoe UI', Arial, sans-serif !important;
+      font-size: 17px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>RC ESTAMPA — MODELO ENTIDAD-RELACIÓN (POSTGRESQL 16 & R2)</h1>
+    <p>Arquitectura de Datos Completa • E-Commerce, Catálogo Polimórfico, Pedidos PCI-DSS y Personalizador</p>
+  </div>
+  <div id="diagram" class="mermaid">
+erDiagram
+    %% ==========================================
+    %% 1. USUARIOS Y AUTENTICACIÓN
+    %% ==========================================
+    User ||--o{ DireccionEnvio : "posee (1:N)"
+    User ||--o{ Favorito : "guarda (1:N)"
+    User ||--o| Carrito : "sincroniza (1:1)"
+    User ||--o{ Pedido : "realiza (1:N)"
+    User ||--o{ Diseno : "crea (1:N)"
+
+    User {
+        bigint id PK
+        varchar email UK "Email Login"
+        varchar password "Hash PBKDF2"
+        varchar nombre "Nombre Cliente"
+        varchar rol "admin | cliente"
+        varchar rut "Identificación Tributaria"
+        varchar telefono "Teléfono Despacho"
+        varchar direccion "Dirección Principal"
+        varchar comuna "Comuna"
+        varchar ciudad "Ciudad"
+        varchar region "Región"
+        varchar codigo_verificacion "2FA Token"
+        datetime codigo_expiracion "Expiración Token"
+        boolean email_verificado "Email Validado"
+        boolean is_staff "Acceso Panel"
+        boolean is_superuser "Superadmin"
+    }
+
+    DireccionEnvio {
+        bigint id PK
+        bigint user_id FK "cuentas_user"
+        varchar nombre_destinatario "Receptor"
+        varchar direccion "Calle y Número"
+        varchar comuna "Comuna"
+        varchar ciudad "Ciudad"
+        varchar region "Región"
+        varchar codigo_postal "Código Postal"
+        boolean es_principal "Por Defecto"
+    }
+
+    Favorito {
+        bigint id PK
+        bigint user_id FK "cuentas_user"
+        bigint producto_id FK "Nullable: catalogo_producto"
+        bigint drinkware_id FK "Nullable: catalogo_productovajilla"
+        datetime creado_en "Timestamp"
+    }
+
+    %% ==========================================
+    %% 2. CATÁLOGO TEXTIL Y DRINKWARE
+    %% ==========================================
+    Categoria ||--o{ Producto : "clasifica (1:N)"
+    Categoria ||--o{ ProductoVajilla : "clasifica (1:N)"
+    
+    Producto ||--o{ VarianteProducto : "tiene variantes (1:N)"
+    Producto ||--o{ ImagenProducto : "galeria (1:N)"
+    Producto ||--o{ Favorito : "en favoritos (1:N)"
+
+    ProductoVajilla ||--o{ VarianteVajilla : "tiene variantes (1:N)"
+    ProductoVajilla ||--o{ ImagenVajilla : "galeria (1:N)"
+    ProductoVajilla ||--o{ Favorito : "en favoritos (1:N)"
+
+    Linea {
+        bigint id PK
+        varchar nombre "Urbana, Formal, Drinkware"
+        varchar slug UK "URL Semántica"
+        boolean es_sin_categoria "Oculta a público"
+        datetime creado_en "Fecha creación"
+    }
+
+    Categoria {
+        bigint id PK
+        varchar nombre "Poleras, Hoodies, Termos, etc."
+        varchar slug UK "URL Semántica"
+        varchar linea "urbana | formal | drinkware"
+    }
+
+    Producto {
+        bigint id PK
+        bigint categoria_id FK "catalogo_categoria (PROTECT)"
+        varchar nombre "Nombre Producto Textil"
+        varchar slug UK "URL Semántica"
+        text descripcion "Detalle y composición"
+        integer precio "Precio CLP"
+        integer precio_oferta "Precio Oferta CLP"
+        varchar linea "urbana | formal | deportiva"
+        boolean activo "Visible en catálogo"
+        boolean destacado "En portada y coverflow"
+        boolean nuevo "Badge Novedad"
+        datetime creado_en "Fecha ingreso"
+    }
+
+    VarianteProducto {
+        bigint id PK
+        bigint producto_id FK "catalogo_producto (CASCADE)"
+        varchar talla "XS, S, M, L, XL, XXL"
+        varchar color "Negro, Blanco, etc."
+        varchar color_hex "Código Hexadecimal #HEX"
+        integer stock "Inventario disponible"
+        varchar sku UK "Código único inventario"
+    }
+
+    ImagenProducto {
+        bigint id PK
+        bigint producto_id FK "catalogo_producto (CASCADE)"
+        varchar imagen "URL Cloudflare R2"
+        boolean es_principal "Foto Principal"
+        boolean es_frente "Foto Frente (Hover Swap)"
+        boolean es_reverso "Foto Reverso (Hover Swap)"
+        integer orden "Orden visualización"
+    }
+
+    ProductoVajilla {
+        bigint id PK
+        bigint categoria_id FK "catalogo_categoria (PROTECT)"
+        varchar nombre "Nombre Producto Drinkware"
+        varchar slug UK "URL Semántica"
+        text descripcion "Capacidad y aislamiento"
+        integer precio "Precio CLP"
+        integer precio_oferta "Precio Oferta CLP"
+        varchar material "Acero Inox, Cerámica, Vidrio"
+        integer capacidad_ml "Capacidad en mililitros"
+        varchar linea "drinkware"
+        boolean activo "Visible en catálogo"
+        boolean destacado "En portada"
+        boolean nuevo "Badge Novedad"
+        datetime creado_en "Fecha ingreso"
+    }
+
+    VarianteVajilla {
+        bigint id PK
+        bigint producto_id FK "catalogo_productovajilla (CASCADE)"
+        varchar color "Color vajilla"
+        varchar color_hex "Código Hexadecimal #HEX"
+        integer stock "Inventario disponible"
+        varchar sku UK "Código único inventario"
+    }
+
+    ImagenVajilla {
+        bigint id PK
+        bigint producto_id FK "catalogo_productovajilla (CASCADE)"
+        varchar imagen "URL Cloudflare R2"
+        boolean es_principal "Foto Principal"
+        integer orden "Orden visualización"
+    }
+
+    %% ==========================================
+    %% 3. PEDIDOS, AUDITORÍA Y CHECKOUT
+    %% ==========================================
+    Pedido ||--|{ ItemPedido : "contiene (1:N)"
+    Carrito ||--o{ ItemCarrito : "contiene (1:N)"
+
+    Pedido {
+        bigint id PK
+        varchar numero UK "Código Pedido RC-XXXXXXXX"
+        bigint user_id FK "Nullable: cuentas_user"
+        varchar nombre "Nombre Comprador"
+        varchar email "Email Comprador"
+        varchar telefono "Teléfono Contacto"
+        varchar direccion "Dirección Despacho"
+        varchar comuna "Comuna Despacho"
+        varchar ciudad "Ciudad Despacho"
+        varchar region "Región Despacho"
+        text notas "Instrucciones de entrega"
+        integer total "Monto Total Pagado CLP"
+        varchar estado "pendiente | pagado | en_proceso | enviado | entregado | cancelado"
+        varchar metodo_pago "mercadopago | transferencia"
+        varchar transaccion_id "ID Pago Mercado Pago"
+        text url_pago "Link de Pago Checkout Pro"
+        datetime pagado_en "Timestamp Confirmación"
+        varchar payment_method_id "visa, mastercard, debito"
+        varchar payment_type_id "credit_card, ticket"
+        varchar card_last_four "Últimos 4 dígitos tarjeta"
+        varchar card_first_six "BIN tarjeta auditoría"
+        varchar cardholder_name "Nombre Titular Tarjeta"
+        varchar cardholder_identification "RUT Titular"
+        varchar authorization_code "Código Autorización Transbank/MP"
+        smallint cuotas "Número de cuotas"
+        decimal monto_neto "Liquidación Neta Contable"
+        decimal comision_mp "Comisión Pasarela Pago"
+        varchar estado_detalle "accredited, in_process, etc."
+        inet ip_cliente "Dirección IP Auditoría"
+        text user_agent "Navegador y Dispositivo"
+        jsonb historial_estados "Log de Auditoría Temporal"
+        jsonb datos_pago_raw "Webhook Payload Completo"
+        datetime creado_en "Fecha creación"
+    }
+
+    ItemPedido {
+        bigint id PK
+        bigint pedido_id FK "pedidos_pedido (CASCADE)"
+        varchar tipo "catalogo | diseno"
+        varchar nombre "Nombre del Producto o Prenda"
+        text imagen "Snapshot URL Cloudflare R2"
+        varchar talla "Talla comprada"
+        varchar color "Color comprado"
+        varchar prenda "Tipo prenda si es diseño"
+        varchar color_base "Color base prenda"
+        varchar linea "Línea de producto"
+        integer precio "Precio unitario histórico CLP"
+        integer cantidad "Cantidad unidades"
+        integer producto_id "ID Producto Textil si aplica"
+        integer variante_id "ID Variante SKU si aplica"
+        integer diseno_id "ID Diseño Personalizado si aplica"
+    }
+
+    Carrito {
+        bigint id PK
+        bigint user_id FK "cuentas_user (1:1)"
+        datetime actualizado_en "Última modificación"
+    }
+
+    ItemCarrito {
+        bigint id PK
+        bigint carrito_id FK "pedidos_carrito (CASCADE)"
+        varchar item_id "Hash local cart"
+        varchar tipo "catalogo | diseno"
+        varchar nombre "Nombre del Producto"
+        text imagen "URL Cloudflare R2"
+        varchar talla "Talla seleccionada"
+        varchar color "Color seleccionado"
+        varchar prenda "Tipo prenda"
+        varchar color_base "Color base"
+        varchar linea "Línea de negocio"
+        integer precio "Precio unitario CLP"
+        integer cantidad "Cantidad en carro"
+        integer producto_id "ID Producto si aplica"
+        integer variante_id "ID Variante si aplica"
+        integer diseno_id "ID Diseño si aplica"
+    }
+
+    Cotizacion {
+        bigint id PK
+        varchar numero UK "Código Cotización PER-XXXXXX"
+        varchar nombre "Nombre Solicitante"
+        varchar email "Email Contacto"
+        varchar telefono "Teléfono"
+        varchar linea "Línea solicitada"
+        varchar tipo_prenda "Tipo de Prenda"
+        varchar talla "Talla requerida"
+        text descripcion "Requerimientos estampados"
+        varchar presupuesto_estimado "Presupuesto aproximado"
+        varchar estado "pendiente | cotizada | aceptada | rechazada"
+        datetime creado_en "Fecha solicitud"
+    }
+
+    %% ==========================================
+    %% 4. PERSONALIZADOR, DISEÑOS Y CONFIGURACIÓN
+    %% ==========================================
+    Diseno {
+        bigint id PK
+        bigint user_id FK "Nullable: cuentas_user"
+        varchar imagen "Canvas PNG en Cloudflare R2"
+        varchar prenda "Polera, Hoodie, Termo, etc."
+        varchar color_base "Color de la prenda"
+        varchar talla "Talla de la prenda"
+        datetime creado_en "Fecha creación"
+    }
+
+    ColorEditor {
+        bigint id PK
+        varchar nombre "Nombre Color Editor"
+        varchar hex UK "Código Hexadecimal #HEX"
+        integer orden "Orden en paleta"
+    }
+
+    PrecioEditor {
+        bigint id PK
+        varchar producto_key UK "polera_manga_corta, etc."
+        integer precio "Precio base en editor CLP"
+    }
+
+    TallaStandard {
+        bigint id PK
+        varchar nombre UK "XS, S, M, L, XL, XXL"
+        integer orden "Orden tallas"
+    }
+
+    Region {
+        bigint id PK
+        varchar nombre UK "Metropolitana, Valparaíso, etc."
+        integer orden "Orden geográfico"
+    }
+
+    FotoCliente {
+        bigint id PK
+        varchar imagen "URL Cloudflare R2"
+        varchar tipo "ropa | vajilla"
+        text texto_review "Testimonio del cliente"
+        varchar nombre_cliente "Nombre del cliente"
+        varchar producto_ropa_slug "Slug producto textil"
+        varchar producto_vajilla_slug "Slug producto vajilla"
+    }
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#f1f5f9',
+        primaryTextColor: '#0f172a',
+        primaryBorderColor: '#2563eb',
+        lineColor: '#c9a84c',
+        secondaryColor: '#f8fafc',
+        tertiaryColor: '#ffffff',
+        fontSize: '18px'
+      }
+    });
+  </script>
+</body>
+</html>

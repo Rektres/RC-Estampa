@@ -79,16 +79,26 @@ def is_postgres_available():
     except Exception:
         return False
 
-# Postgres when POSTGRES_DB is provided & resolvable (Docker); SQLite otherwise (local dev)
-if env('POSTGRES_DB', default=None) and is_postgres_available():
+# Postgres when POSTGRES_DB is provided & resolvable (Docker / Supabase); SQLite otherwise (local dev)
+USE_SQLITE = env.bool('USE_SQLITE', default=False)
+POSTGRES_DB = env('POSTGRES_DB', default=None)
+
+if not USE_SQLITE and POSTGRES_DB and is_postgres_available():
+    db_options = {}
+    ssl_mode = env('POSTGRES_SSLMODE', default=None)
+    if ssl_mode:
+        db_options['sslmode'] = ssl_mode
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': env('POSTGRES_DB'),
+            'NAME': POSTGRES_DB,
             'USER': env('POSTGRES_USER', default='postgres'),
             'PASSWORD': env('POSTGRES_PASSWORD', default='postgres'),
             'HOST': env('POSTGRES_HOST', default='db'),
             'PORT': env('POSTGRES_PORT', default='5432'),
+            'CONN_MAX_AGE': env.int('CONN_MAX_AGE', default=60),
+            'OPTIONS': db_options,
         }
     }
 else:
