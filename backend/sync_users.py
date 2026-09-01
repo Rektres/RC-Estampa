@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import django
 
@@ -14,9 +14,8 @@ with open("backup_data_20260901.json", "r", encoding="utf-8") as f:
 for item in data:
     if item["model"] == "cuentas.user":
         fields = item["fields"]
-        pk = item["pk"]
         email = fields["email"]
-        user, created = User.objects.get_or_create(email=email, defaults={"id": pk})
+        user, created = User.objects.get_or_create(email=email)
         user.nombre = fields.get("nombre", "")
         user.rol = fields.get("rol", "cliente")
         user.password = fields.get("password", "")
