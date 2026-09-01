@@ -148,7 +148,7 @@ class PanelCategoriaViewSet(viewsets.ModelViewSet):
 
 
 class PanelUploadView(APIView):
-    """Sube una imagen de producto y devuelve su URL en /media/."""
+    """Sube una imagen de producto y devuelve su URL pública en R2 / Media."""
 
     permission_classes = [IsAdminRol]
     parser_classes = [MultiPartParser]
@@ -166,7 +166,11 @@ class PanelUploadView(APIView):
         if ext not in self.ALLOWED_EXT:
             return Response({'detail': f'Extensión no permitida: {ext}'}, status=400)
         path = default_storage.save(f'productos/{uuid.uuid4().hex}{ext}', file)
-        return Response({'url': f'/media/{path}'}, status=201)
+        try:
+            url = default_storage.url(path)
+        except Exception:
+            url = f'/media/{path}'
+        return Response({'url': url}, status=201)
 
 
 class PanelLineasView(APIView):

@@ -15,6 +15,7 @@ import {
   Info,
 } from 'lucide-react';
 import { panelApi } from '../../api';
+import { resolveImageUrl } from '../../utils';
 import { startProductoModalTour } from '../../utils/panelTour';
 import type { Producto, ProductoVajilla, ProductoInput, Categoria } from '../../types';
 
@@ -635,7 +636,7 @@ export default function ProductoModalForm({ show, tipo, productoId, onHide, onSu
                       style={{ width: '4.5rem', height: '4.5rem' }}
                     >
                       {img.imagen ? (
-                        <img src={img.imagen} alt="" className="w-100 h-100 object-fit-cover" />
+                        <img src={resolveImageUrl(img.imagen)} alt="" className="w-100 h-100 object-fit-cover" />
                       ) : (
                         <ImageIcon size={22} className="text-muted opacity-50" />
                       )}

@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Plus, Trash2, Upload } from 'lucide-react';
 import { panelApi } from '../../api';
 import { useAsync } from '../../api/hooks';
+import { resolveImageUrl } from '../../utils';
 import type { Producto, ProductoVajilla, ProductoInput } from '../../types';
 
 const varianteSchema = z.object({
@@ -318,7 +319,7 @@ export default function PanelProductoForm() {
             <div key={field.id} className="d-flex flex-wrap gap-3 align-items-start border-bottom border-border pb-3">
               <div className="bg-elevated rounded overflow-hidden flex-shrink-0 d-flex align-items-center justify-content-center" style={{ width: '5rem', height: '5rem' }}>
                 {imagenesWatch?.[i]?.imagen
-                  ? <img src={imagenesWatch[i].imagen} alt="" className="w-100 h-100 object-fit-cover" />
+                  ? <img src={resolveImageUrl(imagenesWatch[i].imagen)} alt="" className="w-100 h-100 object-fit-cover" />
                   : <span className="text-ghost font-montserrat" style={{ fontSize: '0.75rem' }}>Sin img</span>}
               </div>
               <div className="flex-grow-1 d-flex flex-column gap-2" style={{ minWidth: '14rem' }}>

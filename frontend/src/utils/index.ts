@@ -25,6 +25,24 @@ export function getLineaBadgeClass(linea: string): string {
   return map[normalized] ?? 'badge-linea-custom';
 }
 
+const R2_PUBLIC_URL = 'https://pub-528ef7178bc74c7cbd61de5f341be259.r2.dev';
+
+export function resolveImageUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('/media/')) {
+    const relative = trimmed.replace(/^\/media\//, '');
+    return `${R2_PUBLIC_URL}/${relative}`;
+  }
+  if (!trimmed.startsWith('/')) {
+    return `${R2_PUBLIC_URL}/${trimmed}`;
+  }
+  return trimmed;
+}
+
 export function useIntersectionObserver() {
   return (el: Element | null) => {
     if (!el) return;
