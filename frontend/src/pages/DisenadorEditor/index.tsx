@@ -5,7 +5,8 @@ import {
   Upload, Trash2, FlipHorizontal, Eye,
   Minus, Plus, ShoppingBag, ArrowLeft, Type,
   Sparkles, Palette, Image as ImageIcon, Shirt, Coffee, GlassWater,
-  PlusCircle
+  PlusCircle, Maximize2, Minimize2, Grid,
+  AlignCenter, ChevronDown, Sliders, Layers
 } from 'lucide-react';
 import { formatPrice } from '../../utils';
 import { useCartStore } from '../../store/cartStore';
@@ -73,6 +74,8 @@ const COLOR_PALETTE = [
   { nombre: 'Beige Arena', hex: '#E5E0D8' },
 ];
 
+export type FitMode = 'ajustar' | 'calzar' | 'expandir' | 'repetir' | 'manual';
+
 export interface CustomImage {
   id: string;
   src: string;
@@ -80,12 +83,14 @@ export interface CustomImage {
   imgElement: HTMLImageElement;
   x: number; // -80 to 80
   y: number; // -80 to 80
-  scale: number; // 20 to 140
+  scale: number; // 20 to 160
   rotation: number; // -180 to 180
   flipX: boolean;
+  fitMode: FitMode;
+  repeatScale: number; // 2 to 8
 }
 
-type ActiveTab = 'modelo' | 'logo' | 'texto' | 'color';
+type ActiveTab = 'imagenes' | 'color' | 'estilo' | 'texto';
 
 export default function DisenadorEditor() {
   const { producto = 'polera' } = useParams<{ producto: string }>();
@@ -97,8 +102,8 @@ export default function DisenadorEditor() {
   const subtypesList = PRODUCT_SUBTYPES[producto] || [];
   const [subTipo, setSubTipo] = useState<string>(subtypesList[0]?.id || 'default');
 
-  // Design state
-  const [activeTab, setActiveTab] = useState<ActiveTab>('modelo');
+  // External Design state (Outside 3D)
+  const [activeTab, setActiveTab] = useState<ActiveTab>('imagenes');
   const [productColor, setProductColor] = useState('#FFFFFF');
   const [selectedTalla, setSelectedTalla] = useState('M');
   const [cantidad, setCantidad] = useState(1);
@@ -106,6 +111,10 @@ export default function DisenadorEditor() {
   // Multiple Images State
   const [images, setImages] = useState<CustomImage[]>([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+
+  // In-Canvas Floating Menu State
+  const [activeFloatingTarget, setActiveFloatingTarget] = useState<string>('image'); // 'image' or 'text'
+  const [isFloatingMenuExpanded, setIsFloatingMenuExpanded] = useState(true);
 
   // Text state
   const [customText, setCustomText] = useState('');
@@ -135,7 +144,7 @@ export default function DisenadorEditor() {
     description: `Crea y personaliza tu ${currentSubtypeName} en 3D interactivo 360° con estampado DTF textil o grabado láser. Despacho a todo Chile.`,
   });
 
-  // Redraw the 2D texture canvas with all uploaded images & text
+  // Redraw the 2D texture canvas with all uploaded images & text based on fit modes
   const redrawTexture = useCallback(() => {
     if (!textureCanvasRef.current) {
       const c = document.createElement('canvas');
@@ -154,38 +163,106 @@ export default function DisenadorEditor() {
     const centerW = canvas.width / 2;
     const centerH = canvas.height / 2;
 
-    // 1. Draw all images in sequence
+    // 1. Draw all images according to their fit modes
     images.forEach((imgItem) => {
       const img = imgItem.imgElement;
       if (!img) return;
 
-      const baseMax = 380;
-      const scaleFactor = (imgItem.scale / 100);
-      const aspect = (img.width || 1) / (img.height || 1);
-
-      let drawW = baseMax * scaleFactor;
-      let drawH = (baseMax / aspect) * scaleFactor;
-      if (aspect < 1) {
-        drawH = baseMax * scaleFactor;
-        drawW = baseMax * aspect * scaleFactor;
-      }
-
-      const posX = centerW + (imgItem.x * 3.2);
-      const posY = centerH - (imgItem.y * 3.2);
+      const imgW = img.width || 1;
+      const imgH = img.height || 1;
+      const aspect = imgW / imgH;
 
       ctx.save();
-      ctx.translate(posX, posY);
-      ctx.rotate((imgItem.rotation * Math.PI) / 180);
-      if (imgItem.flipX) ctx.scale(-1, 1);
 
-      ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+      if (imgItem.fitMode === 'repetir') {
+        // --- MODO REPETIR / PATRÓN MOSAICO (ALL-OVER) ---
+        const repeatCols = Math.max(2, imgItem.repeatScale || 4);
+        const tileSize = canvas.width / repeatCols;
+        const tileH = tileSize;
+
+        ctx.globalAlpha = 0.95;
+        for (let row = 0; row < repeatCols; row++) {
+          for (let col = 0; col < repeatCols; col++) {
+            const tx = col * tileSize + tileSize / 2;
+            const ty = row * tileH + tileH / 2;
+
+            ctx.save();
+            ctx.translate(tx, ty);
+            ctx.rotate((imgItem.rotation * Math.PI) / 180);
+            if (imgItem.flipX) ctx.scale(-1, 1);
+
+            let dw = tileSize * 0.85;
+            let dh = (tileSize / aspect) * 0.85;
+            if (aspect < 1) {
+              dh = tileSize * 0.85;
+              dw = tileSize * aspect * 0.85;
+            }
+            ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+            ctx.restore();
+          }
+        }
+      } else if (imgItem.fitMode === 'expandir') {
+        // --- MODO EXPANDIR / ESTIRAR (Full Stretch) ---
+        ctx.translate(centerW, centerH);
+        ctx.rotate((imgItem.rotation * Math.PI) / 180);
+        if (imgItem.flipX) ctx.scale(-1, 1);
+        ctx.drawImage(img, -centerW, -centerH, canvas.width, canvas.height);
+
+      } else if (imgItem.fitMode === 'calzar') {
+        // --- MODO CALZAR TODO (Full Cover Proporcional) ---
+        ctx.translate(centerW, centerH);
+        ctx.rotate((imgItem.rotation * Math.PI) / 180);
+        if (imgItem.flipX) ctx.scale(-1, 1);
+
+        const scaleCover = Math.max(canvas.width / imgW, canvas.height / imgH);
+        const drawW = imgW * scaleCover;
+        const drawH = imgH * scaleCover;
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+
+      } else if (imgItem.fitMode === 'ajustar') {
+        // --- MODO AJUSTAR / CENTRADO (Contain Proporcional) ---
+        const baseArea = 600;
+        let drawW = baseArea;
+        let drawH = baseArea / aspect;
+        if (aspect < 1) {
+          drawH = baseArea;
+          drawW = baseArea * aspect;
+        }
+
+        ctx.translate(centerW, centerH);
+        ctx.rotate((imgItem.rotation * Math.PI) / 180);
+        if (imgItem.flipX) ctx.scale(-1, 1);
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+
+      } else {
+        // --- MODO MANUAL / LIBRE ---
+        const baseMax = 380;
+        const scaleFactor = (imgItem.scale / 100);
+
+        let drawW = baseMax * scaleFactor;
+        let drawH = (baseMax / aspect) * scaleFactor;
+        if (aspect < 1) {
+          drawH = baseMax * scaleFactor;
+          drawW = baseMax * aspect * scaleFactor;
+        }
+
+        const posX = centerW + (imgItem.x * 3.4);
+        const posY = centerH - (imgItem.y * 3.4);
+
+        ctx.translate(posX, posY);
+        ctx.rotate((imgItem.rotation * Math.PI) / 180);
+        if (imgItem.flipX) ctx.scale(-1, 1);
+
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+      }
+
       ctx.restore();
     });
 
     // 2. Draw Custom Text if provided
     if (customText.trim()) {
-      const posX = centerW + (textPosX * 3.2);
-      const posY = centerH - (textPosY * 3.2);
+      const posX = centerW + (textPosX * 3.4);
+      const posY = centerH - (textPosY * 3.4);
 
       ctx.save();
       ctx.translate(posX, posY);
@@ -237,10 +314,12 @@ export default function DisenadorEditor() {
           scale: 60,
           rotation: 0,
           flipX: false,
+          fitMode: 'manual',
+          repeatScale: 4,
         };
         setImages((prev) => [...prev, newImg]);
         setSelectedImageId(newImg.id);
-        setActiveTab('logo');
+        setActiveFloatingTarget('image');
       };
       img.src = src;
     };
@@ -265,12 +344,33 @@ export default function DisenadorEditor() {
     });
   };
 
+  // Quick Position Presets
+  const applyPositionPreset = (preset: 'pecho-centro' | 'bolsillo-izq' | 'pecho-der' | 'abdomen' | 'centro-total') => {
+    if (!currentImage) return;
+    switch (preset) {
+      case 'pecho-centro':
+        updateCurrentImage({ x: 0, y: 18, scale: 55, fitMode: 'manual' });
+        break;
+      case 'bolsillo-izq':
+        updateCurrentImage({ x: -32, y: 22, scale: 32, fitMode: 'manual' });
+        break;
+      case 'pecho-der':
+        updateCurrentImage({ x: 32, y: 22, scale: 32, fitMode: 'manual' });
+        break;
+      case 'abdomen':
+        updateCurrentImage({ x: 0, y: -22, scale: 55, fitMode: 'manual' });
+        break;
+      case 'centro-total':
+      default:
+        updateCurrentImage({ x: 0, y: 0, scale: 60, fitMode: 'manual' });
+        break;
+    }
+  };
+
   const openPreview = () => {
-    // 1. Snapshot from 3D Viewport
     const mockup3D = viewer3DRef.current?.getSnapshot() || '';
     setPreviewUrl(mockup3D);
 
-    // 2. Clean 300 DPI Transparent Print File
     if (textureCanvasRef.current) {
       setPrintUrl(textureCanvasRef.current.toDataURL('image/png'));
     }
@@ -337,9 +437,9 @@ export default function DisenadorEditor() {
       {/* Main 3D Customizer Layout */}
       <div className="row g-4 align-items-stretch">
         
-        {/* Left Column: Direct 3D Canvas */}
+        {/* Left Column: Direct 3D Canvas with Floating Interactive Toolbar */}
         <div className="col-12 col-lg-7 d-flex flex-column">
-          <div className="w-100 h-100 bg-elevated border border-border rounded-4 p-2 position-relative shadow-sm d-flex flex-column justify-content-center" style={{ minHeight: '540px' }}>
+          <div className="w-100 h-100 bg-elevated border border-border rounded-4 p-2 position-relative shadow-sm d-flex flex-column justify-content-center overflow-hidden" style={{ minHeight: '560px' }}>
             <Viewer3D
               ref={viewer3DRef}
               producto={producto}
@@ -348,20 +448,412 @@ export default function DisenadorEditor() {
               canvasSource={textureCanvasRef.current}
               textureVersion={textureVersion}
             />
+
+            {/* ==========================================================
+                IN-CANVAS FLOATING EDIT MENU (Menú Flotante Interactivo 3D)
+            ========================================================== */}
+            {(images.length > 0 || customText.trim()) && (
+              <div
+                className="position-absolute bottom-0 start-50 translate-middle-x w-100 px-3 pb-3 z-3 pointer-events-auto"
+                style={{ maxWidth: '540px' }}
+              >
+                <div
+                  className="rounded-4 border shadow-lg p-3 transition-all"
+                  style={{
+                    backgroundColor: 'rgba(22, 22, 26, 0.92)',
+                    backdropFilter: 'blur(16px)',
+                    borderColor: 'rgba(255, 255, 255, 0.15)',
+                    color: '#F4F4F5',
+                  }}
+                >
+                  {/* Floating Header: Active Element Selector & Minimize Toggle */}
+                  <div className="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom border-secondary border-opacity-25">
+                    <div className="d-flex align-items-center gap-1 overflow-x-auto">
+                      {images.map((imgItem, idx) => (
+                        <button
+                          key={imgItem.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedImageId(imgItem.id);
+                            setActiveFloatingTarget('image');
+                          }}
+                          className={`btn btn-sm py-1 px-2 rounded-2 font-montserrat d-flex align-items-center gap-1 transition-all ${
+                            selectedImageId === imgItem.id && activeFloatingTarget === 'image'
+                              ? 'btn-primary text-black fw-bold'
+                              : 'bg-dark bg-opacity-50 text-light border border-secondary border-opacity-25'
+                          }`}
+                          style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+                        >
+                          <ImageIcon size={11} />
+                          Logo #{idx + 1}
+                        </button>
+                      ))}
+
+                      {customText.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveFloatingTarget('text')}
+                          className={`btn btn-sm py-1 px-2 rounded-2 font-montserrat d-flex align-items-center gap-1 transition-all ${
+                            activeFloatingTarget === 'text'
+                              ? 'btn-primary text-black fw-bold'
+                              : 'bg-dark bg-opacity-50 text-light border border-secondary border-opacity-25'
+                          }`}
+                          style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+                        >
+                          <Type size={11} />
+                          Texto
+                        </button>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsFloatingMenuExpanded(!isFloatingMenuExpanded)}
+                      title={isFloatingMenuExpanded ? 'Minimizar menú' : 'Expandir controles'}
+                      className="btn btn-sm text-light p-1 bg-dark bg-opacity-50 rounded-circle border border-secondary border-opacity-25 ms-2 flex-shrink-0"
+                      style={{ width: '26px', height: '26px' }}
+                    >
+                      {isFloatingMenuExpanded ? <ChevronDown size={14} /> : <Sliders size={14} className="text-primary" />}
+                    </button>
+                  </div>
+
+                  {/* Expanded Body with Fit Modes, Presets & Fine-Tune Sliders */}
+                  {isFloatingMenuExpanded && (
+                    <div className="d-flex flex-column gap-2 pt-1 font-montserrat" style={{ fontSize: '0.72rem' }}>
+                      
+                      {activeFloatingTarget === 'image' && currentImage && (
+                        <>
+                          {/* 1. Modos de Calce (Fit Modes) */}
+                          <div>
+                            <span className="text-muted d-block mb-1" style={{ fontSize: '0.65rem' }}>MODO DE CALCE EN EL PRODUCTO:</span>
+                            <div className="d-grid gap-1" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                              <button
+                                type="button"
+                                onClick={() => updateCurrentImage({ fitMode: 'ajustar' })}
+                                title="Ajustar proporcional centrado"
+                                className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
+                                  currentImage.fitMode === 'ajustar' ? 'btn-primary text-black fw-semibold' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
+                                }`}
+                                style={{ fontSize: '0.65rem' }}
+                              >
+                                <Minimize2 size={12} className="mb-1" />
+                                Ajustar
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => updateCurrentImage({ fitMode: 'calzar' })}
+                                title="Calzar todo el diseño"
+                                className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
+                                  currentImage.fitMode === 'calzar' ? 'btn-primary text-black fw-semibold' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
+                                }`}
+                                style={{ fontSize: '0.65rem' }}
+                              >
+                                <Maximize2 size={12} className="mb-1" />
+                                Calzar
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => updateCurrentImage({ fitMode: 'expandir' })}
+                                title="Expandir en toda el área"
+                                className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
+                                  currentImage.fitMode === 'expandir' ? 'btn-primary text-black fw-semibold' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
+                                }`}
+                                style={{ fontSize: '0.65rem' }}
+                              >
+                                <Layers size={12} className="mb-1" />
+                                Expandir
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => updateCurrentImage({ fitMode: 'repetir' })}
+                                title="Repetir en patrón / mosaico"
+                                className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
+                                  currentImage.fitMode === 'repetir' ? 'btn-primary text-black fw-semibold' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
+                                }`}
+                                style={{ fontSize: '0.65rem' }}
+                              >
+                                <Grid size={12} className="mb-1" />
+                                Repetir
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => updateCurrentImage({ fitMode: 'manual' })}
+                                title="Ajuste manual milimétrico"
+                                className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
+                                  currentImage.fitMode === 'manual' ? 'btn-primary text-black fw-semibold' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
+                                }`}
+                                style={{ fontSize: '0.65rem' }}
+                              >
+                                <Sliders size={12} className="mb-1" />
+                                Manual
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* 2. Presets de Posición Rápida */}
+                          {currentImage.fitMode === 'manual' && (
+                            <div>
+                              <span className="text-muted d-block mb-1" style={{ fontSize: '0.65rem' }}>POSICIONES RÁPIDAS:</span>
+                              <div className="d-flex flex-wrap gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => applyPositionPreset('pecho-centro')}
+                                  className="btn btn-sm py-1 px-2 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25"
+                                  style={{ fontSize: '0.65rem' }}
+                                >
+                                  Pecho Centro
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyPositionPreset('bolsillo-izq')}
+                                  className="btn btn-sm py-1 px-2 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25"
+                                  style={{ fontSize: '0.65rem' }}
+                                >
+                                  Bolsillo / Escudo
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyPositionPreset('pecho-der')}
+                                  className="btn btn-sm py-1 px-2 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25"
+                                  style={{ fontSize: '0.65rem' }}
+                                >
+                                  Pecho Der.
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyPositionPreset('abdomen')}
+                                  className="btn btn-sm py-1 px-2 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25"
+                                  style={{ fontSize: '0.65rem' }}
+                                >
+                                  Abdomen
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyPositionPreset('centro-total')}
+                                  className="btn btn-sm py-1 px-2 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25"
+                                  style={{ fontSize: '0.65rem' }}
+                                >
+                                  Centro Total
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 3. Sliders de Ajuste Fino */}
+                          {currentImage.fitMode === 'repetir' ? (
+                            <div>
+                              <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                                <span>🔁 Densidad del Patrón (Mosaico)</span>
+                                <span className="text-light">{currentImage.repeatScale}x{currentImage.repeatScale}</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="2"
+                                max="8"
+                                value={currentImage.repeatScale || 4}
+                                onChange={(e) => updateCurrentImage({ repeatScale: Number(e.target.value) })}
+                                className="form-range w-100"
+                              />
+                            </div>
+                          ) : (
+                            <div className="row g-2 pt-1">
+                              <div className="col-6">
+                                <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                                  <span>↕️ Vertical</span>
+                                  <span className="text-light">{currentImage.y}</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="-80"
+                                  max="80"
+                                  value={currentImage.y}
+                                  onChange={(e) => updateCurrentImage({ y: Number(e.target.value), fitMode: 'manual' })}
+                                  className="form-range w-100"
+                                />
+                              </div>
+
+                              <div className="col-6">
+                                <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                                  <span>↔️ Horizontal</span>
+                                  <span className="text-light">{currentImage.x}</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="-80"
+                                  max="80"
+                                  value={currentImage.x}
+                                  onChange={(e) => updateCurrentImage({ x: Number(e.target.value), fitMode: 'manual' })}
+                                  className="form-range w-100"
+                                />
+                              </div>
+
+                              <div className="col-6">
+                                <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                                  <span>🔍 Escala</span>
+                                  <span className="text-light">{currentImage.scale}%</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="20"
+                                  max="150"
+                                  value={currentImage.scale}
+                                  onChange={(e) => updateCurrentImage({ scale: Number(e.target.value), fitMode: 'manual' })}
+                                  className="form-range w-100"
+                                />
+                              </div>
+
+                              <div className="col-6">
+                                <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                                  <span>🔄 Rotar</span>
+                                  <span className="text-light">{currentImage.rotation}°</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="-180"
+                                  max="180"
+                                  value={currentImage.rotation}
+                                  onChange={(e) => updateCurrentImage({ rotation: Number(e.target.value) })}
+                                  className="form-range w-100"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Quick Actions Footer inside Floating */}
+                          <div className="d-flex gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => updateCurrentImage({ flipX: !currentImage.flipX })}
+                              className={`btn btn-sm flex-grow-1 py-1 d-inline-flex align-items-center justify-content-center gap-1 rounded-2 border ${
+                                currentImage.flipX ? 'btn-primary text-black' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
+                              }`}
+                              style={{ fontSize: '0.68rem' }}
+                            >
+                              <FlipHorizontal size={12} />
+                              Voltear
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => updateCurrentImage({ x: 0, y: 15, scale: 60, rotation: 0, flipX: false, fitMode: 'manual' })}
+                              className="btn btn-sm py-1 px-3 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25 d-inline-flex align-items-center gap-1"
+                              style={{ fontSize: '0.68rem' }}
+                            >
+                              <AlignCenter size={12} />
+                              Centrar
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={removeCurrentImage}
+                              className="btn btn-sm py-1 px-2 btn-outline-danger rounded-2 d-inline-flex align-items-center gap-1"
+                              style={{ fontSize: '0.68rem' }}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Floating Controls for Custom Text */}
+                      {activeFloatingTarget === 'text' && (
+                        <div className="d-flex flex-column gap-2 pt-1">
+                          <div className="row g-2">
+                            <div className="col-6">
+                              <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                                <span>↕️ Posición V</span>
+                                <span className="text-light">{textPosY}</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="-80"
+                                max="80"
+                                value={textPosY}
+                                onChange={(e) => setTextPosY(Number(e.target.value))}
+                                className="form-range w-100"
+                              />
+                            </div>
+
+                            <div className="col-6">
+                              <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                                <span>↔️ Posición H</span>
+                                <span className="text-light">{textPosX}</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="-80"
+                                max="80"
+                                value={textPosX}
+                                onChange={(e) => setTextPosX(Number(e.target.value))}
+                                className="form-range w-100"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                              <span>🔍 Tamaño de letra</span>
+                              <span className="text-light">{textSize}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="16"
+                              max="70"
+                              value={textSize}
+                              onChange={(e) => setTextSize(Number(e.target.value))}
+                              className="form-range w-100"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Column: Direct Customization Controls */}
+        {/* Right Column: Clean Exterior Controls (Colores, Imágenes, Estilos, Resumen) */}
         <div className="col-12 col-lg-5 d-flex flex-column gap-3">
           
-          {/* Tabs Selector: Modelo / Logo / Texto / Color */}
+          {/* Main Exterior Tabs: Imágenes / Color / Estilo / Texto */}
           <div className="d-flex bg-elevated border border-border rounded-3 p-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('imagenes')}
+              className={`flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
+                activeTab === 'imagenes' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
+              }`}
+              style={{ fontSize: '0.75rem' }}
+            >
+              <ImageIcon size={13} />
+              Imágenes ({images.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('color')}
+              className={`flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
+                activeTab === 'color' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
+              }`}
+              style={{ fontSize: '0.75rem' }}
+            >
+              <Palette size={13} />
+              Colores & Talla
+            </button>
+
             {subtypesList.length > 1 && (
               <button
                 type="button"
-                onClick={() => setActiveTab('modelo')}
+                onClick={() => setActiveTab('estilo')}
                 className={`flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
-                  activeTab === 'modelo' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
+                  activeTab === 'estilo' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
                 }`}
                 style={{ fontSize: '0.75rem' }}
               >
@@ -369,17 +861,7 @@ export default function DisenadorEditor() {
                 Estilo
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => setActiveTab('logo')}
-              className={`flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
-                activeTab === 'logo' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
-              }`}
-              style={{ fontSize: '0.75rem' }}
-            >
-              <ImageIcon size={13} />
-              Logos ({images.length})
-            </button>
+
             <button
               type="button"
               onClick={() => setActiveTab('texto')}
@@ -391,28 +873,176 @@ export default function DisenadorEditor() {
               <Type size={13} />
               Texto
             </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('color')}
-              className={`flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
-                activeTab === 'color' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
-              }`}
-              style={{ fontSize: '0.75rem' }}
-            >
-              <Palette size={13} />
-              Color & Talla
-            </button>
           </div>
 
-          {/* TAB 0: SUB-TIPOS / ESTILOS DE MODELO */}
-          {activeTab === 'modelo' && subtypesList.length > 0 && (
+          {/* TAB 1: GESTIÓN Y SUBIDA DE IMÁGENES */}
+          {activeTab === 'imagenes' && (
+            <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
+              <div className="d-flex align-items-center justify-content-between">
+                <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
+                  Subir Logos y Diseños ({images.length}/{MAX_IMAGES})
+                </span>
+                {images.length < MAX_IMAGES && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 font-montserrat"
+                    style={{ fontSize: '0.72rem' }}
+                  >
+                    <PlusCircle size={13} />
+                    Añadir otra imagen
+                  </button>
+                )}
+              </div>
+
+              {/* Upload Dropzone / Button */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border border-dashed border-primary border-opacity-50 bg-primary-10 rounded-3 p-4 text-center d-flex flex-column align-items-center gap-2 cursor-pointer transition-all hover-opacity"
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="rounded-circle bg-card d-flex align-items-center justify-content-center shadow-sm" style={{ width: '3.2rem', height: '3.2rem' }}>
+                  <Upload size={22} className="text-primary" />
+                </div>
+                <div>
+                  <p className="font-montserrat fw-semibold text-text mb-0" style={{ fontSize: '0.82rem' }}>
+                    Haz clic para subir un logo o ilustración
+                  </p>
+                  <span className="font-montserrat text-muted" style={{ fontSize: '0.7rem' }}>
+                    Soporta PNG, JPG o SVG transparente de alta resolución
+                  </span>
+                </div>
+              </div>
+
+              {/* Thumbnails of uploaded images */}
+              {images.length > 0 && (
+                <div className="d-flex flex-column gap-2 pt-1">
+                  <span className="font-montserrat text-muted" style={{ fontSize: '0.72rem' }}>Imágenes cargadas en el diseño:</span>
+                  <div className="d-flex flex-column gap-2">
+                    {images.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className={`d-flex align-items-center justify-content-between p-2 rounded-3 border transition-all ${
+                          selectedImageId === item.id ? 'border-primary bg-primary-10' : 'border-border bg-elevated'
+                        }`}
+                      >
+                        <div
+                          className="d-flex align-items-center gap-2 cursor-pointer flex-grow-1"
+                          onClick={() => {
+                            setSelectedImageId(item.id);
+                            setActiveFloatingTarget('image');
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <img src={item.src} alt={item.name} className="rounded object-fit-contain bg-card p-1 border" style={{ width: '40px', height: '40px' }} />
+                          <div>
+                            <div className="d-flex align-items-center gap-1">
+                              <span className="badge bg-primary text-black font-montserrat px-1" style={{ fontSize: '0.65rem' }}>#{idx + 1}</span>
+                              <p className="font-montserrat fw-semibold text-text mb-0 text-truncate" style={{ fontSize: '0.78rem', maxWidth: '160px' }}>
+                                {item.name}
+                              </p>
+                            </div>
+                            <span className="font-montserrat text-muted" style={{ fontSize: '0.68rem' }}>
+                              Modo: {item.fitMode.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImages((prev) => prev.filter((img) => img.id !== item.id));
+                            if (selectedImageId === item.id) {
+                              const remaining = images.filter((img) => img.id !== item.id);
+                              setSelectedImageId(remaining[0]?.id || null);
+                            }
+                          }}
+                          className="btn btn-sm btn-link text-danger p-1"
+                          title="Eliminar imagen"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="alert alert-secondary py-2 px-3 border border-border rounded-3 d-flex align-items-center gap-2 mb-0 mt-1">
+                    <Sparkles size={14} className="text-primary flex-shrink-0" />
+                    <span className="font-montserrat text-muted" style={{ fontSize: '0.7rem' }}>
+                      Ajusta la posición, tamaño, calce y repetición usando el <strong>menú flotante dentro del visor 3D</strong>.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="d-none" />
+            </div>
+          )}
+
+          {/* TAB 2: PALETA DE COLORES Y TALLAS */}
+          {activeTab === 'color' && (
+            <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
+              <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
+                Color Base y Especificaciones
+              </span>
+
+              <div>
+                <label className="font-montserrat text-muted mb-2 d-block" style={{ fontSize: '0.72rem' }}>Color del producto (100% Personalizable)</label>
+                <div className="d-flex flex-wrap gap-2 align-items-center">
+                  {COLOR_PALETTE.map((c) => (
+                    <button
+                      key={c.hex}
+                      type="button"
+                      onClick={() => setProductColor(c.hex)}
+                      title={c.nombre}
+                      className={`rounded-circle border border-2 ${productColor === c.hex ? 'border-primary' : 'border-border'}`}
+                      style={{ width: '2.1rem', height: '2.1rem', backgroundColor: c.hex, transform: productColor === c.hex ? 'scale(1.15)' : undefined }}
+                    />
+                  ))}
+                  <div className="d-flex align-items-center gap-2 ms-1">
+                    <input
+                      type="color"
+                      value={productColor}
+                      onChange={(e) => setProductColor(e.target.value)}
+                      title="Color personalizado libre"
+                      className="rounded-circle border border-2 border-border bg-transparent"
+                      style={{ width: '2.2rem', height: '2.2rem', cursor: 'pointer', overflow: 'hidden' }}
+                    />
+                    <span className="font-montserrat text-muted" style={{ fontSize: '0.75rem' }}>{productColor}</span>
+                  </div>
+                </div>
+              </div>
+
+              {['polera', 'gorra', 'pantalon'].includes(producto) && (
+                <div>
+                  <label className="font-montserrat text-muted mb-2 d-block" style={{ fontSize: '0.72rem' }}>Talla</label>
+                  <div className="d-flex flex-wrap gap-2">
+                    {tallasStandard.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setSelectedTalla(t)}
+                        className={`px-3 py-1 rounded border font-montserrat fw-semibold bg-transparent ${
+                          selectedTalla === t ? 'border-primary bg-primary-10 text-primary' : 'border-border text-muted'
+                        }`}
+                        style={{ fontSize: '0.75rem' }}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: ESTILOS / SUB-TIPOS */}
+          {activeTab === 'estilo' && subtypesList.length > 0 && (
             <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
               <div>
                 <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
-                  Selecciona el tipo de {label}
+                  Selecciona el estilo de {label}
                 </span>
                 <p className="font-montserrat text-muted mb-0 mt-1" style={{ fontSize: '0.72rem' }}>
-                  El modelo 3D cambiará su silueta, costuras y acabados en tiempo real.
+                  El modelo 3D cambiará su silueta y acabados en tiempo real.
                 </p>
               </div>
 
@@ -438,171 +1068,7 @@ export default function DisenadorEditor() {
             </div>
           )}
 
-          {/* TAB 1: MULTI-LOGO & IMÁGENES */}
-          {activeTab === 'logo' && (
-            <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
-              <div className="d-flex align-items-center justify-content-between">
-                <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
-                  Estampados e Imágenes ({images.length}/{MAX_IMAGES})
-                </span>
-                {images.length < MAX_IMAGES && (
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 font-montserrat"
-                    style={{ fontSize: '0.72rem' }}
-                  >
-                    <PlusCircle size={13} />
-                    Añadir otra imagen
-                  </button>
-                )}
-              </div>
-
-              {/* Thumbnails list of uploaded images */}
-              {images.length > 0 && (
-                <div className="d-flex gap-2 overflow-x-auto pb-1">
-                  {images.map((item, idx) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setSelectedImageId(item.id)}
-                      className={`position-relative p-1 rounded-3 border flex-shrink-0 transition-all ${
-                        currentImage?.id === item.id ? 'border-primary bg-primary-10' : 'border-border bg-elevated'
-                      }`}
-                      style={{ width: '56px', height: '56px' }}
-                    >
-                      <img src={item.src} alt={item.name} className="w-100 h-100 object-fit-contain" />
-                      <span className="position-absolute top-0 start-0 badge bg-primary text-black font-montserrat px-1" style={{ fontSize: '0.6rem' }}>
-                        #{idx + 1}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {!currentImage ? (
-                <div className="border border-dashed border-border rounded-3 p-4 text-center d-flex flex-column align-items-center gap-2">
-                  <div className="rounded-circle bg-elevated d-flex align-items-center justify-content-center" style={{ width: '3rem', height: '3rem' }}>
-                    <Upload size={20} className="text-primary" />
-                  </div>
-                  <p className="font-montserrat text-muted mb-0" style={{ fontSize: '0.75rem' }}>
-                    Sube hasta {MAX_IMAGES} logos o ilustraciones (PNG, JPG o SVG transparente).
-                  </p>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2 mt-1"
-                    style={{ fontSize: '0.8rem' }}
-                  >
-                    <Upload size={14} />
-                    Seleccionar imagen
-                  </button>
-                </div>
-              ) : (
-                <div className="d-flex flex-column gap-3">
-                  <div className="d-flex align-items-center justify-content-between bg-elevated p-2 rounded-3 border border-border">
-                    <div className="d-flex align-items-center gap-2">
-                      <img src={currentImage.src} alt="Selected" className="rounded object-fit-contain bg-card p-1" style={{ width: '36px', height: '36px' }} />
-                      <div>
-                        <p className="font-montserrat fw-semibold text-text mb-0" style={{ fontSize: '0.75rem' }}>
-                          Editando imagen seleccionada
-                        </p>
-                        <span className="font-montserrat text-muted" style={{ fontSize: '0.68rem' }}>Ajusta su posición y tamaño</span>
-                      </div>
-                    </div>
-                    <button onClick={removeCurrentImage} className="btn btn-sm btn-link text-danger p-0 d-flex align-items-center gap-1 font-montserrat" style={{ fontSize: '0.72rem' }}>
-                      <Trash2 size={12} />
-                      Eliminar
-                    </button>
-                  </div>
-
-                  {/* Sliders for current active image */}
-                  <div className="d-flex flex-column gap-2 pt-1">
-                    <div>
-                      <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
-                        <span>↕️ Posición Vertical</span>
-                        <span className="text-text">{currentImage.y > 0 ? `+${currentImage.y}` : currentImage.y}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="-80"
-                        max="80"
-                        value={currentImage.y}
-                        onChange={(e) => updateCurrentImage({ y: Number(e.target.value) })}
-                        className="form-range w-100"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
-                        <span>↔️ Posición Horizontal</span>
-                        <span className="text-text">{currentImage.x > 0 ? `+${currentImage.x}` : currentImage.x}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="-80"
-                        max="80"
-                        value={currentImage.x}
-                        onChange={(e) => updateCurrentImage({ x: Number(e.target.value) })}
-                        className="form-range w-100"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
-                        <span>🔍 Tamaño / Escala</span>
-                        <span className="text-text">{currentImage.scale}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="20"
-                        max="140"
-                        value={currentImage.scale}
-                        onChange={(e) => updateCurrentImage({ scale: Number(e.target.value) })}
-                        className="form-range w-100"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
-                        <span>🔄 Rotación</span>
-                        <span className="text-text">{currentImage.rotation}°</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="-180"
-                        max="180"
-                        value={currentImage.rotation}
-                        onChange={(e) => updateCurrentImage({ rotation: Number(e.target.value) })}
-                        className="form-range w-100"
-                      />
-                    </div>
-
-                    <div className="d-flex gap-2 mt-1">
-                      <button
-                        onClick={() => updateCurrentImage({ flipX: !currentImage.flipX })}
-                        className={`btn btn-sm flex-grow-1 d-inline-flex align-items-center justify-content-center gap-1 font-montserrat ${
-                          currentImage.flipX ? 'btn-primary' : 'btn-secondary'
-                        }`}
-                        style={{ fontSize: '0.72rem' }}
-                      >
-                        <FlipHorizontal size={13} />
-                        Voltear
-                      </button>
-                      <button
-                        onClick={() => updateCurrentImage({ x: 0, y: 15, scale: 60, rotation: 0, flipX: false })}
-                        className="btn btn-sm btn-secondary font-montserrat"
-                        style={{ fontSize: '0.72rem' }}
-                      >
-                        Centrar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="d-none" />
-            </div>
-          )}
-
-          {/* TAB 2: TEXTO PERSONALIZADO */}
+          {/* TAB 4: TEXTO PERSONALIZADO */}
           {activeTab === 'texto' && (
             <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
               <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
@@ -662,111 +1128,6 @@ export default function DisenadorEditor() {
                         style={{ width: '1.6rem', height: '1.6rem', cursor: 'pointer', overflow: 'hidden' }}
                       />
                     </div>
-                  </div>
-
-                  {/* Text Sliders */}
-                  <div className="d-flex flex-column gap-2 pt-1">
-                    <div>
-                      <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
-                        <span>↕️ Posición Vertical</span>
-                        <span className="text-text">{textPosY > 0 ? `+${textPosY}` : textPosY}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="-80"
-                        max="80"
-                        value={textPosY}
-                        onChange={(e) => setTextPosY(Number(e.target.value))}
-                        className="form-range w-100"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
-                        <span>↔️ Posición Horizontal</span>
-                        <span className="text-text">{textPosX > 0 ? `+${textPosX}` : textPosX}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="-80"
-                        max="80"
-                        value={textPosX}
-                        onChange={(e) => setTextPosX(Number(e.target.value))}
-                        className="form-range w-100"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
-                        <span>🔍 Tamaño de letra</span>
-                        <span className="text-text">{textSize}px</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="16"
-                        max="70"
-                        value={textSize}
-                        onChange={(e) => setTextSize(Number(e.target.value))}
-                        className="form-range w-100"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 3: COLOR DEL PRODUCTO & TALLA */}
-          {activeTab === 'color' && (
-            <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
-              <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
-                Color Base y Especificaciones
-              </span>
-
-              <div>
-                <label className="font-montserrat text-muted mb-2 d-block" style={{ fontSize: '0.72rem' }}>Color del producto (100% Personalizable)</label>
-                <div className="d-flex flex-wrap gap-2 align-items-center">
-                  {COLOR_PALETTE.map((c) => (
-                    <button
-                      key={c.hex}
-                      type="button"
-                      onClick={() => setProductColor(c.hex)}
-                      title={c.nombre}
-                      className={`rounded-circle border border-2 ${productColor === c.hex ? 'border-primary' : 'border-border'}`}
-                      style={{ width: '2rem', height: '2rem', backgroundColor: c.hex, transform: productColor === c.hex ? 'scale(1.15)' : undefined }}
-                    />
-                  ))}
-                  <div className="d-flex align-items-center gap-2 ms-1">
-                    <input
-                      type="color"
-                      value={productColor}
-                      onChange={(e) => setProductColor(e.target.value)}
-                      title="Color personalizado libre"
-                      className="rounded-circle border border-2 border-border bg-transparent"
-                      style={{ width: '2.1rem', height: '2.1rem', cursor: 'pointer', overflow: 'hidden' }}
-                    />
-                    <span className="font-montserrat text-muted" style={{ fontSize: '0.75rem' }}>{productColor}</span>
-                  </div>
-                </div>
-              </div>
-
-              {['polera', 'gorra', 'pantalon'].includes(producto) && (
-                <div>
-                  <label className="font-montserrat text-muted mb-2 d-block" style={{ fontSize: '0.72rem' }}>Talla</label>
-                  <div className="d-flex flex-wrap gap-2">
-                    {tallasStandard.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setSelectedTalla(t)}
-                        className={`px-3 py-1 rounded border font-montserrat fw-semibold bg-transparent ${
-                          selectedTalla === t ? 'border-primary bg-primary-10 text-primary' : 'border-border text-muted'
-                        }`}
-                        style={{ fontSize: '0.75rem' }}
-                      >
-                        {t}
-                      </button>
-                    ))}
                   </div>
                 </div>
               )}
