@@ -4,7 +4,7 @@ import { Modal } from 'react-bootstrap';
 import {
   Upload, Trash2, FlipHorizontal, Eye,
   Minus, Plus, ShoppingBag, ArrowLeft, Type,
-  Sparkles, Palette, Image as ImageIcon
+  Sparkles, Palette, Image as ImageIcon, Shirt, Coffee, GlassWater
 } from 'lucide-react';
 import { formatPrice } from '../../utils';
 import { useCartStore } from '../../store/cartStore';
@@ -24,6 +24,33 @@ const PRODUCT_LABELS: Record<string, string> = {
   vaso: 'Vaso',
 };
 
+const PRODUCT_SUBTYPES: Record<string, { id: string; label: string; desc: string }[]> = {
+  polera: [
+    { id: 'cuello-redondo', label: 'Cuello Redondo', desc: 'Algodón clásico 100%' },
+    { id: 'polo', label: 'Polo Piqué', desc: 'Cuello camisero y botones' },
+    { id: 'cuello-v', label: 'Cuello V', desc: 'Corte V acanalado' },
+    { id: 'poleron', label: 'Polerón / Hoodie', desc: 'Capucha y bolsillo canguro' },
+  ],
+  vaso: [
+    { id: 'clasico', label: 'Vaso Clásico', desc: 'Vidrio / Tumbler cónico' },
+    { id: 'shopero', label: 'Shopero Cervecero', desc: 'Asa robusta y base gruesa' },
+    { id: 'jarra', label: 'Jarra con Pico', desc: 'Pico vertedor y asa' },
+    { id: 'termico', label: 'Vaso Térmico', desc: 'Acero con tapa hermética' },
+  ],
+  taza: [
+    { id: 'clasica', label: 'Mug Clásico 320ml', desc: 'Cerámica esmaltada' },
+    { id: 'conica', label: 'Taza Cónica Latte', desc: 'Diseño cónico moderno' },
+  ],
+  termo: [
+    { id: 'clasico', label: 'Termo Acero Clásico', desc: 'Doble pared aislante' },
+    { id: 'deportivo', label: 'Botella Deportiva', desc: 'Con tapa ergonómica' },
+  ],
+  gorra: [
+    { id: 'curva', label: 'Jockey Curvo', desc: 'Visera curva 6 paneles' },
+    { id: 'plana', label: 'Visera Plana', desc: 'Estilo snapback urbano' },
+  ],
+};
+
 const FONT_OPTIONS = [
   { label: 'Elegante (Italiana)', value: 'Italiana, serif' },
   { label: 'Moderna (Montserrat)', value: 'Montserrat, sans-serif' },
@@ -31,7 +58,20 @@ const FONT_OPTIONS = [
   { label: 'Cursiva (Script)', value: 'cursive, Georgia, serif' },
 ];
 
-type ActiveTab = 'logo' | 'texto' | 'color';
+const COLOR_PALETTE = [
+  { nombre: 'Blanco Puro', hex: '#FFFFFF' },
+  { nombre: 'Negro Azabache', hex: '#111111' },
+  { nombre: 'Gris Jaspe', hex: '#6B7280' },
+  { nombre: 'Azul Marino', hex: '#1E3A8A' },
+  { nombre: 'Rojo Carmesí', hex: '#DC2626' },
+  { nombre: 'Verde Bosque', hex: '#15803D' },
+  { nombre: 'Mostaza Gold', hex: '#D97706' },
+  { nombre: 'Dorado Premium', hex: '#C9A84C' },
+  { nombre: 'Rosa Pastel', hex: '#F472B6' },
+  { nombre: 'Beige Arena', hex: '#E5E0D8' },
+];
+
+type ActiveTab = 'modelo' | 'logo' | 'texto' | 'color';
 
 export default function DisenadorEditor() {
   const { producto = 'polera' } = useParams<{ producto: string }>();
@@ -40,9 +80,13 @@ export default function DisenadorEditor() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoImageRef = useRef<HTMLImageElement | null>(null);
 
+  // Sub-type selection
+  const subtypesList = PRODUCT_SUBTYPES[producto] || [];
+  const [subTipo, setSubTipo] = useState<string>(subtypesList[0]?.id || 'default');
+
   // Design state
-  const [activeTab, setActiveTab] = useState<ActiveTab>('logo');
-  const [productColor, setProductColor] = useState('#F0EDE8');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('modelo');
+  const [productColor, setProductColor] = useState('#FFFFFF');
   const [selectedTalla, setSelectedTalla] = useState('M');
   const [cantidad, setCantidad] = useState(1);
 
@@ -70,14 +114,15 @@ export default function DisenadorEditor() {
 
   const { addItem, openCart } = useCartStore();
   const { data: editor } = useAsync(() => catalogoApi.editor(), []);
-  const coloresEditor = editor?.colores ?? [];
   const tallasStandard = editor?.tallas ?? [];
   const precio = editor?.precios?.[producto] ?? 15000;
   const label = PRODUCT_LABELS[producto] ?? producto;
 
+  const currentSubtypeName = subtypesList.find(s => s.id === subTipo)?.label || label;
+
   useSEO({
-    title: `Diseñar ${label} Personalizada en 3D · RC Estampa`,
-    description: `Crea y personaliza tu ${label} en 3D interactivo 360° con estampado DTF textil o grabado láser. Despacho a todo Chile.`,
+    title: `Diseñar ${currentSubtypeName} en 3D · RC Estampa`,
+    description: `Crea y personaliza tu ${currentSubtypeName} en 3D interactivo 360° con estampado DTF textil o grabado láser. Despacho a todo Chile.`,
   });
 
   // Redraw the 2D texture canvas whenever logo, text, or positioning changes
@@ -210,7 +255,7 @@ export default function DisenadorEditor() {
     try {
       const res = await disenosApi.crear({
         imagen_base64: snapshot,
-        prenda: label,
+        prenda: currentSubtypeName,
         color_base: productColor,
         talla: selectedTalla,
       });
@@ -224,9 +269,9 @@ export default function DisenadorEditor() {
       tipo: 'diseno',
       id: `diseno-${Date.now()}`,
       disenoId,
-      nombre: `${label} personalizada (3D)`,
+      nombre: `${currentSubtypeName} personalizada (3D)`,
       imagen,
-      prenda: label,
+      prenda: currentSubtypeName,
       color_base: productColor,
       talla: selectedTalla,
       cantidad,
@@ -245,17 +290,17 @@ export default function DisenadorEditor() {
             Cambiar producto
           </Link>
           <span>/</span>
-          <span className="text-text fw-semibold">{label}</span>
+          <span className="text-text fw-semibold">{currentSubtypeName}</span>
         </div>
         <div className="d-flex align-items-center gap-2">
           <span className="badge bg-primary-10 text-primary border border-primary-20 font-montserrat px-3 py-1 d-flex align-items-center gap-1">
             <Sparkles size={12} />
-            Editor 3D Interactivo 360°
+            Visualizador 3D Interactivo 360°
           </span>
         </div>
       </div>
 
-      {/* Main 3D Customizer Layout (60% 3D Viewport / 40% Control Panel) */}
+      {/* Main 3D Customizer Layout */}
       <div className="row g-4 align-items-stretch">
         
         {/* Left Column: Direct 3D Canvas */}
@@ -264,6 +309,7 @@ export default function DisenadorEditor() {
             <Viewer3D
               ref={viewer3DRef}
               producto={producto}
+              subTipo={subTipo}
               productColor={productColor}
               canvasSource={textureCanvasRef.current}
               textureVersion={textureVersion}
@@ -274,42 +320,89 @@ export default function DisenadorEditor() {
         {/* Right Column: Direct Customization Controls */}
         <div className="col-12 col-lg-5 d-flex flex-column gap-3">
           
-          {/* Tabs Selector: Logo / Texto / Color */}
+          {/* Tabs Selector: Modelo / Logo / Texto / Color */}
           <div className="d-flex bg-elevated border border-border rounded-3 p-1">
+            {subtypesList.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('modelo')}
+                className={`flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
+                  activeTab === 'modelo' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
+                }`}
+                style={{ fontSize: '0.75rem' }}
+              >
+                {producto === 'polera' ? <Shirt size={13} /> : producto === 'vaso' ? <GlassWater size={13} /> : <Coffee size={13} />}
+                Estilo
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setActiveTab('logo')}
-              className={`flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
+              className={`flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
                 activeTab === 'logo' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
               }`}
-              style={{ fontSize: '0.8rem' }}
+              style={{ fontSize: '0.75rem' }}
             >
-              <ImageIcon size={14} />
-              Logo / Imagen
+              <ImageIcon size={13} />
+              Logo / Foto
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('texto')}
-              className={`flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
+              className={`flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
                 activeTab === 'texto' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
               }`}
-              style={{ fontSize: '0.8rem' }}
+              style={{ fontSize: '0.75rem' }}
             >
-              <Type size={14} />
+              <Type size={13} />
               Texto
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('color')}
-              className={`flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
+              className={`flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
                 activeTab === 'color' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
               }`}
-              style={{ fontSize: '0.8rem' }}
+              style={{ fontSize: '0.75rem' }}
             >
-              <Palette size={14} />
+              <Palette size={13} />
               Color & Talla
             </button>
           </div>
+
+          {/* TAB 0: SUB-TIPOS / ESTILOS DE MODELO */}
+          {activeTab === 'modelo' && subtypesList.length > 0 && (
+            <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
+              <div>
+                <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
+                  Selecciona el tipo de {label}
+                </span>
+                <p className="font-montserrat text-muted mb-0 mt-1" style={{ fontSize: '0.72rem' }}>
+                  El modelo 3D cambiará su silueta y acabados en tiempo real.
+                </p>
+              </div>
+
+              <div className="d-grid gap-2" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                {subtypesList.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setSubTipo(item.id)}
+                    className={`btn text-start p-3 border rounded-3 d-flex flex-column justify-content-between transition-all ${
+                      subTipo === item.id ? 'btn-primary shadow-sm' : 'bg-elevated border-border text-muted'
+                    }`}
+                  >
+                    <span className="font-montserrat fw-bold d-block" style={{ fontSize: '0.8rem' }}>
+                      {item.label}
+                    </span>
+                    <span className="font-montserrat mt-1 d-block opacity-75" style={{ fontSize: '0.68rem' }}>
+                      {item.desc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* TAB 1: LOGO & IMAGEN */}
           {activeTab === 'logo' && (
@@ -349,7 +442,7 @@ export default function DisenadorEditor() {
                     <img src={logoSrc} alt="Logo" className="rounded object-fit-contain bg-card p-1" style={{ width: '48px', height: '48px' }} />
                     <div className="flex-grow-1">
                       <p className="font-montserrat fw-semibold text-text mb-0" style={{ fontSize: '0.75rem' }}>Logo Activo</p>
-                      <span className="font-montserrat text-muted" style={{ fontSize: '0.7rem' }}>Ajusta el tamaño y posición en 3D</span>
+                      <span className="font-montserrat text-muted" style={{ fontSize: '0.7rem' }}>Posiciónalo directamente sobre el 3D</span>
                     </div>
                     <button onClick={() => fileInputRef.current?.click()} className="btn btn-sm btn-secondary py-1 px-2 font-montserrat" style={{ fontSize: '0.7rem' }}>
                       Cambiar
@@ -487,7 +580,7 @@ export default function DisenadorEditor() {
                   <div>
                     <label className="font-montserrat text-muted mb-1 d-block" style={{ fontSize: '0.72rem' }}>Color del texto</label>
                     <div className="d-flex flex-wrap gap-2 align-items-center">
-                      {['#FFFFFF', '#111111', '#C9A84C', '#D4AF37', '#E53E3E', '#3182CE', '#38A169'].map((c) => (
+                      {['#FFFFFF', '#111111', '#C9A84C', '#D4AF37', '#DC2626', '#1E3A8A', '#15803D'].map((c) => (
                         <button
                           key={c}
                           type="button"
@@ -566,9 +659,9 @@ export default function DisenadorEditor() {
               </span>
 
               <div>
-                <label className="font-montserrat text-muted mb-2 d-block" style={{ fontSize: '0.72rem' }}>Color del producto</label>
+                <label className="font-montserrat text-muted mb-2 d-block" style={{ fontSize: '0.72rem' }}>Color del producto (100% Personalizable)</label>
                 <div className="d-flex flex-wrap gap-2 align-items-center">
-                  {coloresEditor.map((c) => (
+                  {COLOR_PALETTE.map((c) => (
                     <button
                       key={c.hex}
                       type="button"
@@ -578,14 +671,17 @@ export default function DisenadorEditor() {
                       style={{ width: '2rem', height: '2rem', backgroundColor: c.hex, transform: productColor === c.hex ? 'scale(1.15)' : undefined }}
                     />
                   ))}
-                  <input
-                    type="color"
-                    value={productColor}
-                    onChange={(e) => setProductColor(e.target.value)}
-                    title="Color personalizado"
-                    className="rounded-circle border border-2 border-border bg-transparent"
-                    style={{ width: '2rem', height: '2rem', cursor: 'pointer', overflow: 'hidden' }}
-                  />
+                  <div className="d-flex align-items-center gap-2 ms-1">
+                    <input
+                      type="color"
+                      value={productColor}
+                      onChange={(e) => setProductColor(e.target.value)}
+                      title="Color personalizado libre"
+                      className="rounded-circle border border-2 border-border bg-transparent"
+                      style={{ width: '2.1rem', height: '2.1rem', cursor: 'pointer', overflow: 'hidden' }}
+                    />
+                    <span className="font-montserrat text-muted" style={{ fontSize: '0.75rem' }}>{productColor}</span>
+                  </div>
                 </div>
               </div>
 
@@ -615,7 +711,7 @@ export default function DisenadorEditor() {
           {/* Resumen del Pedido y Agregar */}
           <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3 mt-auto">
             <div className="d-flex justify-content-between align-items-center font-montserrat">
-              <span className="text-muted" style={{ fontSize: '0.8rem' }}>{label} Personalizada</span>
+              <span className="text-muted" style={{ fontSize: '0.8rem' }}>{currentSubtypeName}</span>
               <span className="text-primary fw-bold" style={{ fontSize: '1rem' }}>{formatPrice(precio * cantidad)}</span>
             </div>
 
@@ -699,8 +795,8 @@ export default function DisenadorEditor() {
 
               <div className="bg-elevated border border-border rounded-3 p-3 d-flex flex-column gap-2">
                 <div className="d-flex justify-content-between font-montserrat" style={{ fontSize: '0.78rem' }}>
-                  <span className="text-muted">Producto</span>
-                  <span className="text-text fw-semibold">{label}</span>
+                  <span className="text-muted">Modelo</span>
+                  <span className="text-text fw-semibold">{currentSubtypeName}</span>
                 </div>
                 {['polera', 'gorra', 'pantalon'].includes(producto) && (
                   <div className="d-flex justify-content-between font-montserrat" style={{ fontSize: '0.78rem' }}>
