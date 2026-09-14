@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import {
   Package, Heart, User as UserIcon, LogOut, CheckCircle2,
   MessageCircle, ShoppingBag, Trash2, ShieldCheck, ChevronDown, ChevronUp,
-  Calendar, X
+  Calendar, X, Shirt
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { authApi, pedidosApi, favoritosApi, type Pedido } from '../../api';
@@ -345,17 +345,81 @@ export default function Perfil() {
                   {/* DETALLE EXPANDIBLE */}
                   {isExpanded && (
                     <div className="pt-3 border-top border-border font-montserrat animate-tab-fade">
-                      <h4 className="fs-6 fw-bold text-text mb-3">Productos en esta orden</h4>
+                      <h4 className="fs-6 fw-bold text-text mb-3 d-flex align-items-center gap-2">
+                        <ShoppingBag size={16} className="text-primary" />
+                        <span>Artículos de la Orden ({pedido.items?.length || 0})</span>
+                      </h4>
                       <div className="d-flex flex-column gap-2 mb-3">
                         {pedido.items.map((item, idx) => (
-                          <div key={idx} className="p-2 bg-elevated rounded-3 d-flex justify-content-between align-items-center small">
-                            <div>
-                              <strong className="text-text">{item.nombre}</strong>
-                              <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                                {item.talla ? `Talla: ${item.talla}` : ''} {item.color ? `| Color: ${item.color}` : ''} &times; {item.cantidad}
+                          <div
+                            key={idx}
+                            className="p-3 bg-elevated rounded-3 border border-border d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 hover-lift"
+                          >
+                            <div className="d-flex align-items-center gap-3">
+                              {/* Imagen o Placeholder */}
+                              <div
+                                className="rounded-3 bg-surface border border-border overflow-hidden d-flex align-items-center justify-content-center flex-shrink-0"
+                                style={{ width: '3.5rem', height: '3.5rem' }}
+                              >
+                                {item.imagen ? (
+                                  <img src={item.imagen} alt={item.nombre} className="w-100 h-100 object-fit-cover" />
+                                ) : (
+                                  <Shirt size={20} className="text-muted opacity-50" />
+                                )}
+                              </div>
+
+                              <div>
+                                <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                  <strong className="text-text font-montserrat small">{item.nombre}</strong>
+                                  <span className={`badge ${item.tipo === 'diseno' ? 'bg-warning bg-opacity-15 text-warning border border-warning' : 'bg-primary bg-opacity-10 text-primary border border-primary'} text-uppercase`} style={{ fontSize: '0.65rem' }}>
+                                    {item.tipo === 'diseno' ? 'Personalizado' : 'Catálogo'}
+                                  </span>
+                                  {item.linea && (
+                                    <span className="badge bg-surface text-muted border border-border text-uppercase" style={{ fontSize: '0.65rem' }}>
+                                      {item.linea}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Características Detalladas */}
+                                <div className="d-flex flex-wrap align-items-center gap-2 text-muted" style={{ fontSize: '0.75rem' }}>
+                                  {item.prenda && (
+                                    <span className="bg-surface px-2 py-0.5 rounded-1 border border-border text-text">
+                                      Prenda: <strong>{item.prenda}</strong>
+                                    </span>
+                                  )}
+                                  {item.talla && (
+                                    <span className="bg-surface px-2 py-0.5 rounded-1 border border-border text-text">
+                                      Talla: <strong>{item.talla}</strong>
+                                    </span>
+                                  )}
+                                  {item.color && (
+                                    <span className="bg-surface px-2 py-0.5 rounded-1 border border-border text-text">
+                                      Color: <strong>{item.color}</strong>
+                                    </span>
+                                  )}
+                                  {item.color_base && item.color_base !== item.color && (
+                                    <span className="bg-surface px-2 py-0.5 rounded-1 border border-border text-text">
+                                      Base: <strong>{item.color_base}</strong>
+                                    </span>
+                                  )}
+                                  {item.diseno_id && (
+                                    <span className="bg-surface px-2 py-0.5 rounded-1 border border-border text-warning">
+                                      ID Diseño: #{item.diseno_id}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                            <span className="text-primary fw-semibold">{item.precio ? formatPrice(item.precio * item.cantidad) : 'A cotizar'}</span>
+
+                            <div className="text-sm-end ps-sm-3 border-sm-start border-border flex-shrink-0">
+                              <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
+                                {item.cantidad} &times; {formatPrice(item.precio || 0)}
+                              </div>
+                              <div className="text-primary fw-bold font-montserrat">
+                                {formatPrice((item.precio || 0) * item.cantidad)}
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -517,14 +581,23 @@ export default function Perfil() {
               </div>
 
               <div className="col-12 col-md-6">
-                <label className="form-label text-muted small fw-semibold">RUT / Identificación</label>
+                <div className="d-flex align-items-center justify-content-between mb-1">
+                  <label className="form-label text-muted small fw-semibold mb-0">RUT / Identificación</label>
+                  <span className="badge bg-elevated text-muted border border-border" style={{ fontSize: '0.68rem' }}>
+                    🔒 No modificable
+                  </span>
+                </div>
                 <input
                   type="text"
-                  value={formData.rut}
-                  onChange={(e) => setFormData({ ...formData, rut: e.target.value })}
-                  className="form-control bg-elevated text-text border-border"
-                  placeholder="12.345.678-9"
+                  value={formData.rut || user?.rut || ''}
+                  disabled
+                  readOnly
+                  className="form-control bg-elevated text-muted border-border opacity-75 cursor-not-allowed"
+                  placeholder="Sin RUT registrado"
                 />
+                <span className="form-text text-muted" style={{ fontSize: '0.72rem' }}>
+                  El RUT queda registrado de forma permanente por motivos tributarios y de facturación.
+                </span>
               </div>
 
               <div className="col-12">

@@ -27,6 +27,7 @@ import {
   ChevronRight,
   Calendar,
   Info,
+  Shirt,
 } from 'lucide-react';
 import { Modal } from 'react-bootstrap';
 import { panelApi, pedidosApi, type EstadisticasData } from '../../api';
@@ -57,14 +58,16 @@ export default function Estadisticas() {
   const [reload, setReload] = useState(0);
   const [busqueda, setBusqueda] = useState('');
   
-  // Multi-filtro por estado
+  // Multi-filtro por estado del embudo
   const [estadosFiltro, setEstadosFiltro] = useState<string[]>([]);
+
+  // Nuevos Filtros: Método de Pago y Estado de Pago
+  const [filtroMetodoPago, setFiltroMetodoPago] = useState<string>('todos');
+  const [filtroEstadoPago, setFiltroEstadoPago] = useState<string>('todos');
   
-  // Paginación y Modos de Carga
-  const [modoCarga, setModoCarga] = useState<'paginacion' | 'lazy'>('paginacion');
+  // Paginación
   const [filasPorPagina, setFilasPorPagina] = useState<number>(10);
   const [paginaActual, setPaginaActual] = useState<number>(1);
-  const [lazyLimit, setLazyLimit] = useState<number>(15);
 
   // Ordenamiento de Columnas
   const [sortColumn, setSortColumn] = useState<string>('creado_en');
@@ -183,7 +186,23 @@ export default function Estadisticas() {
         }
       }
 
-      return matchEstado && matchBusqueda && matchFecha;
+      // Filtro por Método de Pago
+      let matchMetodo = true;
+      if (filtroMetodoPago !== 'todos') {
+        const m = filtroMetodoPago.toLowerCase();
+        matchMetodo = Boolean(
+          (tx.metodo_pago && tx.metodo_pago.toLowerCase().includes(m)) ||
+          (tx.payment_method_id && tx.payment_method_id.toLowerCase().includes(m))
+        );
+      }
+
+      // Filtro por Estado de Pago / Pedido
+      let matchEstadoPago = true;
+      if (filtroEstadoPago !== 'todos') {
+        matchEstadoPago = tx.estado === filtroEstadoPago;
+      }
+
+      return matchEstado && matchBusqueda && matchFecha && matchMetodo && matchEstadoPago;
     });
 
     // 2. Ordenar según la columna seleccionada
@@ -209,17 +228,14 @@ export default function Estadisticas() {
       if (strA > strB) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [data?.ultimas_transacciones, estadosFiltro, busqueda, filtroFecha, fechaDesde, fechaHasta, sortColumn, sortDirection]);
+  }, [data?.ultimas_transacciones, estadosFiltro, busqueda, filtroFecha, fechaDesde, fechaHasta, filtroMetodoPago, filtroEstadoPago, sortColumn, sortDirection]);
 
-  // Paginación o Lazy Load
+  // Paginación única y limpia
   const totalPaginas = Math.ceil(transaccionesFiltradas.length / (filasPorPagina || 10)) || 1;
   const transaccionesPaginadas = useMemo(() => {
-    if (modoCarga === 'lazy') {
-      return transaccionesFiltradas.slice(0, lazyLimit);
-    }
     const inicio = (paginaActual - 1) * filasPorPagina;
     return transaccionesFiltradas.slice(inicio, inicio + filasPorPagina);
-  }, [transaccionesFiltradas, modoCarga, paginaActual, filasPorPagina, lazyLimit]);
+  }, [transaccionesFiltradas, paginaActual, filasPorPagina]);
 
   async function handleExportExcel() {
     setIsExporting(true);
@@ -678,48 +694,59 @@ export default function Estadisticas() {
                 )}
               </div>
 
-              {/* Controles de Búsqueda y Modo de Carga */}
-              <div className="d-flex align-items-center gap-2 flex-wrap">
-                {/* Selector de Modo: Paginación vs Lazy Load */}
-                <div id="tour-stats-orders-mode" className="btn-group btn-group-sm bg-elevated rounded-3 p-1 border border-border">
-                  <button
-                    onClick={() => setModoCarga('paginacion')}
-                    className={`btn btn-sm border-0 font-montserrat ${
-                      modoCarga === 'paginacion' ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
-                    }`}
-                    style={{ fontSize: '0.75rem' }}
+              {/* Controles de Filtros y Búsqueda */}
+              <div id="tour-stats-orders-filters" className="d-flex align-items-center gap-2 flex-wrap">
+                {/* Filtro: Método de Pago */}
+                <div className="d-flex align-items-center gap-1">
+                  <select
+                    value={filtroMetodoPago}
+                    onChange={(e) => { setFiltroMetodoPago(e.target.value); setPaginaActual(1); }}
+                    className="form-select form-select-sm bg-elevated text-text border-border font-montserrat w-auto"
+                    style={{ fontSize: '0.78rem', minWidth: '150px' }}
+                    title="Filtrar por Método de Pago"
                   >
-                    Paginado
-                  </button>
-                  <button
-                    onClick={() => setModoCarga('lazy')}
-                    className={`btn btn-sm border-0 font-montserrat ${
-                      modoCarga === 'lazy' ? 'btn-primary text-black fw-bold' : 'text-muted bg-transparent'
-                    }`}
-                    style={{ fontSize: '0.75rem' }}
-                  >
-                    Lazy Load
-                  </button>
+                    <option value="todos">💳 Todos los Métodos</option>
+                    <option value="mercadopago">Mercado Pago / Tarjeta</option>
+                    <option value="transferencia">Transferencia Bancaria</option>
+                  </select>
                 </div>
 
-                {/* Filas por Página (Modo Paginación) */}
-                {modoCarga === 'paginacion' && (
+                {/* Filtro: Estado de Pago */}
+                <div className="d-flex align-items-center gap-1">
                   <select
-                    value={filasPorPagina}
-                    onChange={(e) => { setFilasPorPagina(Number(e.target.value)); setPaginaActual(1); }}
+                    value={filtroEstadoPago}
+                    onChange={(e) => { setFiltroEstadoPago(e.target.value); setPaginaActual(1); }}
                     className="form-select form-select-sm bg-elevated text-text border-border font-montserrat w-auto"
-                    style={{ fontSize: '0.75rem' }}
+                    style={{ fontSize: '0.78rem', minWidth: '150px' }}
+                    title="Filtrar por Estado de Pago"
                   >
-                    <option value={5}>5 filas</option>
-                    <option value={10}>10 filas</option>
-                    <option value={25}>25 filas</option>
-                    <option value={50}>50 filas</option>
-                    <option value={100}>100 filas</option>
+                    <option value="todos">📋 Todos los Estados</option>
+                    <option value="pagado">✅ Pagado (Aprobado)</option>
+                    <option value="pendiente">⏳ Pendiente</option>
+                    <option value="en_proceso">⚙️ En Proceso</option>
+                    <option value="enviado">🚚 Enviado</option>
+                    <option value="entregado">📦 Entregado</option>
+                    <option value="cancelado">❌ Cancelado</option>
                   </select>
-                )}
+                </div>
+
+                {/* Filas por Página */}
+                <select
+                  value={filasPorPagina}
+                  onChange={(e) => { setFilasPorPagina(Number(e.target.value)); setPaginaActual(1); }}
+                  className="form-select form-select-sm bg-elevated text-text border-border font-montserrat w-auto"
+                  style={{ fontSize: '0.78rem' }}
+                  title="Filas por página"
+                >
+                  <option value={5}>5 filas</option>
+                  <option value={10}>10 filas</option>
+                  <option value={25}>25 filas</option>
+                  <option value={50}>50 filas</option>
+                  <option value={100}>100 filas</option>
+                </select>
 
                 {/* Input Buscador */}
-                <div id="tour-stats-orders-search" className="position-relative" style={{ minWidth: '240px', maxWidth: '340px' }}>
+                <div id="tour-stats-orders-search" className="position-relative" style={{ minWidth: '220px', maxWidth: '300px' }}>
                   <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '9px' }} />
                   <input
                     type="text"
@@ -929,8 +956,21 @@ export default function Estadisticas() {
                             {new Date(tx.creado_en).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </td>
-                        <td className="font-montserrat fw-bold text-primary small">
-                          {tx.numero}
+                        <td
+                          className="font-montserrat fw-bold text-primary small cursor-pointer"
+                          style={{ cursor: 'pointer' }}
+                          title="Hacer clic para ver detalles y artículos de la orden"
+                          onClick={() => {
+                            setActiveModalTx(tx);
+                            setModalTab('trazabilidad');
+                          }}
+                        >
+                          <span className="text-decoration-underline">{tx.numero}</span>
+                          {tx.items && tx.items.length > 0 && (
+                            <span className="badge bg-elevated text-muted border border-border ms-1" style={{ fontSize: '0.65rem' }}>
+                              {tx.items.length} {tx.items.length === 1 ? 'ítem' : 'ítems'}
+                            </span>
+                          )}
                         </td>
                         <td>
                           <div className="font-montserrat fw-semibold text-text small">{tx.nombre}</div>
@@ -1020,52 +1060,33 @@ export default function Estadisticas() {
               </div>
             )}
 
-            {/* Controles Inferiores de Paginación / Lazy Load */}
+            {/* Controles Inferiores de Paginación */}
             {transaccionesFiltradas.length > 0 && (
               <div className="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 pt-3 mt-3 border-top border-border font-montserrat small">
-                {modoCarga === 'paginacion' ? (
-                  <>
-                    <span className="text-muted" style={{ fontSize: '0.78rem' }}>
-                      Mostrando {((paginaActual - 1) * filasPorPagina) + 1} — {Math.min(paginaActual * filasPorPagina, transaccionesFiltradas.length)} de {transaccionesFiltradas.length} órdenes
-                    </span>
-                    <div className="d-flex align-items-center gap-1">
-                      <button
-                        onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
-                        disabled={paginaActual <= 1}
-                        className="btn btn-sm btn-outline-secondary px-2 py-1"
-                        title="Página Anterior"
-                      >
-                        <ChevronLeft size={15} />
-                      </button>
-                      <span className="px-2 text-text fw-semibold" style={{ fontSize: '0.8rem' }}>
-                        Página {paginaActual} de {totalPaginas}
-                      </span>
-                      <button
-                        onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
-                        disabled={paginaActual >= totalPaginas}
-                        className="btn btn-sm btn-outline-secondary px-2 py-1"
-                        title="Página Siguiente"
-                      >
-                        <ChevronRight size={15} />
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-muted" style={{ fontSize: '0.78rem' }}>
-                      Mostrando {Math.min(lazyLimit, transaccionesFiltradas.length)} de {transaccionesFiltradas.length} órdenes cargadas
-                    </span>
-                    {lazyLimit < transaccionesFiltradas.length && (
-                      <button
-                        onClick={() => setLazyLimit((prev) => prev + 15)}
-                        className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 font-montserrat"
-                      >
-                        <Plus size={13} />
-                        <span>Cargar más pedidos ({transaccionesFiltradas.length - lazyLimit} restantes)</span>
-                      </button>
-                    )}
-                  </>
-                )}
+                <span className="text-muted" style={{ fontSize: '0.78rem' }}>
+                  Mostrando {((paginaActual - 1) * filasPorPagina) + 1} — {Math.min(paginaActual * filasPorPagina, transaccionesFiltradas.length)} de {transaccionesFiltradas.length} órdenes
+                </span>
+                <div className="d-flex align-items-center gap-1">
+                  <button
+                    onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+                    disabled={paginaActual <= 1}
+                    className="btn btn-sm btn-outline-secondary px-2 py-1"
+                    title="Página Anterior"
+                  >
+                    <ChevronLeft size={15} />
+                  </button>
+                  <span className="px-2 text-text fw-semibold" style={{ fontSize: '0.8rem' }}>
+                    Página {paginaActual} de {totalPaginas}
+                  </span>
+                  <button
+                    onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+                    disabled={paginaActual >= totalPaginas}
+                    className="btn btn-sm btn-outline-secondary px-2 py-1"
+                    title="Página Siguiente"
+                  >
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -1182,6 +1203,106 @@ export default function Estadisticas() {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  {/* Artículos y Objetos del Pedido con todas sus características */}
+                  <div id="tour-modal-order-items" className="p-3 bg-elevated rounded-3 border border-border">
+                    <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-border">
+                      <div className="d-flex align-items-center gap-2">
+                        <ShoppingBag size={16} className="text-primary" />
+                        <h6 className="fw-bold text-text small mb-0">
+                          Artículos del Pedido ({activeModalTx.items?.length || 0})
+                        </h6>
+                      </div>
+                      <span className="badge bg-surface text-primary border border-border font-montserrat fw-semibold" style={{ fontSize: '0.72rem' }}>
+                        {activeModalTx.metodo_pago === 'transferencia' ? '🏦 Transferencia Bancaria' : '💳 Mercado Pago / Webpay'}
+                      </span>
+                    </div>
+
+                    {(!activeModalTx.items || activeModalTx.items.length === 0) ? (
+                      <div className="text-center py-3 text-muted small font-montserrat">
+                        No se encontraron detalles de artículos registrados para este pedido.
+                      </div>
+                    ) : (
+                      <div className="d-flex flex-column gap-2">
+                        {activeModalTx.items.map((item: any, idx: number) => {
+                          const itemSubtotal = item.subtotal ?? ((item.precio || 0) * (item.cantidad || 1));
+                          return (
+                            <div
+                              key={idx}
+                              className="p-3 bg-surface rounded-3 border border-border d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 hover-lift"
+                            >
+                              <div className="d-flex align-items-center gap-3">
+                                {/* Imagen o Miniatura */}
+                                <div
+                                  className="rounded-3 bg-elevated border border-border overflow-hidden d-flex align-items-center justify-content-center flex-shrink-0"
+                                  style={{ width: '3.75rem', height: '3.75rem' }}
+                                >
+                                  {item.imagen ? (
+                                    <img src={item.imagen} alt={item.nombre} className="w-100 h-100 object-fit-cover" />
+                                  ) : (
+                                    <Shirt size={22} className="text-muted opacity-50" />
+                                  )}
+                                </div>
+
+                                <div>
+                                  <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                    <strong className="text-text font-montserrat small">{item.nombre}</strong>
+                                    <span className={`badge ${item.tipo === 'diseno' ? 'bg-warning bg-opacity-15 text-warning border border-warning' : 'bg-primary bg-opacity-10 text-primary border border-primary'} text-uppercase`} style={{ fontSize: '0.65rem' }}>
+                                      {item.tipo === 'diseno' ? 'Personalizado' : 'Catálogo'}
+                                    </span>
+                                    {item.linea && (
+                                      <span className="badge bg-elevated text-muted border border-border text-uppercase" style={{ fontSize: '0.65rem' }}>
+                                        {item.linea}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Características Detalladas */}
+                                  <div className="d-flex flex-wrap align-items-center gap-2 text-muted" style={{ fontSize: '0.75rem' }}>
+                                    {item.prenda && (
+                                      <span className="bg-elevated px-2 py-0.5 rounded-1 border border-border text-text">
+                                        Prenda: <strong>{item.prenda}</strong>
+                                      </span>
+                                    )}
+                                    {item.talla && (
+                                      <span className="bg-elevated px-2 py-0.5 rounded-1 border border-border text-text">
+                                        Talla: <strong>{item.talla}</strong>
+                                      </span>
+                                    )}
+                                    {item.color && (
+                                      <span className="bg-elevated px-2 py-0.5 rounded-1 border border-border text-text d-inline-flex align-items-center gap-1">
+                                        Color: <strong>{item.color}</strong>
+                                      </span>
+                                    )}
+                                    {item.color_base && item.color_base !== item.color && (
+                                      <span className="bg-elevated px-2 py-0.5 rounded-1 border border-border text-text">
+                                        Base: <strong>{item.color_base}</strong>
+                                      </span>
+                                    )}
+                                    {item.diseno_id && (
+                                      <span className="bg-elevated px-2 py-0.5 rounded-1 border border-border text-warning">
+                                        ID Diseño: #{item.diseno_id}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Cantidad y Precios */}
+                              <div className="text-sm-end ps-sm-3 border-sm-start border-border flex-shrink-0">
+                                <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
+                                  {item.cantidad} &times; {formatPrice(item.precio || 0)}
+                                </div>
+                                <div className="text-primary fw-bold font-montserrat">
+                                  {formatPrice(itemSubtotal)}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {/* Datos de Despacho */}

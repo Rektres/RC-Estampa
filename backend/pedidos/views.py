@@ -365,7 +365,27 @@ class PanelEstadisticasView(generics.GenericAPIView):
 
         # 6. Listado de Pedidos del Período para la Tabla de Gestión (Todos los Estados)
         ultimas_transacciones = []
-        for ped in qs.order_by('-creado_en')[:200]:
+        for ped in qs.prefetch_related('items').order_by('-creado_en')[:200]:
+            items_list = [
+                {
+                    'id': it.id,
+                    'tipo': it.tipo,
+                    'nombre': it.nombre,
+                    'imagen': it.imagen,
+                    'talla': it.talla,
+                    'color': it.color,
+                    'prenda': it.prenda,
+                    'color_base': it.color_base,
+                    'linea': it.linea,
+                    'precio': it.precio,
+                    'cantidad': it.cantidad,
+                    'subtotal': (it.precio or 0) * it.cantidad,
+                    'producto_id': it.producto_id,
+                    'variante_id': it.variante_id,
+                    'diseno_id': it.diseno_id,
+                }
+                for it in ped.items.all()
+            ]
             ultimas_transacciones.append({
                 'numero': ped.numero,
                 'nombre': ped.nombre,
@@ -388,6 +408,7 @@ class PanelEstadisticasView(generics.GenericAPIView):
                 'historial_estados': ped.historial_estados or [],
                 'pagado_en': ped.pagado_en,
                 'creado_en': ped.creado_en,
+                'items': items_list,
             })
 
         return Response({

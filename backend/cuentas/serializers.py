@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'email', 'nombre', 'rol', 'telefono', 'rut',
             'direccion', 'comuna', 'ciudad', 'region', 'email_verificado'
         )
-        read_only_fields = ('id', 'email', 'rol', 'email_verificado')
+        read_only_fields = ('id', 'email', 'rol', 'email_verificado', 'rut')
 
 
 class RegisterSerializer(serializers.ModelSerializer):

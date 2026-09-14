@@ -290,14 +290,14 @@ export function startPanelTabTour(tab: 'estadisticas' | 'ropa' | 'drinkware' | '
       });
     }
 
-    // 10. Modo de Carga de Pedidos
-    if (document.querySelector('#tour-stats-orders-mode')) {
+    // 10. Filtros y Paginación de Pedidos
+    if (document.querySelector('#tour-stats-orders-filters')) {
       tour.addStep({
-        id: 'stats-orders-mode-step',
-        title: 'Modo de Visualización de Pedidos',
-        text: 'Elige cómo navegar tus pedidos: en <strong>Modo Paginado</strong> (5, 10, 25 o 50 filas) o en <strong>Modo Continuo (Lazy Load)</strong>.',
+        id: 'stats-orders-filters-step',
+        title: 'Filtros de Pago & Paginación',
+        text: 'Filtra tus pedidos al instante por <strong>Método de Pago</strong> (Mercado Pago, Tarjetas, Transferencia) y <strong>Estado de Pago</strong>, además de ajustar las filas por página.',
         attachTo: {
-          element: '#tour-stats-orders-mode',
+          element: '#tour-stats-orders-filters',
           on: 'bottom',
         },
         buttons: [
