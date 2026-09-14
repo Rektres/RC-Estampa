@@ -13,9 +13,11 @@ function ScrollToTop() {
 import Catalogo from './pages/Catalogo';
 import ProductoDetalle from './pages/ProductoDetalle';
 import VajillaDetalle from './pages/VajillaDetalle';
+import React, { Suspense } from 'react';
 import Personalizado from './pages/Personalizado';
 import Disenador from './pages/Disenador';
-import DisenadorEditor from './pages/DisenadorEditor';
+
+const DisenadorEditor = React.lazy(() => import('./pages/DisenadorEditor'));
 import Checkout from './pages/Checkout';
 import Confirmacion from './pages/Confirmacion';
 import Auth from './pages/Auth';
@@ -44,7 +46,14 @@ export default function App() {
           <Route path="/drinkware/:slug" element={<VajillaDetalle />} />
           <Route path="/personalizado" element={<Personalizado />} />
           <Route path="/disenar" element={<Disenador />} />
-          <Route path="/disenar/:producto" element={<DisenadorEditor />} />
+          <Route
+            path="/disenar/:producto"
+            element={
+              <Suspense fallback={<div className="container py-5 text-center text-muted font-montserrat">Cargando visualizador 3D...</div>}>
+                <DisenadorEditor />
+              </Suspense>
+            }
+          />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/confirmacion" element={<Confirmacion />} />
           <Route path="/auth" element={<Auth />} />

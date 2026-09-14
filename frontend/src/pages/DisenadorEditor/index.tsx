@@ -4,23 +4,30 @@ import { fabric } from 'fabric';
 import { Modal } from 'react-bootstrap';
 import {
   Undo2, Redo2, Trash2, Eye, Upload, Brush, ChevronDown, ChevronUp,
-  X, Minus, Plus, ShoppingBag, FlipHorizontal, Layers, ArrowLeft
+  X, Minus, Plus, ShoppingBag, FlipHorizontal, Layers, ArrowLeft,
+  Box, Edit3, Sparkles
 } from 'lucide-react';
 import { formatPrice } from '../../utils';
 import { useCartStore } from '../../store/cartStore';
 import { catalogoApi, disenosApi } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { useSEO } from '../../hooks/useSEO';
+import { Viewer3D, Viewer3DRef } from '../../components/common/Viewer3D';
 
 const CANVAS_SIZE = 500;
+const TEXTURE_CANVAS_SIZE = 1024;
 const MAX_IMAGES = 3;
 
 const PRODUCT_LABELS: Record<string, string> = {
-  polera: 'Polera', gorra: 'Gorra', pantalon: 'Pantalón',
-  taza: 'Taza', termo: 'Termo', vaso: 'Vaso',
+  polera: 'Polera',
+  gorra: 'Gorra',
+  pantalon: 'Pantalón',
+  taza: 'Taza',
+  termo: 'Termo',
+  vaso: 'Vaso',
 };
 
-/* Simple SVG silhouettes */
+/* Simple SVG silhouettes for 2D drafting */
 function getProductSVG(key: string, color: string): string {
   const w = CANVAS_SIZE;
   const h = CANVAS_SIZE;
@@ -102,12 +109,15 @@ function AccordionStep({ number, title, active, expanded, onClick, children }: S
 export default function DisenadorEditor() {
   const { producto = 'polera' } = useParams<{ producto: string }>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const textureCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const viewer3DRef = useRef<Viewer3DRef | null>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const historyRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
   const bgRef = useRef<fabric.Image | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d');
   const [productColor, setProductColor] = useState('#F0EDE8');
   const [activeTool, setActiveTool] = useState<ActiveTool>('color');
   const [drawColor, setDrawColor] = useState('#111111');
@@ -116,11 +126,13 @@ export default function DisenadorEditor() {
   const [imageCount, setImageCount] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [printUrl, setPrintUrl] = useState('');
   const [clearConfirm, setClearConfirm] = useState(false);
   const [selectedTalla, setSelectedTalla] = useState('M');
   const [cantidad, setCantidad] = useState(1);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [textureVersion, setTextureVersion] = useState(0);
 
   const { addItem, openCart } = useCartStore();
   const { data: editor } = useAsync(() => catalogoApi.editor(), []);
@@ -130,9 +142,46 @@ export default function DisenadorEditor() {
   const label = PRODUCT_LABELS[producto] ?? producto;
 
   useSEO({
-    title: `Diseñar ${label} Personalizada · Editor 3D`,
-    description: `Crea y personaliza tu ${label} en vivo con estampado DTF textil o grabado láser. Despacho a todo Chile.`,
+    title: `Diseñar ${label} Personalizada en 3D · RC Estampa`,
+    description: `Crea y personaliza tu ${label} en 3D interactivo 360° con estampado DTF textil o grabado láser. Despacho a todo Chile.`,
   });
+
+  // Sync fabric objects to texture canvas for 3D mapping
+  const sync3DTexture = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    if (!textureCanvasRef.current) {
+      const offscreen = document.createElement('canvas');
+      offscreen.width = TEXTURE_CANVAS_SIZE;
+      offscreen.height = TEXTURE_CANVAS_SIZE;
+      textureCanvasRef.current = offscreen;
+    }
+
+    const offscreen = textureCanvasRef.current;
+    const ctx = offscreen.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, offscreen.width, offscreen.height);
+
+    // Hide background silhouette so 3D material retains pure PBR shading
+    const bg = bgRef.current;
+    const originalBgVisible = bg?.visible ?? true;
+    if (bg) {
+      bg.visible = false;
+      canvas.renderAll();
+    }
+
+    const fabricDom = canvas.getElement();
+    ctx.drawImage(fabricDom, 0, 0, offscreen.width, offscreen.height);
+
+    if (bg) {
+      bg.visible = originalBgVisible;
+      canvas.renderAll();
+    }
+
+    setTextureVersion((v) => v + 1);
+  }, []);
 
   const saveHistory = useCallback(() => {
     const canvas = fabricRef.current;
@@ -143,7 +192,8 @@ export default function DisenadorEditor() {
     historyIndexRef.current = historyRef.current.length - 1;
     setCanUndo(historyIndexRef.current > 0);
     setCanRedo(false);
-  }, []);
+    sync3DTexture();
+  }, [sync3DTexture]);
 
   const updateBg = useCallback((color: string) => {
     const canvas = fabricRef.current;
@@ -159,8 +209,9 @@ export default function DisenadorEditor() {
       bgRef.current = img;
       canvas.renderAll();
       URL.revokeObjectURL(url);
+      sync3DTexture();
     });
-  }, [producto]);
+  }, [producto, sync3DTexture]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -175,6 +226,7 @@ export default function DisenadorEditor() {
     canvas.on('object:added', saveHistory);
     canvas.on('object:modified', saveHistory);
     canvas.on('object:removed', saveHistory);
+    canvas.on('path:created', saveHistory);
 
     updateBg(productColor);
     historyRef.current = [];
@@ -217,6 +269,7 @@ export default function DisenadorEditor() {
       canvas.renderAll();
       setCanUndo(historyIndexRef.current > 0);
       setCanRedo(true);
+      sync3DTexture();
     });
   }
 
@@ -229,6 +282,7 @@ export default function DisenadorEditor() {
       canvas.renderAll();
       setCanUndo(true);
       setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+      sync3DTexture();
     });
   }
 
@@ -262,6 +316,7 @@ export default function DisenadorEditor() {
       setImageCount((c) => c + 1);
       URL.revokeObjectURL(url);
       if (fileInputRef.current) fileInputRef.current.value = '';
+      sync3DTexture();
     });
   }
 
@@ -273,39 +328,60 @@ export default function DisenadorEditor() {
     canvas.discardActiveObject();
     canvas.renderAll();
     setImageCount((c) => Math.max(0, c - active.filter((o: fabric.Object) => o.type === 'image').length));
+    sync3DTexture();
   }
 
   function flipHorizontal() {
     const canvas = fabricRef.current;
     if (!canvas) return;
     const obj = canvas.getActiveObject();
-    if (obj) { obj.set('flipX', !obj.flipX); canvas.renderAll(); }
+    if (obj) { obj.set('flipX', !obj.flipX); canvas.renderAll(); sync3DTexture(); }
   }
 
   function bringForward() {
     const canvas = fabricRef.current;
     if (!canvas) return;
     const obj = canvas.getActiveObject();
-    if (obj) { canvas.bringForward(obj); canvas.renderAll(); }
+    if (obj) { canvas.bringForward(obj); canvas.renderAll(); sync3DTexture(); }
   }
 
   function openPreview() {
     const canvas = fabricRef.current;
     if (!canvas) return;
-    const url = canvas.toDataURL({ format: 'png', quality: 0.85, multiplier: 1 });
-    setPreviewUrl(url);
+
+    // 1. Snapshot from 3D Viewport
+    let mockup3D = viewer3DRef.current?.getSnapshot() || '';
+    if (!mockup3D) {
+      mockup3D = canvas.toDataURL({ format: 'png', quality: 0.9, multiplier: 1 });
+    }
+    setPreviewUrl(mockup3D);
+
+    // 2. High-res 300 DPI transparent print file for DTF / Laser (without silhouette)
+    const bg = bgRef.current;
+    if (bg) bg.visible = false;
+    canvas.renderAll();
+    const highResPrint = canvas.toDataURL({ format: 'png', quality: 1.0, multiplier: 3 });
+    setPrintUrl(highResPrint);
+    if (bg) bg.visible = true;
+    canvas.renderAll();
+
     setPreviewOpen(true);
   }
 
   async function addToCart() {
     const canvas = fabricRef.current;
     if (!canvas) return;
-    const url = canvas.toDataURL({ format: 'png', quality: 0.85 });
-    let imagen = url;
+
+    let snapshot = previewUrl;
+    if (!snapshot) {
+      snapshot = viewer3DRef.current?.getSnapshot() || canvas.toDataURL({ format: 'png', quality: 0.9 });
+    }
+
+    let imagen = snapshot;
     let disenoId: number | undefined;
     try {
       const res = await disenosApi.crear({
-        imagen_base64: url,
+        imagen_base64: snapshot,
         prenda: label,
         color_base: productColor,
         talla: selectedTalla,
@@ -315,11 +391,12 @@ export default function DisenadorEditor() {
     } catch {
       // Si falla la subida, se conserva el data URL local como respaldo
     }
+
     addItem({
       tipo: 'diseno',
       id: `diseno-${Date.now()}`,
       disenoId,
-      nombre: `${label} personalizada`,
+      nombre: `${label} personalizada (3D)`,
       imagen,
       prenda: label,
       color_base: productColor,
@@ -332,14 +409,42 @@ export default function DisenadorEditor() {
 
   return (
     <div className="container-xxl py-4">
-      {/* Breadcrumb */}
-      <div className="d-flex align-items-center gap-2 font-montserrat text-muted mb-4" style={{ fontSize: '0.75rem' }}>
-        <Link to="/disenar" className="d-flex align-items-center gap-1 text-muted text-decoration-none">
-          <ArrowLeft size={12} />
-          Cambiar producto
-        </Link>
-        <span>/</span>
-        <span className="text-text">{label}</span>
+      {/* Breadcrumb & Mode Switcher */}
+      <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+        <div className="d-flex align-items-center gap-2 font-montserrat text-muted" style={{ fontSize: '0.75rem' }}>
+          <Link to="/disenar" className="d-flex align-items-center gap-1 text-muted text-decoration-none">
+            <ArrowLeft size={12} />
+            Cambiar producto
+          </Link>
+          <span>/</span>
+          <span className="text-text fw-semibold">{label}</span>
+        </div>
+
+        {/* View Mode Pills (3D / 2D) */}
+        <div className="d-inline-flex bg-elevated border border-border p-1 rounded-3">
+          <button
+            type="button"
+            onClick={() => setViewMode('3d')}
+            className={`d-flex align-items-center gap-2 px-3 py-1 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
+              viewMode === '3d' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
+            }`}
+            style={{ fontSize: '0.8rem' }}
+          >
+            <Box size={15} />
+            Visualizador 3D (360°)
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('2d')}
+            className={`d-flex align-items-center gap-2 px-3 py-1 rounded-2 border-0 font-montserrat fw-semibold transition-all ${
+              viewMode === '2d' ? 'btn-primary shadow-sm' : 'bg-transparent text-muted'
+            }`}
+            style={{ fontSize: '0.8rem' }}
+          >
+            <Edit3 size={15} />
+            Mesa de Diseño 2D
+          </button>
+        </div>
       </div>
 
       {/* Toolbar */}
@@ -362,28 +467,80 @@ export default function DisenadorEditor() {
           </button>
         )}
         <div className="flex-grow-1" />
-        <button onClick={openPreview} className="btn btn-primary d-inline-flex align-items-center gap-1 px-4 py-2" style={{ fontSize: '0.75rem' }}>
+        <button onClick={openPreview} className="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2" style={{ fontSize: '0.75rem' }}>
           <Eye size={14} />
-          Vista previa
+          Vista previa 3D
         </button>
       </div>
 
       {/* Main layout 60/40 */}
       <div className="row g-4">
-        {/* Canvas — 60% */}
-        <div className="col-12 col-lg-7 d-flex justify-content-center">
-          <div className="bg-elevated border border-border rounded p-3 d-inline-block">
-            <canvas ref={canvasRef} />
+        {/* Viewport Area — 60% */}
+        <div className="col-12 col-lg-7 d-flex flex-column align-items-center">
+          <div className="position-relative w-100 bg-elevated border border-border rounded p-2 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '520px' }}>
+            
+            {/* 3D Viewport */}
+            <div className={`w-100 h-100 ${viewMode === '3d' ? 'd-block' : 'd-none'}`} style={{ minHeight: '500px' }}>
+              <Viewer3D
+                ref={viewer3DRef}
+                producto={producto}
+                productColor={productColor}
+                canvasSource={textureCanvasRef.current}
+                textureVersion={textureVersion}
+              />
+            </div>
+
+            {/* 2D Canvas Viewport */}
+            <div className={`position-relative ${viewMode === '2d' ? 'd-block' : 'd-none'}`}>
+              <canvas ref={canvasRef} />
+              <div className="text-center mt-2">
+                <span className="font-montserrat text-muted" style={{ fontSize: '0.72rem' }}>
+                  Área de estampado · Los cambios se actualizan automáticamente en el modelo 3D
+                </span>
+              </div>
+            </div>
+
+            {/* Floating Picture-in-Picture Mini 3D preview when in 2D mode */}
+            {viewMode === '2d' && (
+              <div
+                onClick={() => setViewMode('3d')}
+                title="Haz clic para ver en 3D completo"
+                className="position-absolute bottom-0 end-0 m-3 bg-card border border-primary rounded-3 p-2 shadow-lg cursor-pointer d-flex flex-column align-items-center gap-1 z-3"
+                style={{ width: '130px', cursor: 'pointer', opacity: 0.95 }}
+              >
+                <div className="d-flex align-items-center gap-1 text-primary font-montserrat fw-semibold" style={{ fontSize: '0.68rem' }}>
+                  <Sparkles size={11} />
+                  Vista 3D en Vivo
+                </div>
+                <div style={{ width: '110px', height: '110px', pointerEvents: 'none' }}>
+                  <Viewer3D
+                    producto={producto}
+                    productColor={productColor}
+                    canvasSource={textureCanvasRef.current}
+                    textureVersion={textureVersion}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Panel — 40% */}
+        {/* Editing Tools Panel — 40% */}
         <div className="col-12 col-lg-5 d-flex flex-column gap-2">
           {/* Step 1 — Upload image */}
-          <AccordionStep number={1} title="Subir diseño" active expanded={activeTool === 'imagen'} onClick={() => setActiveTool(activeTool === 'imagen' ? null : 'imagen')}>
+          <AccordionStep
+            number={1}
+            title="Subir diseño / Logo"
+            active
+            expanded={activeTool === 'imagen'}
+            onClick={() => {
+              setActiveTool(activeTool === 'imagen' ? null : 'imagen');
+              if (viewMode === '3d') setViewMode('2d');
+            }}
+          >
             <div className="d-flex flex-column gap-3">
               <p className="font-montserrat text-muted mb-0" style={{ fontSize: '0.75rem' }}>
-                PNG, JPG, SVG o WEBP. Máx 5MB. ({imageCount}/{MAX_IMAGES} imágenes)
+                PNG, JPG, SVG o WEBP en alta definición. ({imageCount}/{MAX_IMAGES} imágenes)
               </p>
               <button
                 onClick={() => fileInputRef.current?.click()}
@@ -415,7 +572,7 @@ export default function DisenadorEditor() {
           {/* Step 2 — Product color */}
           <AccordionStep number={2} title="Color del producto" active expanded={activeTool === 'color'} onClick={() => setActiveTool(activeTool === 'color' ? null : 'color')}>
             <div className="d-flex flex-column gap-3">
-              <p className="font-montserrat text-muted mb-0" style={{ fontSize: '0.75rem' }}>Selecciona el color base de la prenda</p>
+              <p className="font-montserrat text-muted mb-0" style={{ fontSize: '0.75rem' }}>Selecciona el color base y acabado 3D del producto</p>
               <div className="d-flex flex-wrap gap-2">
                 {coloresEditor.map((c) => (
                   <button
@@ -456,7 +613,16 @@ export default function DisenadorEditor() {
           </AccordionStep>
 
           {/* Step 3 — Free drawing */}
-          <AccordionStep number={3} title="Dibujo libre" active expanded={activeTool === 'dibujo'} onClick={() => setActiveTool(activeTool === 'dibujo' ? null : 'dibujo')}>
+          <AccordionStep
+            number={3}
+            title="Dibujo libre y trazos"
+            active
+            expanded={activeTool === 'dibujo'}
+            onClick={() => {
+              setActiveTool(activeTool === 'dibujo' ? null : 'dibujo');
+              if (viewMode === '3d') setViewMode('2d');
+            }}
+          >
             <div className="d-flex flex-column gap-3">
               <div className="d-flex gap-2">
                 <button
@@ -525,41 +691,79 @@ export default function DisenadorEditor() {
             </div>
             <button onClick={openPreview} className="btn btn-primary w-100 py-3 d-flex align-items-center justify-content-center gap-2">
               <Eye size={14} />
-              Vista previa y agregar
+              Vista previa 3D y agregar
             </button>
           </div>
         </div>
       </div>
 
       {/* Preview modal */}
-      <Modal show={previewOpen} onHide={() => setPreviewOpen(false)} centered>
+      <Modal show={previewOpen} onHide={() => setPreviewOpen(false)} centered size="lg">
         <Modal.Body className="p-4">
           <div className="d-flex align-items-center justify-content-between mb-3">
-            <h3 className="font-italiana text-text mb-0" style={{ fontSize: '1.5rem' }}>Vista previa</h3>
+            <div className="d-flex align-items-center gap-2">
+              <Sparkles size={18} className="text-primary" />
+              <h3 className="font-italiana text-text mb-0" style={{ fontSize: '1.5rem' }}>Vista previa del Mockup 3D</h3>
+            </div>
             <button onClick={() => setPreviewOpen(false)} className="btn btn-link p-0 text-muted"><X size={20} /></button>
           </div>
-          <img src={previewUrl} alt="Vista previa" className="w-100 object-fit-contain bg-elevated rounded mb-3" style={{ maxHeight: '18rem' }} />
-          <div className="d-flex flex-column gap-2">
-            <div className="d-flex justify-content-between font-montserrat" style={{ fontSize: '0.875rem' }}>
-              <span className="text-muted">Prenda</span><span className="text-text">{label}</span>
+
+          <div className="row g-3 mb-3">
+            {/* 3D Render Snapshot */}
+            <div className="col-12 col-md-8">
+              <div className="bg-elevated border border-border rounded p-3 text-center">
+                <img src={previewUrl} alt="Mockup 3D" className="w-100 object-fit-contain rounded" style={{ maxHeight: '20rem' }} />
+                <div className="mt-2 text-muted font-montserrat" style={{ fontSize: '0.72rem' }}>
+                  ✓ Mockup 3D fotorrealista para confirmación del cliente y taller
+                </div>
+              </div>
             </div>
-            <div className="d-flex justify-content-between font-montserrat" style={{ fontSize: '0.875rem' }}>
-              <span className="text-muted">Talla</span><span className="text-text">{selectedTalla}</span>
+
+            {/* High-res DTF Print File Preview */}
+            <div className="col-12 col-md-4 d-flex flex-column gap-2">
+              <div className="bg-elevated border border-border rounded p-3 text-center flex-grow-1 d-flex flex-column justify-content-center">
+                <p className="font-montserrat fw-semibold text-text mb-1" style={{ fontSize: '0.75rem' }}>Base de Impresión (300 DPI)</p>
+                {printUrl ? (
+                  <img src={printUrl} alt="Base DTF" className="w-100 object-fit-contain rounded my-2" style={{ maxHeight: '7rem' }} />
+                ) : (
+                  <div className="text-muted font-montserrat my-2" style={{ fontSize: '0.72rem' }}>Sin elementos adicionales</div>
+                )}
+                <span className="badge bg-primary-10 text-primary border border-primary-20 font-montserrat fw-normal" style={{ fontSize: '0.68rem' }}>
+                  ✓ Listo para DTF Textil / Láser
+                </span>
+              </div>
+
+              {/* Order specifications */}
+              <div className="bg-elevated border border-border rounded p-3 d-flex flex-column gap-2">
+                <div className="d-flex justify-content-between font-montserrat" style={{ fontSize: '0.8rem' }}>
+                  <span className="text-muted">Producto</span><span className="text-text fw-semibold">{label}</span>
+                </div>
+                {['polera', 'gorra', 'pantalon'].includes(producto) && (
+                  <div className="d-flex justify-content-between font-montserrat" style={{ fontSize: '0.8rem' }}>
+                    <span className="text-muted">Talla</span><span className="text-text">{selectedTalla}</span>
+                  </div>
+                )}
+                <div className="d-flex justify-content-between font-montserrat" style={{ fontSize: '0.8rem' }}>
+                  <span className="text-muted">Color</span>
+                  <div className="d-flex align-items-center gap-1">
+                    <span className="rounded-circle border" style={{ width: '12px', height: '12px', backgroundColor: productColor }} />
+                    <span className="text-text" style={{ fontSize: '0.75rem' }}>{productColor}</span>
+                  </div>
+                </div>
+                <div className="d-flex justify-content-between font-montserrat" style={{ fontSize: '0.8rem' }}>
+                  <span className="text-muted">Cantidad</span><span className="text-text">{cantidad}</span>
+                </div>
+                <div className="d-flex justify-content-between font-montserrat fw-bold pt-2 border-top border-border" style={{ fontSize: '0.85rem' }}>
+                  <span className="text-muted">Precio base</span>
+                  <span className="text-primary">{formatPrice(precio * cantidad)}</span>
+                </div>
+              </div>
             </div>
-            <div className="d-flex justify-content-between font-montserrat" style={{ fontSize: '0.875rem' }}>
-              <span className="text-muted">Cantidad</span><span className="text-text">{cantidad}</span>
-            </div>
-            <div className="d-flex justify-content-between font-montserrat fw-bold" style={{ fontSize: '0.875rem' }}>
-              <span className="text-muted">Precio base</span>
-              <span className="text-primary">A cotizar</span>
-            </div>
-            <p className="font-montserrat text-muted bg-elevated p-2 rounded mb-0" style={{ fontSize: '0.75rem' }}>
-              El precio final será confirmado por nuestro equipo.
-            </p>
           </div>
+
           <div className="d-flex gap-3 mt-3">
             <button onClick={addToCart} className="btn btn-primary flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-3">
-              <ShoppingBag size={14} />
+              <ShoppingBag size={15} />
               Agregar al carrito
             </button>
             <button onClick={() => setPreviewOpen(false)} className="btn btn-secondary flex-grow-1 py-3">
