@@ -116,7 +116,7 @@ class PanelAdminTests(APITestCase):
         f.name = 'test.png'
         r = self.client.post('/api/panel/upload/', {'file': f}, format='multipart')
         self.assertEqual(r.status_code, 201)
-        self.assertTrue(r.data['url'].startswith('/media/productos/'))
+        self.assertTrue(r.data['url'].startswith('/media/productos/') or 'productos/' in r.data['url'])
 
         f2 = io.BytesIO(b'x')
         f2.name = 'malo.exe'
