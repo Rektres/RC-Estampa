@@ -54,17 +54,17 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
 
     switch (view) {
       case 'front':
-        cameraRef.current.position.set(0, 0.2, dist);
+        cameraRef.current.position.set(0, 0.15, dist);
         break;
       case 'back':
-        cameraRef.current.position.set(0, 0.2, -dist);
+        cameraRef.current.position.set(0, 0.15, -dist);
         break;
       case 'side':
-        cameraRef.current.position.set(dist, 0.2, 0);
+        cameraRef.current.position.set(dist, 0.15, 0);
         break;
       case 'iso':
       default:
-        cameraRef.current.position.set(3.2, 2.0, 3.6);
+        cameraRef.current.position.set(3.2, 1.8, 3.6);
         break;
     }
     controlsRef.current.target.set(0, 0, 0);
@@ -88,13 +88,13 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     triggerRender: renderFrame,
   }), [getSnapshot, resetCamera, setCameraView, renderFrame]);
 
-  // Build smooth, organic 3D models per product & subTipo
+  // Build ultra-realistic and distinctive 3D models
   const buildProductMesh = useCallback((type: string, sub: string, color: string, texture: THREE.Texture | null) => {
     const group = new THREE.Group();
     baseMaterialsRef.current = [];
     printMaterialsRef.current = [];
 
-    // Helper for PBR base material (carries product color)
+    // Helper for PBR base material
     const createBaseMaterial = (roughness = 0.85, metalness = 0.05, clearcoat = 0.0) => {
       const mat = new THREE.MeshStandardMaterial({
         color: new THREE.Color(color),
@@ -110,7 +110,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       return mat;
     };
 
-    // Helper for Print / Decal Overlay material (always pure white base so logo/text colors are 100% faithful)
+    // Helper for Decal Print Material (Pure white diffuse so graphic colors are 100% faithful)
     const createPrintMaterial = (roughness = 0.85, metalness = 0.0) => {
       const mat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
@@ -130,14 +130,277 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
 
     switch (type) {
       /* ==========================================================
-         VASOS & DRINKWARE (Clásico, Shopero, Jarra, Vaso Térmico)
+         1. POLERAS & ROPA (Cuello Redondo, Polo Piqué, Cuello V, Polerón)
+      ========================================================== */
+      case 'polera': {
+        const isPolo = sub === 'polo';
+        const isVNeck = sub === 'cuello-v';
+        const isPoleron = sub === 'poleron';
+
+        const fabricMat = createBaseMaterial(isPolo ? 0.92 : 0.82, 0.0, 0.0);
+        const printMat = createPrintMaterial(0.8, 0.0);
+
+        const widthScale = isPoleron ? 1.3 : isPolo ? 1.18 : 1.15;
+        const depthScale = isPoleron ? 0.75 : 0.62;
+
+        // Torso body
+        const torsoGeo = new THREE.CylinderGeometry(1.3, 1.2, 2.5, 64, 32, false);
+        torsoGeo.scale(widthScale, 1.0, depthScale);
+
+        const pos = torsoGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const x = pos.getX(i);
+          const y = pos.getY(i);
+          if (y > 0.8) {
+            const shoulderFactor = 1.0 - (Math.abs(x) / 1.5) * 0.15;
+            pos.setY(i, y * shoulderFactor);
+          }
+        }
+        torsoGeo.computeVertexNormals();
+        group.add(new THREE.Mesh(torsoGeo, fabricMat));
+
+        // Decal Print Zone on front chest
+        const printGeo = new THREE.PlaneGeometry(2.4, 2.2, 32, 32);
+        const printPos = printGeo.attributes.position;
+        const printUvs = printGeo.attributes.uv;
+        for (let i = 0; i < printPos.count; i++) {
+          const x = printPos.getX(i);
+          const y = printPos.getY(i);
+          const zCurve = (isPoleron ? 0.92 : 0.77) - (x * x) * 0.09;
+          printPos.setZ(i, zCurve);
+          printUvs.setXY(i, THREE.MathUtils.clamp((x + 1.2) / 2.4, 0, 1), THREE.MathUtils.clamp((y + 1.1) / 2.2, 0, 1));
+        }
+        printGeo.computeVertexNormals();
+        printUvs.needsUpdate = true;
+        const printMesh = new THREE.Mesh(printGeo, printMat);
+        printMesh.position.set(0, -0.05, 0);
+        group.add(printMesh);
+
+        // Sleeves
+        const sleeveRadius = isPoleron ? 0.52 : isPolo ? 0.46 : 0.44;
+        const sleeveLength = isPoleron ? 1.45 : isPolo ? 0.95 : 1.1;
+        const sleeveGeo = new THREE.CylinderGeometry(sleeveRadius, sleeveRadius * 0.85, sleeveLength, 48, 16);
+        sleeveGeo.computeVertexNormals();
+
+        const leftSleeve = new THREE.Mesh(sleeveGeo, fabricMat);
+        leftSleeve.position.set(-1.48, 0.7, 0);
+        leftSleeve.rotation.set(0.1, 0, isPoleron ? 0.65 : 0.58);
+        group.add(leftSleeve);
+
+        const rightSleeve = new THREE.Mesh(sleeveGeo, fabricMat);
+        rightSleeve.position.set(1.48, 0.7, 0);
+        rightSleeve.rotation.set(0.1, 0, isPoleron ? -0.65 : -0.58);
+        group.add(rightSleeve);
+
+        // Distinct Sub-Type Details
+        if (isPolo) {
+          // --- POLO PIQUÉ ---
+          // 1. Cuello camisero doblado (Left & Right Collar Wings)
+          const leftCollarShape = new THREE.Shape();
+          leftCollarShape.moveTo(0, 0);
+          leftCollarShape.lineTo(-0.95, -0.6);
+          leftCollarShape.lineTo(-0.7, 0.35);
+          leftCollarShape.lineTo(0, 0.2);
+          leftCollarShape.closePath();
+          const leftWingGeo = new THREE.ExtrudeGeometry(leftCollarShape, { depth: 0.08, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03 });
+          leftWingGeo.computeVertexNormals();
+          const leftWing = new THREE.Mesh(leftWingGeo, fabricMat);
+          leftWing.rotation.x = -Math.PI / 3.2;
+          leftWing.position.set(-0.02, 1.25, 0.45);
+          group.add(leftWing);
+
+          const rightCollarShape = new THREE.Shape();
+          rightCollarShape.moveTo(0, 0);
+          rightCollarShape.lineTo(0.95, -0.6);
+          rightCollarShape.lineTo(0.7, 0.35);
+          rightCollarShape.lineTo(0, 0.2);
+          rightCollarShape.closePath();
+          const rightWingGeo = new THREE.ExtrudeGeometry(rightCollarShape, { depth: 0.08, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03 });
+          rightWingGeo.computeVertexNormals();
+          const rightWing = new THREE.Mesh(rightWingGeo, fabricMat);
+          rightWing.rotation.x = -Math.PI / 3.2;
+          rightWing.position.set(0.02, 1.25, 0.45);
+          group.add(rightWing);
+
+          // 2. Solapa de botones (Placket)
+          const placketGeo = new THREE.BoxGeometry(0.32, 0.95, 0.08);
+          placketGeo.computeVertexNormals();
+          const placketMesh = new THREE.Mesh(placketGeo, fabricMat);
+          placketMesh.position.set(0, 0.78, 0.78);
+          group.add(placketMesh);
+
+          // 3. Botones nácar con relieve
+          const buttonMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#FAFAFA'), roughness: 0.15, metalness: 0.4 });
+          const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.03, 16), buttonMat);
+          b1.rotation.x = Math.PI / 2;
+          b1.position.set(0, 1.1, 0.83);
+          const b2 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.03, 16), buttonMat);
+          b2.rotation.x = Math.PI / 2;
+          b2.position.set(0, 0.85, 0.83);
+          const b3 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.03, 16), buttonMat);
+          b3.rotation.x = Math.PI / 2;
+          b3.position.set(0, 0.6, 0.83);
+          group.add(b1, b2, b3);
+
+          // 4. Ribetes en puños de mangas
+          const cuffGeo = new THREE.TorusGeometry(0.39, 0.04, 16, 32);
+          const leftCuff = new THREE.Mesh(cuffGeo, fabricMat);
+          leftCuff.position.set(-1.85, 0.35, 0);
+          leftCuff.rotation.z = 0.58;
+          const rightCuff = new THREE.Mesh(cuffGeo, fabricMat);
+          rightCuff.position.set(1.85, 0.35, 0);
+          rightCuff.rotation.z = -0.58;
+          group.add(leftCuff, rightCuff);
+
+        } else if (isPoleron) {
+          // --- POLERÓN / HOODIE ---
+          // 1. Capucha 3D en la espalda y cuello
+          const hoodGeo = new THREE.SphereGeometry(1.05, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.68);
+          hoodGeo.scale(1.0, 1.15, 1.0);
+          hoodGeo.computeVertexNormals();
+          const hoodMesh = new THREE.Mesh(hoodGeo, fabricMat);
+          hoodMesh.position.set(0, 1.45, -0.35);
+          group.add(hoodMesh);
+
+          // 2. Cordones de capucha blancos colgando al frente
+          const cordMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#FFFFFF'), roughness: 0.5 });
+          const leftCord = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.7, 16), cordMat);
+          leftCord.position.set(-0.2, 0.9, 0.82);
+          leftCord.rotation.z = 0.05;
+          const rightCord = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.7, 16), cordMat);
+          rightCord.position.set(0.2, 0.9, 0.82);
+          rightCord.rotation.z = -0.05;
+          group.add(leftCord, rightCord);
+
+          // 3. Bolsillo Canguro frontal prominente
+          const pocketShape = new THREE.Shape();
+          pocketShape.moveTo(-1.0, -0.65);
+          pocketShape.lineTo(-0.75, 0.35);
+          pocketShape.lineTo(0.75, 0.35);
+          pocketShape.lineTo(1.0, -0.65);
+          pocketShape.closePath();
+          const pocketGeo = new THREE.ExtrudeGeometry(pocketShape, { depth: 0.16, bevelEnabled: true, bevelSize: 0.05, bevelThickness: 0.05 });
+          pocketGeo.computeVertexNormals();
+          const pocketMesh = new THREE.Mesh(pocketGeo, fabricMat);
+          pocketMesh.position.set(0, -0.45, 0.82);
+          group.add(pocketMesh);
+
+          // 4. Pretina acanalada gruesa inferior
+          const hemGeo = new THREE.CylinderGeometry(1.22, 1.22, 0.35, 64);
+          hemGeo.scale(1.28, 1.0, 0.76);
+          hemGeo.computeVertexNormals();
+          const hemMesh = new THREE.Mesh(hemGeo, fabricMat);
+          hemMesh.position.y = -1.35;
+          group.add(hemMesh);
+
+        } else if (isVNeck) {
+          // --- CUELLO V ---
+          const vCollarCurve = new THREE.CurvePath<THREE.Vector3>();
+          vCollarCurve.add(new THREE.LineCurve3(new THREE.Vector3(-0.6, 1.25, 0.35), new THREE.Vector3(0, 0.62, 0.76)));
+          vCollarCurve.add(new THREE.LineCurve3(new THREE.Vector3(0, 0.62, 0.76), new THREE.Vector3(0.6, 1.25, 0.35)));
+          const vCollarGeo = new THREE.TubeGeometry(vCollarCurve, 32, 0.08, 16, false);
+          vCollarGeo.computeVertexNormals();
+          group.add(new THREE.Mesh(vCollarGeo, fabricMat));
+
+        } else {
+          // --- CUELLO REDONDO CLÁSICO ---
+          const collarGeo = new THREE.TorusGeometry(0.52, 0.08, 24, 64);
+          collarGeo.scale(1.1, 0.45, 0.75);
+          collarGeo.computeVertexNormals();
+          const collarMesh = new THREE.Mesh(collarGeo, fabricMat);
+          collarMesh.rotation.x = Math.PI / 2;
+          collarMesh.position.set(0, 1.26, 0);
+          group.add(collarMesh);
+        }
+        break;
+      }
+
+      /* ==========================================================
+         2. PANTALÓN / JOGGER (Conectado, orgánico, con pretina y cordones)
+      ========================================================== */
+      case 'pantalon': {
+        const pantsMat = createBaseMaterial(0.85, 0.0, 0.0);
+        const printMat = createPrintMaterial(0.8, 0.0);
+
+        // 1. Pelvis / Cadera Unificada (Single connected pelvic torso)
+        const pelvisGeo = new THREE.CylinderGeometry(1.22, 1.32, 1.3, 48, 16);
+        pelvisGeo.scale(1.15, 1.0, 0.72);
+        pelvisGeo.computeVertexNormals();
+        const pelvisMesh = new THREE.Mesh(pelvisGeo, pantsMat);
+        pelvisMesh.position.y = 0.95;
+        group.add(pelvisMesh);
+
+        // 2. Pretina elástica superior con relieve
+        const waistGeo = new THREE.TorusGeometry(1.25, 0.12, 16, 48);
+        waistGeo.scale(1.12, 0.6, 0.7);
+        waistGeo.computeVertexNormals();
+        const waistMesh = new THREE.Mesh(waistGeo, pantsMat);
+        waistMesh.rotation.x = Math.PI / 2;
+        waistMesh.position.y = 1.6;
+        group.add(waistMesh);
+
+        // 3. Cordones de ajuste frontales
+        const cordMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#FFFFFF'), roughness: 0.5 });
+        const c1 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5, 12), cordMat);
+        c1.position.set(-0.12, 1.25, 0.85);
+        c1.rotation.z = 0.1;
+        const c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5, 12), cordMat);
+        c2.position.set(0.12, 1.25, 0.85);
+        c2.rotation.z = -0.1;
+        group.add(c1, c2);
+
+        // 4. Pierna Izquierda (Tapered leg connecting seamlessly to pelvis)
+        const legGeo = new THREE.CylinderGeometry(0.62, 0.38, 2.5, 48, 32);
+        legGeo.computeVertexNormals();
+
+        const leftLeg = new THREE.Mesh(legGeo, pantsMat);
+        leftLeg.position.set(-0.62, -0.65, 0);
+        leftLeg.rotation.z = -0.05;
+        group.add(leftLeg);
+
+        // Pierna Derecha
+        const rightLeg = new THREE.Mesh(legGeo, pantsMat);
+        rightLeg.position.set(0.62, -0.65, 0);
+        rightLeg.rotation.z = 0.05;
+        group.add(rightLeg);
+
+        // 5. Decal Overlay en Muslo Izquierdo
+        const thighPrintGeo = new THREE.PlaneGeometry(0.8, 1.4, 24, 24);
+        const tPos = thighPrintGeo.attributes.position;
+        const tUvs = thighPrintGeo.attributes.uv;
+        for (let i = 0; i < tPos.count; i++) {
+          const x = tPos.getX(i);
+          const y = tPos.getY(i);
+          tPos.setZ(i, 0.62 - (x * x) * 0.15);
+          tUvs.setXY(i, THREE.MathUtils.clamp((x + 0.4) / 0.8, 0, 1), THREE.MathUtils.clamp((y + 0.7) / 1.4, 0, 1));
+        }
+        thighPrintGeo.computeVertexNormals();
+        tUvs.needsUpdate = true;
+        const thighMesh = new THREE.Mesh(thighPrintGeo, printMat);
+        thighMesh.position.set(-0.62, -0.3, 0.08);
+        thighMesh.rotation.z = -0.05;
+        group.add(thighMesh);
+
+        // 6. Puños elásticos en los tobillos
+        const cuffGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 32);
+        cuffGeo.computeVertexNormals();
+        const leftCuff = new THREE.Mesh(cuffGeo, pantsMat);
+        leftCuff.position.set(-0.72, -1.95, 0);
+        const rightCuff = new THREE.Mesh(cuffGeo, pantsMat);
+        rightCuff.position.set(0.72, -1.95, 0);
+        group.add(leftCuff, rightCuff);
+        break;
+      }
+
+      /* ==========================================================
+         3. VASOS & DRINKWARE (Clásico, Shopero Cervecero, Jarra, Vaso Térmico)
       ========================================================== */
       case 'vaso': {
         const isShopero = sub === 'shopero';
         const isJarra = sub === 'jarra';
         const isTermico = sub === 'termico';
 
-        const glassMat = createBaseMaterial(isTermico ? 0.25 : 0.15, isTermico ? 0.6 : 0.1, 0.4);
+        const glassMat = createBaseMaterial(isTermico ? 0.25 : 0.12, isTermico ? 0.6 : 0.08, 0.5);
         const printMat = createPrintMaterial(0.2, 0.0);
         if (texture) {
           texture.wrapS = THREE.RepeatWrapping;
@@ -145,53 +408,53 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
         }
 
         if (isShopero) {
-          // Shopero Cervecero (Beer Mug)
-          const bodyGeo = new THREE.CylinderGeometry(1.3, 1.25, 3.2, 64, 32, true);
+          // --- SHOPERO CERVECERO ---
+          const bodyGeo = new THREE.CylinderGeometry(1.32, 1.25, 3.2, 64, 32, true);
           bodyGeo.computeVertexNormals();
           group.add(new THREE.Mesh(bodyGeo, glassMat));
 
-          const printGeo = new THREE.CylinderGeometry(1.305, 1.255, 3.2, 64, 32, true);
+          const printGeo = new THREE.CylinderGeometry(1.325, 1.255, 3.2, 64, 32, true);
           printGeo.computeVertexNormals();
           group.add(new THREE.Mesh(printGeo, printMat));
 
           // Base gruesa facetada
-          const baseGeo = new THREE.CylinderGeometry(1.35, 1.4, 0.35, 48);
+          const baseGeo = new THREE.CylinderGeometry(1.38, 1.45, 0.45, 48);
           baseGeo.computeVertexNormals();
           const baseMesh = new THREE.Mesh(baseGeo, glassMat);
           baseMesh.position.y = -1.6;
           group.add(baseMesh);
 
-          // Asa gruesa robusta de shopero
+          // Asa gruesa de shopero
           const handleCurve = new THREE.CurvePath<THREE.Vector3>();
           handleCurve.add(new THREE.CubicBezierCurve3(
-            new THREE.Vector3(-1.28, 1.1, 0),
-            new THREE.Vector3(-2.4, 0.9, 0),
-            new THREE.Vector3(-2.4, -0.9, 0),
-            new THREE.Vector3(-1.28, -1.1, 0)
+            new THREE.Vector3(-1.3, 1.1, 0),
+            new THREE.Vector3(-2.45, 0.95, 0),
+            new THREE.Vector3(-2.45, -0.95, 0),
+            new THREE.Vector3(-1.3, -1.1, 0)
           ));
-          const handleGeo = new THREE.TubeGeometry(handleCurve, 48, 0.24, 24, false);
+          const handleGeo = new THREE.TubeGeometry(handleCurve, 48, 0.25, 24, false);
           handleGeo.computeVertexNormals();
           group.add(new THREE.Mesh(handleGeo, glassMat));
 
           // Rim superior
-          const rimGeo = new THREE.TorusGeometry(1.3, 0.05, 16, 64);
+          const rimGeo = new THREE.TorusGeometry(1.32, 0.05, 16, 64);
           const rimMesh = new THREE.Mesh(rimGeo, glassMat);
           rimMesh.rotation.x = Math.PI / 2;
           rimMesh.position.y = 1.6;
           group.add(rimMesh);
 
         } else if (isJarra) {
-          // Jarra con pico vertedor (Pitcher)
-          const bodyGeo = new THREE.CylinderGeometry(1.05, 1.45, 3.2, 64, 32, true);
+          // --- JARRA CON PICO ---
+          const bodyGeo = new THREE.CylinderGeometry(1.05, 1.48, 3.2, 64, 32, true);
           bodyGeo.computeVertexNormals();
           group.add(new THREE.Mesh(bodyGeo, glassMat));
 
-          const printGeo = new THREE.CylinderGeometry(1.055, 1.455, 3.2, 64, 32, true);
+          const printGeo = new THREE.CylinderGeometry(1.055, 1.485, 3.2, 64, 32, true);
           printGeo.computeVertexNormals();
           group.add(new THREE.Mesh(printGeo, printMat));
 
           // Base
-          const baseGeo = new THREE.CylinderGeometry(1.45, 1.45, 0.15, 64);
+          const baseGeo = new THREE.CylinderGeometry(1.48, 1.48, 0.18, 64);
           const baseMesh = new THREE.Mesh(baseGeo, glassMat);
           baseMesh.position.y = -1.6;
           group.add(baseMesh);
@@ -199,10 +462,10 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
           // Pico vertedor frontal
           const spoutShape = new THREE.Shape();
           spoutShape.moveTo(-0.4, 0);
-          spoutShape.lineTo(0, 0.6);
+          spoutShape.lineTo(0, 0.65);
           spoutShape.lineTo(0.4, 0);
           spoutShape.closePath();
-          const spoutGeo = new THREE.ExtrudeGeometry(spoutShape, { depth: 0.06, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02 });
+          const spoutGeo = new THREE.ExtrudeGeometry(spoutShape, { depth: 0.08, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03 });
           spoutGeo.computeVertexNormals();
           const spoutMesh = new THREE.Mesh(spoutGeo, glassMat);
           spoutMesh.rotation.x = -Math.PI / 3;
@@ -215,14 +478,14 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
             new THREE.Vector3(0, 1.2, -1.1),
             new THREE.Vector3(0, 1.3, -2.4),
             new THREE.Vector3(0, -1.0, -2.4),
-            new THREE.Vector3(0, -1.2, -1.45)
+            new THREE.Vector3(0, -1.2, -1.48)
           ));
-          const handleGeo = new THREE.TubeGeometry(handleCurve, 48, 0.18, 24, false);
+          const handleGeo = new THREE.TubeGeometry(handleCurve, 48, 0.2, 24, false);
           handleGeo.computeVertexNormals();
           group.add(new THREE.Mesh(handleGeo, glassMat));
 
         } else if (isTermico) {
-          // Vaso Térmico de Café con tapa
+          // --- VASO TÉRMICO ---
           const bodyGeo = new THREE.CylinderGeometry(1.2, 0.88, 3.0, 64, 32);
           bodyGeo.computeVertexNormals();
           group.add(new THREE.Mesh(bodyGeo, glassMat));
@@ -232,8 +495,8 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
           group.add(new THREE.Mesh(printGeo, printMat));
 
           // Banda de silicona central
-          const gripMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#333333'), roughness: 0.9 });
-          const gripGeo = new THREE.CylinderGeometry(1.08, 1.0, 0.9, 64);
+          const gripMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#2A2A2A'), roughness: 0.9 });
+          const gripGeo = new THREE.CylinderGeometry(1.08, 1.0, 0.95, 64);
           const gripMesh = new THREE.Mesh(gripGeo, gripMat);
           gripMesh.position.y = 0.2;
           group.add(gripMesh);
@@ -246,7 +509,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
           group.add(lidMesh);
 
         } else {
-          // Vaso Cónico Clásico
+          // --- VASO CLÁSICO ---
           const vasoGeo = new THREE.CylinderGeometry(1.22, 0.88, 3.0, 64, 32, false);
           vasoGeo.computeVertexNormals();
           group.add(new THREE.Mesh(vasoGeo, glassMat));
@@ -267,149 +530,10 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       }
 
       /* ==========================================================
-         POLERAS & ROPA (Cuello Redondo, Polo Piqué, Cuello V, Polerón)
-      ========================================================== */
-      case 'polera': {
-        const isPolo = sub === 'polo';
-        const isVNeck = sub === 'cuello-v';
-        const isPoleron = sub === 'poleron';
-
-        const fabricMat = createBaseMaterial(isPolo ? 0.92 : 0.82, 0.0, 0.0);
-        const printMat = createPrintMaterial(0.8, 0.0);
-
-        const widthScale = isPoleron ? 1.25 : 1.15;
-        const depthScale = isPoleron ? 0.72 : 0.62;
-
-        // Torso base mesh
-        const torsoGeo = new THREE.CylinderGeometry(1.3, 1.2, 2.5, 64, 32, false);
-        torsoGeo.scale(widthScale, 1.0, depthScale);
-
-        const pos = torsoGeo.attributes.position;
-        for (let i = 0; i < pos.count; i++) {
-          const x = pos.getX(i);
-          const y = pos.getY(i);
-          if (y > 0.8) {
-            const shoulderFactor = 1.0 - (Math.abs(x) / 1.5) * 0.15;
-            pos.setY(i, y * shoulderFactor);
-          }
-        }
-        torsoGeo.computeVertexNormals();
-        group.add(new THREE.Mesh(torsoGeo, fabricMat));
-
-        // Chest Print Zone Overlay
-        const printGeo = new THREE.PlaneGeometry(2.4, 2.2, 32, 32);
-        const printPos = printGeo.attributes.position;
-        const printUvs = printGeo.attributes.uv;
-        for (let i = 0; i < printPos.count; i++) {
-          const x = printPos.getX(i);
-          const y = printPos.getY(i);
-          // Subtle curve matching torso contour
-          const zCurve = 0.76 - (x * x) * 0.09;
-          printPos.setZ(i, zCurve);
-          printUvs.setXY(i, THREE.MathUtils.clamp((x + 1.2) / 2.4, 0, 1), THREE.MathUtils.clamp((y + 1.1) / 2.2, 0, 1));
-        }
-        printGeo.computeVertexNormals();
-        printUvs.needsUpdate = true;
-        const printMesh = new THREE.Mesh(printGeo, printMat);
-        printMesh.position.set(0, -0.05, 0);
-        group.add(printMesh);
-
-        // Sleeves (Left & Right)
-        const sleeveRadius = isPoleron ? 0.5 : 0.44;
-        const sleeveGeo = new THREE.CylinderGeometry(sleeveRadius, sleeveRadius * 0.86, isPoleron ? 1.4 : 1.1, 48, 16);
-        sleeveGeo.computeVertexNormals();
-
-        const leftSleeve = new THREE.Mesh(sleeveGeo, fabricMat);
-        leftSleeve.position.set(-1.46, 0.7, 0);
-        leftSleeve.rotation.set(0.1, 0, isPoleron ? 0.65 : 0.58);
-        group.add(leftSleeve);
-
-        const rightSleeve = new THREE.Mesh(sleeveGeo, fabricMat);
-        rightSleeve.position.set(1.46, 0.7, 0);
-        rightSleeve.rotation.set(0.1, 0, isPoleron ? -0.65 : -0.58);
-        group.add(rightSleeve);
-
-        // Subtype Collar / Hood details
-        if (isPolo) {
-          // Polo Piqué: Cuello camisero doblado + Solapa frontal con botones
-          const collarShape = new THREE.Shape();
-          collarShape.moveTo(-0.8, 0);
-          collarShape.lineTo(-0.95, -0.55);
-          collarShape.lineTo(0, -0.2);
-          collarShape.lineTo(0.95, -0.55);
-          collarShape.lineTo(0.8, 0);
-          collarShape.closePath();
-          const poloCollarGeo = new THREE.ExtrudeGeometry(collarShape, { depth: 0.12, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03 });
-          poloCollarGeo.computeVertexNormals();
-          const poloCollarMesh = new THREE.Mesh(poloCollarGeo, fabricMat);
-          poloCollarMesh.rotation.x = -Math.PI / 3;
-          poloCollarMesh.position.set(0, 1.25, 0.35);
-          group.add(poloCollarMesh);
-
-          // Solapa de botones
-          const placketGeo = new THREE.BoxGeometry(0.3, 0.85, 0.05);
-          const placketMesh = new THREE.Mesh(placketGeo, fabricMat);
-          placketMesh.position.set(0, 0.82, 0.77);
-          group.add(placketMesh);
-
-          // Botones nácar
-          const buttonMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#EAEAEA'), roughness: 0.2, metalness: 0.3 });
-          const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.02, 16), buttonMat);
-          b1.rotation.x = Math.PI / 2;
-          b1.position.set(0, 1.05, 0.8);
-          const b2 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.02, 16), buttonMat);
-          b2.rotation.x = Math.PI / 2;
-          b2.position.set(0, 0.75, 0.8);
-          group.add(b1, b2);
-
-        } else if (isVNeck) {
-          // Cuello V pronunciado
-          const vCollarCurve = new THREE.CurvePath<THREE.Vector3>();
-          vCollarCurve.add(new THREE.LineCurve3(new THREE.Vector3(-0.55, 1.25, 0.35), new THREE.Vector3(0, 0.65, 0.75)));
-          vCollarCurve.add(new THREE.LineCurve3(new THREE.Vector3(0, 0.65, 0.75), new THREE.Vector3(0.55, 1.25, 0.35)));
-          const vCollarGeo = new THREE.TubeGeometry(vCollarCurve, 32, 0.07, 16, false);
-          vCollarGeo.computeVertexNormals();
-          group.add(new THREE.Mesh(vCollarGeo, fabricMat));
-
-        } else if (isPoleron) {
-          // Polerón con Capucha 3D y Bolsillo Canguro
-          const hoodGeo = new THREE.SphereGeometry(0.9, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.65);
-          hoodGeo.scale(0.95, 1.05, 0.9);
-          hoodGeo.computeVertexNormals();
-          const hoodMesh = new THREE.Mesh(hoodGeo, fabricMat);
-          hoodMesh.position.set(0, 1.35, -0.3);
-          group.add(hoodMesh);
-
-          // Bolsillo canguro frontal
-          const pocketShape = new THREE.Shape();
-          pocketShape.moveTo(-0.9, -0.6);
-          pocketShape.lineTo(-0.7, 0.35);
-          pocketShape.lineTo(0.7, 0.35);
-          pocketShape.lineTo(0.9, -0.6);
-          pocketShape.closePath();
-          const pocketGeo = new THREE.ExtrudeGeometry(pocketShape, { depth: 0.12, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04 });
-          pocketGeo.computeVertexNormals();
-          const pocketMesh = new THREE.Mesh(pocketGeo, fabricMat);
-          pocketMesh.position.set(0, -0.45, 0.75);
-          group.add(pocketMesh);
-
-        } else {
-          // Cuello Redondo Clásico (Crewneck)
-          const collarGeo = new THREE.TorusGeometry(0.52, 0.08, 24, 64);
-          collarGeo.scale(1.1, 0.45, 0.75);
-          collarGeo.computeVertexNormals();
-          const collarMesh = new THREE.Mesh(collarGeo, fabricMat);
-          collarMesh.rotation.x = Math.PI / 2;
-          collarMesh.position.set(0, 1.26, 0);
-          group.add(collarMesh);
-        }
-        break;
-      }
-
-      /* ==========================================================
-         TAZA CERÁMICA MUG
+         4. TAZA CERÁMICA MUG
       ========================================================== */
       case 'taza': {
+        const isConica = sub === 'conica';
         const ceramicMat = createBaseMaterial(0.12, 0.04, 0.5);
         const printMat = createPrintMaterial(0.15, 0.0);
         if (texture) {
@@ -417,9 +541,8 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
           texture.wrapT = THREE.ClampToEdgeWrapping;
         }
 
-        const isConica = sub === 'conica';
         const rTop = isConica ? 1.35 : 1.2;
-        const rBottom = isConica ? 0.95 : 1.15;
+        const rBottom = isConica ? 0.92 : 1.15;
 
         // Outer cylinder base
         const outerGeo = new THREE.CylinderGeometry(rTop, rBottom, 2.6, 64, 32, true);
@@ -468,7 +591,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       }
 
       /* ==========================================================
-         TERMO DE ACERO INOXIDABLE
+         5. TERMO DE ACERO INOXIDABLE
       ========================================================== */
       case 'termo': {
         const isDeportivo = sub === 'deportivo';
@@ -514,7 +637,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       }
 
       /* ==========================================================
-         GORRA / JOCKEY
+         6. GORRA / JOCKEY
       ========================================================== */
       case 'gorra': {
         const isPlana = sub === 'plana';
@@ -559,65 +682,10 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
         // Top button
         const buttonGeo = new THREE.SphereGeometry(0.12, 24, 24);
         buttonGeo.scale(1, 0.6, 1);
+        buttonGeo.computeVertexNormals();
         const buttonMesh = new THREE.Mesh(buttonGeo, capFabricMat);
         buttonMesh.position.set(0, 1.26, 0);
         group.add(buttonMesh);
-        break;
-      }
-
-      /* ==========================================================
-         PANTALÓN / JOGGER
-      ========================================================== */
-      case 'pantalon': {
-        const pantsMat = createBaseMaterial(0.85, 0.0, 0.0);
-        const printMat = createPrintMaterial(0.8, 0.0);
-
-        // Waistband
-        const waistGeo = new THREE.CylinderGeometry(1.18, 1.12, 0.7, 48, 16);
-        waistGeo.scale(1.1, 1.0, 0.7);
-        waistGeo.computeVertexNormals();
-        group.add(new THREE.Mesh(waistGeo, pantsMat));
-
-        // Legs
-        const leftLegGeo = new THREE.CylinderGeometry(0.56, 0.36, 2.9, 48, 32);
-        leftLegGeo.computeVertexNormals();
-        const leftLeg = new THREE.Mesh(leftLegGeo, pantsMat);
-        leftLeg.position.set(-0.58, -0.15, 0);
-        leftLeg.rotation.z = -0.06;
-        group.add(leftLeg);
-
-        // Left Leg Decal Overlay (Thigh print)
-        const thighPrintGeo = new THREE.PlaneGeometry(0.7, 1.2, 16, 16);
-        const tPos = thighPrintGeo.attributes.position;
-        const tUvs = thighPrintGeo.attributes.uv;
-        for (let i = 0; i < tPos.count; i++) {
-          const x = tPos.getX(i);
-          const y = tPos.getY(i);
-          tPos.setZ(i, 0.58 - (x * x) * 0.12);
-          tUvs.setXY(i, THREE.MathUtils.clamp((x + 0.35) / 0.7, 0, 1), THREE.MathUtils.clamp((y + 0.6) / 1.2, 0, 1));
-        }
-        thighPrintGeo.computeVertexNormals();
-        tUvs.needsUpdate = true;
-        const thighMesh = new THREE.Mesh(thighPrintGeo, printMat);
-        thighMesh.position.set(-0.58, 0.1, 0.05);
-        thighMesh.rotation.z = -0.06;
-        group.add(thighMesh);
-
-        const rightLegGeo = new THREE.CylinderGeometry(0.56, 0.36, 2.9, 48, 32);
-        rightLegGeo.computeVertexNormals();
-        const rightLeg = new THREE.Mesh(rightLegGeo, pantsMat);
-        rightLeg.position.set(0.58, -0.15, 0);
-        rightLeg.rotation.z = 0.06;
-        group.add(rightLeg);
-
-        // Ankle Cuffs
-        const cuffGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.25, 32);
-        cuffGeo.computeVertexNormals();
-        const leftCuff = new THREE.Mesh(cuffGeo, pantsMat);
-        leftCuff.position.set(-0.67, -1.6, 0);
-        const rightCuff = new THREE.Mesh(cuffGeo, pantsMat);
-        rightCuff.position.set(0.67, -1.6, 0);
-        group.add(leftCuff, rightCuff);
         break;
       }
 
@@ -651,7 +719,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
 
     // Camera
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(3.2, 2.0, 3.6);
+    camera.position.set(3.2, 1.8, 3.6);
     cameraRef.current = camera;
 
     // Clean WebGLRenderer without shadow map
@@ -671,7 +739,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     container.appendChild(renderer.domElement);
 
     // Studio 3-Point Lighting setup (Pure studio reflections without ground shadows)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.05);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
     scene.add(ambientLight);
 
     // Key Light
@@ -767,7 +835,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     });
   }, [canvasSource, textureVersion]);
 
-  // Re-build 3D Mesh when product or subTipo changes
+  // Re-build 3D Mesh when product, subTipo or base color changes
   useEffect(() => {
     if (!sceneRef.current) return;
 

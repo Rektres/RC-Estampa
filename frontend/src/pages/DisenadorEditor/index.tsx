@@ -4,7 +4,8 @@ import { Modal } from 'react-bootstrap';
 import {
   Upload, Trash2, FlipHorizontal, Eye,
   Minus, Plus, ShoppingBag, ArrowLeft, Type,
-  Sparkles, Palette, Image as ImageIcon, Shirt, Coffee, GlassWater
+  Sparkles, Palette, Image as ImageIcon, Shirt, Coffee, GlassWater,
+  PlusCircle
 } from 'lucide-react';
 import { formatPrice } from '../../utils';
 import { useCartStore } from '../../store/cartStore';
@@ -14,6 +15,7 @@ import { useSEO } from '../../hooks/useSEO';
 import { Viewer3D, Viewer3DRef } from '../../components/common/Viewer3D';
 
 const TEXTURE_CANVAS_SIZE = 1024;
+const MAX_IMAGES = 6;
 
 const PRODUCT_LABELS: Record<string, string> = {
   polera: 'Polera',
@@ -27,7 +29,7 @@ const PRODUCT_LABELS: Record<string, string> = {
 const PRODUCT_SUBTYPES: Record<string, { id: string; label: string; desc: string }[]> = {
   polera: [
     { id: 'cuello-redondo', label: 'Cuello Redondo', desc: 'Algodón clásico 100%' },
-    { id: 'polo', label: 'Polo Piqué', desc: 'Cuello camisero y botones' },
+    { id: 'polo', label: 'Polo Piqué', desc: 'Cuello camisero y 3 botones' },
     { id: 'cuello-v', label: 'Cuello V', desc: 'Corte V acanalado' },
     { id: 'poleron', label: 'Polerón / Hoodie', desc: 'Capucha y bolsillo canguro' },
   ],
@@ -71,6 +73,18 @@ const COLOR_PALETTE = [
   { nombre: 'Beige Arena', hex: '#E5E0D8' },
 ];
 
+export interface CustomImage {
+  id: string;
+  src: string;
+  name: string;
+  imgElement: HTMLImageElement;
+  x: number; // -80 to 80
+  y: number; // -80 to 80
+  scale: number; // 20 to 140
+  rotation: number; // -180 to 180
+  flipX: boolean;
+}
+
 type ActiveTab = 'modelo' | 'logo' | 'texto' | 'color';
 
 export default function DisenadorEditor() {
@@ -78,7 +92,6 @@ export default function DisenadorEditor() {
   const viewer3DRef = useRef<Viewer3DRef | null>(null);
   const textureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const logoImageRef = useRef<HTMLImageElement | null>(null);
 
   // Sub-type selection
   const subtypesList = PRODUCT_SUBTYPES[producto] || [];
@@ -90,13 +103,9 @@ export default function DisenadorEditor() {
   const [selectedTalla, setSelectedTalla] = useState('M');
   const [cantidad, setCantidad] = useState(1);
 
-  // Logo state
-  const [logoSrc, setLogoSrc] = useState<string | null>(null);
-  const [logoScale, setLogoScale] = useState(60); // 20% to 150%
-  const [logoPosX, setLogoPosX] = useState(0); // -100 to 100
-  const [logoPosY, setLogoPosY] = useState(15); // -100 to 100
-  const [logoRotation, setLogoRotation] = useState(0); // -180 to 180
-  const [logoFlipX, setLogoFlipX] = useState(false);
+  // Multiple Images State
+  const [images, setImages] = useState<CustomImage[]>([]);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
   // Text state
   const [customText, setCustomText] = useState('');
@@ -119,13 +128,14 @@ export default function DisenadorEditor() {
   const label = PRODUCT_LABELS[producto] ?? producto;
 
   const currentSubtypeName = subtypesList.find(s => s.id === subTipo)?.label || label;
+  const currentImage = images.find(img => img.id === selectedImageId) || images[0] || null;
 
   useSEO({
     title: `Diseñar ${currentSubtypeName} en 3D · RC Estampa`,
     description: `Crea y personaliza tu ${currentSubtypeName} en 3D interactivo 360° con estampado DTF textil o grabado láser. Despacho a todo Chile.`,
   });
 
-  // Redraw the 2D texture canvas whenever logo, text, or positioning changes
+  // Redraw the 2D texture canvas with all uploaded images & text
   const redrawTexture = useCallback(() => {
     if (!textureCanvasRef.current) {
       const c = document.createElement('canvas');
@@ -144,11 +154,13 @@ export default function DisenadorEditor() {
     const centerW = canvas.width / 2;
     const centerH = canvas.height / 2;
 
-    // 1. Draw Logo if loaded
-    if (logoImageRef.current && logoSrc) {
-      const img = logoImageRef.current;
-      const baseMax = 420;
-      const scaleFactor = (logoScale / 100);
+    // 1. Draw all images in sequence
+    images.forEach((imgItem) => {
+      const img = imgItem.imgElement;
+      if (!img) return;
+
+      const baseMax = 380;
+      const scaleFactor = (imgItem.scale / 100);
       const aspect = (img.width || 1) / (img.height || 1);
 
       let drawW = baseMax * scaleFactor;
@@ -158,18 +170,17 @@ export default function DisenadorEditor() {
         drawW = baseMax * aspect * scaleFactor;
       }
 
-      // Convert -100..100 sliders to canvas coordinates
-      const posX = centerW + (logoPosX * 3.2);
-      const posY = centerH - (logoPosY * 3.2);
+      const posX = centerW + (imgItem.x * 3.2);
+      const posY = centerH - (imgItem.y * 3.2);
 
       ctx.save();
       ctx.translate(posX, posY);
-      ctx.rotate((logoRotation * Math.PI) / 180);
-      if (logoFlipX) ctx.scale(-1, 1);
+      ctx.rotate((imgItem.rotation * Math.PI) / 180);
+      if (imgItem.flipX) ctx.scale(-1, 1);
 
       ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
       ctx.restore();
-    }
+    });
 
     // 2. Draw Custom Text if provided
     if (customText.trim()) {
@@ -197,7 +208,7 @@ export default function DisenadorEditor() {
 
     setTextureVersion((v) => v + 1);
   }, [
-    logoSrc, logoScale, logoPosX, logoPosY, logoRotation, logoFlipX,
+    images,
     customText, textFont, textColor, textSize, textPosX, textPosY
   ]);
 
@@ -206,18 +217,29 @@ export default function DisenadorEditor() {
     redrawTexture();
   }, [redrawTexture]);
 
-  // Handle Logo file upload
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle Multi-Image file upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || images.length >= MAX_IMAGES) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const src = event.target?.result as string;
       const img = new Image();
       img.onload = () => {
-        logoImageRef.current = img;
-        setLogoSrc(src);
+        const newImg: CustomImage = {
+          id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+          src,
+          name: file.name,
+          imgElement: img,
+          x: 0,
+          y: images.length === 0 ? 15 : -10 * images.length,
+          scale: 60,
+          rotation: 0,
+          flipX: false,
+        };
+        setImages((prev) => [...prev, newImg]);
+        setSelectedImageId(newImg.id);
         setActiveTab('logo');
       };
       img.src = src;
@@ -226,9 +248,21 @@ export default function DisenadorEditor() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const removeLogo = () => {
-    logoImageRef.current = null;
-    setLogoSrc(null);
+  // Update selected image attributes
+  const updateCurrentImage = (partial: Partial<CustomImage>) => {
+    if (!currentImage) return;
+    setImages((prev) =>
+      prev.map((item) => (item.id === currentImage.id ? { ...item, ...partial } : item))
+    );
+  };
+
+  const removeCurrentImage = () => {
+    if (!currentImage) return;
+    setImages((prev) => {
+      const filtered = prev.filter((item) => item.id !== currentImage.id);
+      setSelectedImageId(filtered[0]?.id || null);
+      return filtered;
+    });
   };
 
   const openPreview = () => {
@@ -344,7 +378,7 @@ export default function DisenadorEditor() {
               style={{ fontSize: '0.75rem' }}
             >
               <ImageIcon size={13} />
-              Logo / Foto
+              Logos ({images.length})
             </button>
             <button
               type="button"
@@ -378,7 +412,7 @@ export default function DisenadorEditor() {
                   Selecciona el tipo de {label}
                 </span>
                 <p className="font-montserrat text-muted mb-0 mt-1" style={{ fontSize: '0.72rem' }}>
-                  El modelo 3D cambiará su silueta y acabados en tiempo real.
+                  El modelo 3D cambiará su silueta, costuras y acabados en tiempo real.
                 </p>
               </div>
 
@@ -404,28 +438,54 @@ export default function DisenadorEditor() {
             </div>
           )}
 
-          {/* TAB 1: LOGO & IMAGEN */}
+          {/* TAB 1: MULTI-LOGO & IMÁGENES */}
           {activeTab === 'logo' && (
             <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
               <div className="d-flex align-items-center justify-content-between">
                 <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
-                  Subir y Ajustar Estampado
+                  Estampados e Imágenes ({images.length}/{MAX_IMAGES})
                 </span>
-                {logoSrc && (
-                  <button onClick={removeLogo} className="btn btn-sm btn-link text-danger p-0 d-flex align-items-center gap-1 font-montserrat" style={{ fontSize: '0.72rem' }}>
-                    <Trash2 size={12} />
-                    Quitar logo
+                {images.length < MAX_IMAGES && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 font-montserrat"
+                    style={{ fontSize: '0.72rem' }}
+                  >
+                    <PlusCircle size={13} />
+                    Añadir otra imagen
                   </button>
                 )}
               </div>
 
-              {!logoSrc ? (
+              {/* Thumbnails list of uploaded images */}
+              {images.length > 0 && (
+                <div className="d-flex gap-2 overflow-x-auto pb-1">
+                  {images.map((item, idx) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setSelectedImageId(item.id)}
+                      className={`position-relative p-1 rounded-3 border flex-shrink-0 transition-all ${
+                        currentImage?.id === item.id ? 'border-primary bg-primary-10' : 'border-border bg-elevated'
+                      }`}
+                      style={{ width: '56px', height: '56px' }}
+                    >
+                      <img src={item.src} alt={item.name} className="w-100 h-100 object-fit-contain" />
+                      <span className="position-absolute top-0 start-0 badge bg-primary text-black font-montserrat px-1" style={{ fontSize: '0.6rem' }}>
+                        #{idx + 1}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!currentImage ? (
                 <div className="border border-dashed border-border rounded-3 p-4 text-center d-flex flex-column align-items-center gap-2">
                   <div className="rounded-circle bg-elevated d-flex align-items-center justify-content-center" style={{ width: '3rem', height: '3rem' }}>
                     <Upload size={20} className="text-primary" />
                   </div>
                   <p className="font-montserrat text-muted mb-0" style={{ fontSize: '0.75rem' }}>
-                    Sube tu logo o diseño en formato PNG, JPG o SVG (fondo transparente recomendado).
+                    Sube hasta {MAX_IMAGES} logos o ilustraciones (PNG, JPG o SVG transparente).
                   </p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
@@ -433,35 +493,40 @@ export default function DisenadorEditor() {
                     style={{ fontSize: '0.8rem' }}
                   >
                     <Upload size={14} />
-                    Seleccionar archivo
+                    Seleccionar imagen
                   </button>
                 </div>
               ) : (
                 <div className="d-flex flex-column gap-3">
-                  <div className="d-flex align-items-center gap-3 bg-elevated p-2 rounded-3 border border-border">
-                    <img src={logoSrc} alt="Logo" className="rounded object-fit-contain bg-card p-1" style={{ width: '48px', height: '48px' }} />
-                    <div className="flex-grow-1">
-                      <p className="font-montserrat fw-semibold text-text mb-0" style={{ fontSize: '0.75rem' }}>Logo Activo</p>
-                      <span className="font-montserrat text-muted" style={{ fontSize: '0.7rem' }}>Posiciónalo directamente sobre el 3D</span>
+                  <div className="d-flex align-items-center justify-content-between bg-elevated p-2 rounded-3 border border-border">
+                    <div className="d-flex align-items-center gap-2">
+                      <img src={currentImage.src} alt="Selected" className="rounded object-fit-contain bg-card p-1" style={{ width: '36px', height: '36px' }} />
+                      <div>
+                        <p className="font-montserrat fw-semibold text-text mb-0" style={{ fontSize: '0.75rem' }}>
+                          Editando imagen seleccionada
+                        </p>
+                        <span className="font-montserrat text-muted" style={{ fontSize: '0.68rem' }}>Ajusta su posición y tamaño</span>
+                      </div>
                     </div>
-                    <button onClick={() => fileInputRef.current?.click()} className="btn btn-sm btn-secondary py-1 px-2 font-montserrat" style={{ fontSize: '0.7rem' }}>
-                      Cambiar
+                    <button onClick={removeCurrentImage} className="btn btn-sm btn-link text-danger p-0 d-flex align-items-center gap-1 font-montserrat" style={{ fontSize: '0.72rem' }}>
+                      <Trash2 size={12} />
+                      Eliminar
                     </button>
                   </div>
 
-                  {/* Positioning Sliders */}
+                  {/* Sliders for current active image */}
                   <div className="d-flex flex-column gap-2 pt-1">
                     <div>
                       <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
                         <span>↕️ Posición Vertical</span>
-                        <span className="text-text">{logoPosY > 0 ? `+${logoPosY}` : logoPosY}</span>
+                        <span className="text-text">{currentImage.y > 0 ? `+${currentImage.y}` : currentImage.y}</span>
                       </div>
                       <input
                         type="range"
                         min="-80"
                         max="80"
-                        value={logoPosY}
-                        onChange={(e) => setLogoPosY(Number(e.target.value))}
+                        value={currentImage.y}
+                        onChange={(e) => updateCurrentImage({ y: Number(e.target.value) })}
                         className="form-range w-100"
                       />
                     </div>
@@ -469,14 +534,14 @@ export default function DisenadorEditor() {
                     <div>
                       <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
                         <span>↔️ Posición Horizontal</span>
-                        <span className="text-text">{logoPosX > 0 ? `+${logoPosX}` : logoPosX}</span>
+                        <span className="text-text">{currentImage.x > 0 ? `+${currentImage.x}` : currentImage.x}</span>
                       </div>
                       <input
                         type="range"
                         min="-80"
                         max="80"
-                        value={logoPosX}
-                        onChange={(e) => setLogoPosX(Number(e.target.value))}
+                        value={currentImage.x}
+                        onChange={(e) => updateCurrentImage({ x: Number(e.target.value) })}
                         className="form-range w-100"
                       />
                     </div>
@@ -484,14 +549,14 @@ export default function DisenadorEditor() {
                     <div>
                       <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
                         <span>🔍 Tamaño / Escala</span>
-                        <span className="text-text">{logoScale}%</span>
+                        <span className="text-text">{currentImage.scale}%</span>
                       </div>
                       <input
                         type="range"
                         min="20"
                         max="140"
-                        value={logoScale}
-                        onChange={(e) => setLogoScale(Number(e.target.value))}
+                        value={currentImage.scale}
+                        onChange={(e) => updateCurrentImage({ scale: Number(e.target.value) })}
                         className="form-range w-100"
                       />
                     </div>
@@ -499,23 +564,23 @@ export default function DisenadorEditor() {
                     <div>
                       <div className="d-flex justify-content-between font-montserrat text-muted mb-1" style={{ fontSize: '0.72rem' }}>
                         <span>🔄 Rotación</span>
-                        <span className="text-text">{logoRotation}°</span>
+                        <span className="text-text">{currentImage.rotation}°</span>
                       </div>
                       <input
                         type="range"
                         min="-180"
                         max="180"
-                        value={logoRotation}
-                        onChange={(e) => setLogoRotation(Number(e.target.value))}
+                        value={currentImage.rotation}
+                        onChange={(e) => updateCurrentImage({ rotation: Number(e.target.value) })}
                         className="form-range w-100"
                       />
                     </div>
 
                     <div className="d-flex gap-2 mt-1">
                       <button
-                        onClick={() => setLogoFlipX(!logoFlipX)}
+                        onClick={() => updateCurrentImage({ flipX: !currentImage.flipX })}
                         className={`btn btn-sm flex-grow-1 d-inline-flex align-items-center justify-content-center gap-1 font-montserrat ${
-                          logoFlipX ? 'btn-primary' : 'btn-secondary'
+                          currentImage.flipX ? 'btn-primary' : 'btn-secondary'
                         }`}
                         style={{ fontSize: '0.72rem' }}
                       >
@@ -523,7 +588,7 @@ export default function DisenadorEditor() {
                         Voltear
                       </button>
                       <button
-                        onClick={() => { setLogoPosX(0); setLogoPosY(15); setLogoScale(60); setLogoRotation(0); setLogoFlipX(false); }}
+                        onClick={() => updateCurrentImage({ x: 0, y: 15, scale: 60, rotation: 0, flipX: false })}
                         className="btn btn-sm btn-secondary font-montserrat"
                         style={{ fontSize: '0.72rem' }}
                       >
@@ -533,7 +598,7 @@ export default function DisenadorEditor() {
                   </div>
                 </div>
               )}
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="d-none" />
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="d-none" />
             </div>
           )}
 
