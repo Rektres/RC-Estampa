@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, X } from 'lucide-react';
 import FilterSidebar from '../../components/shared/FilterSidebar';
@@ -27,6 +28,18 @@ export default function Drinkware() {
   const [params] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: vajillaData } = useAsync(() => catalogoApi.drinkwareAll(), []);
+
+  // Bloquear scroll del fondo cuando el modal de filtros está abierto
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen]);
 
   const orden = params.get('ordering') ?? '-creado_en';
   const categorias = params.get('categoria')?.split(',').filter(Boolean) ?? [];
@@ -124,17 +137,59 @@ export default function Drinkware() {
         </div>
       </div>
 
-      {sidebarOpen && (
-        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex" style={{ zIndex: 1050 }}>
-          <div className="position-absolute top-0 start-0 w-100 h-100" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} onClick={() => setSidebarOpen(false)} />
-          <aside className="position-relative bg-card h-100 overflow-y-auto p-4 border-end border-border" style={{ zIndex: 10, width: '20rem' }}>
-            <div className="d-flex align-items-center justify-content-between mb-4">
-              <h3 className="font-montserrat fw-semibold text-text mb-0">Filtros</h3>
-              <button onClick={() => setSidebarOpen(false)} className="bg-transparent border-0 p-0"><X size={20} className="text-muted" /></button>
+      {sidebarOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-end align-items-md-center justify-content-center p-0 p-md-3"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.82)',
+            zIndex: 99999,
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+          }}
+          onClick={() => setSidebarOpen(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-top-4 rounded-md-4 p-4 shadow-2xl w-100 position-relative d-flex flex-column"
+            style={{
+              maxWidth: '28rem',
+              maxHeight: '85vh',
+              boxShadow: '0 -10px 40px rgba(0,0,0,0.8)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom border-border flex-shrink-0">
+              <div>
+                <div className="eyebrow-badge mb-1" style={{ fontSize: '0.62rem', padding: '0.12rem 0.5rem' }}>
+                  <span className="glyph">★</span>
+                  <span>FILTRAR DRINKWARE</span>
+                </div>
+                <h3 className="font-montserrat fw-semibold text-text fs-5 mb-0">Filtros de Drinkware</h3>
+              </div>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="btn btn-sm btn-outline-secondary p-1 rounded-circle d-flex align-items-center justify-content-center hover-lift"
+                style={{ width: '32px', height: '32px' }}
+                aria-label="Cerrar filtros"
+              >
+                <X size={18} />
+              </button>
             </div>
-            <FilterSidebar config={filterConfig} />
-          </aside>
-        </div>
+
+            <div className="overflow-y-auto pe-1 flex-grow-1" style={{ minHeight: 0 }}>
+              <FilterSidebar config={filterConfig} />
+            </div>
+
+            <div className="pt-3 mt-3 border-top border-border flex-shrink-0">
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="btn btn-primary w-100 font-montserrat fw-bold py-2 rounded-3 shadow-md"
+              >
+                Aplicar Filtros ({filtered.length} productos)
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

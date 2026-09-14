@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   SlidersHorizontal,
@@ -57,6 +58,18 @@ export default function Catalogo() {
   const soloNuevos = params.get('nuevo') === '1';
   const soloOferta = params.get('oferta') === '1';
   const q = params.get('q') ?? '';
+
+  // Bloquear scroll del fondo cuando el modal de filtros mobile está abierto
+  useEffect(() => {
+    if (sidebarMobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarMobileOpen]);
 
   useSEO({
     title: linea === 'drinkware'
@@ -348,35 +361,59 @@ export default function Catalogo() {
         </div>
 
         {/* Modal / Drawer de Filtros Mobile */}
-        {sidebarMobileOpen && (
+        {sidebarMobileOpen && typeof document !== 'undefined' && createPortal(
           <div
-            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)', zIndex: 1080, backdropFilter: 'blur(6px)' }}
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-end align-items-md-center justify-content-center p-0 p-md-3"
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.82)',
+              zIndex: 99999,
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+            }}
             onClick={() => setSidebarMobileOpen(false)}
           >
             <div
-              className="bg-card border border-border rounded-4 p-4 shadow-lg w-100 animate-tab-fade"
-              style={{ maxWidth: '26rem', maxHeight: '90vh', overflowY: 'auto' }}
+              className="bg-card border border-border rounded-top-4 rounded-md-4 p-4 shadow-2xl w-100 position-relative d-flex flex-column"
+              style={{
+                maxWidth: '28rem',
+                maxHeight: '85vh',
+                boxShadow: '0 -10px 40px rgba(0,0,0,0.8)',
+              }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom border-border">
-                <h4 className="font-montserrat fw-bold text-text fs-5 mb-0">Filtros de Catálogo</h4>
+              <div className="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom border-border flex-shrink-0">
+                <div>
+                  <div className="eyebrow-badge mb-1" style={{ fontSize: '0.62rem', padding: '0.12rem 0.5rem' }}>
+                    <span className="glyph">★</span>
+                    <span>FILTRAR CATÁLOGO</span>
+                  </div>
+                  <h4 className="font-montserrat fw-bold text-text fs-5 mb-0">Filtros de Catálogo</h4>
+                </div>
                 <button
                   onClick={() => setSidebarMobileOpen(false)}
-                  className="btn btn-sm btn-outline-secondary p-1 rounded-circle"
+                  className="btn btn-sm btn-outline-secondary p-1 rounded-circle d-flex align-items-center justify-content-center hover-lift"
+                  style={{ width: '32px', height: '32px' }}
+                  aria-label="Cerrar filtros"
                 >
                   <X size={18} />
                 </button>
               </div>
-              <FilterSidebar config={filterConfig} />
-              <button
-                onClick={() => setSidebarMobileOpen(false)}
-                className="btn btn-primary w-100 mt-4 font-montserrat fw-bold py-2"
-              >
-                Aplicar Filtros ({filtered.length} productos)
-              </button>
+
+              <div className="overflow-y-auto pe-1 flex-grow-1" style={{ minHeight: 0 }}>
+                <FilterSidebar config={filterConfig} />
+              </div>
+
+              <div className="pt-3 mt-3 border-top border-border flex-shrink-0">
+                <button
+                  onClick={() => setSidebarMobileOpen(false)}
+                  className="btn btn-primary w-100 font-montserrat fw-bold py-2 rounded-3 shadow-md"
+                >
+                  Aplicar Filtros ({filtered.length} productos)
+                </button>
+              </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* Grid / Lista de Productos a la Derecha */}

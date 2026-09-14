@@ -46,6 +46,7 @@ const SAMPLE_CARDS = [
 export default function HeroEscenico() {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   const { data: prodsRopa } = useAsync(() => catalogoApi.productosAll(), []);
   const { data: prodsDrink } = useAsync(() => catalogoApi.drinkwareAll(), []);
@@ -89,6 +90,15 @@ export default function HeroEscenico() {
   const prevCard = () => {
     setActiveIndex((prev) => (prev - 1 + totalCards) % totalCards);
   };
+
+  // Movimiento automático constante cada 3.5 segundos
+  useEffect(() => {
+    if (totalCards <= 1 || isPaused) return;
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % totalCards);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [totalCards, isPaused]);
 
   return (
     <section className="position-relative overflow-hidden pt-4 pb-5">
@@ -167,7 +177,14 @@ export default function HeroEscenico() {
 
           {/* Columna Derecha: Cover Flow 3D de Productos Destacados */}
           <div className="col-12 col-lg-5">
-            <div className="position-relative cover-flow-wrapper" style={{ minHeight: '540px', paddingTop: '15px' }}>
+            <div
+              className="position-relative cover-flow-wrapper"
+              style={{ minHeight: '540px', paddingTop: '15px' }}
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+              onTouchStart={() => setIsPaused(true)}
+              onTouchEnd={() => setIsPaused(false)}
+            >
               {/* Halo de iluminación exterior */}
               <div
                 className="position-absolute top-50 start-50 translate-middle pointer-events-none"
@@ -221,32 +238,47 @@ export default function HeroEscenico() {
                   if (diff > totalCards / 2) diff -= totalCards;
                   if (diff < -totalCards / 2) diff += totalCards;
 
-                  // Mostrar solo las 5 tarjetas visibles más cercanas
-                  const isVisible = Math.abs(diff) <= 2;
-                  if (!isVisible) return null;
-
                   const isCenter = diff === 0;
                   const isLeft = diff < 0;
-                  const isRight = diff > 0;
+                  const absDiff = Math.abs(diff);
 
                   let transformStyle = '';
-                  const zIndex = 30 - Math.abs(diff) * 5;
-                  const opacity = 1; // Tarjetas 100% sólidas sin traslucidez
-                  let filter = 'none';
+                  let zIndex = 10;
+                  let opacity = 0;
+                  let filter = 'brightness(0.2) blur(2px)';
+                  let pointerEvents: 'auto' | 'none' = 'none';
 
                   if (isCenter) {
                     transformStyle = 'translateX(0px) translateZ(0px) rotateY(0deg) scale(1)';
                     filter = 'none';
-                  } else if (isLeft) {
-                    const offsetPx = Math.abs(diff) === 1 ? -120 : -210;
-                    const zOffset = Math.abs(diff) === 1 ? -120 : -220;
-                    transformStyle = `translateX(${offsetPx}px) translateZ(${zOffset}px) rotateY(38deg) scale(${1 - Math.abs(diff) * 0.12})`;
-                    filter = Math.abs(diff) === 1 ? 'brightness(0.65)' : 'brightness(0.35) blur(0.8px)';
-                  } else if (isRight) {
-                    const offsetPx = diff === 1 ? 120 : 210;
-                    const zOffset = diff === 1 ? -120 : -220;
-                    transformStyle = `translateX(${offsetPx}px) translateZ(${zOffset}px) rotateY(-38deg) scale(${1 - diff * 0.12})`;
-                    filter = diff === 1 ? 'brightness(0.65)' : 'brightness(0.35) blur(0.8px)';
+                    opacity = 1;
+                    zIndex = 30;
+                    pointerEvents = 'auto';
+                  } else if (absDiff === 1) {
+                    const offsetPx = isLeft ? -120 : 120;
+                    const rotY = isLeft ? 38 : -38;
+                    transformStyle = `translateX(${offsetPx}px) translateZ(-120px) rotateY(${rotY}deg) scale(0.88)`;
+                    filter = 'brightness(0.65)';
+                    opacity = 1;
+                    zIndex = 25;
+                    pointerEvents = 'auto';
+                  } else if (absDiff === 2) {
+                    const offsetPx = isLeft ? -210 : 210;
+                    const rotY = isLeft ? 42 : -42;
+                    transformStyle = `translateX(${offsetPx}px) translateZ(-220px) rotateY(${rotY}deg) scale(0.76)`;
+                    filter = 'brightness(0.35) blur(0.8px)';
+                    opacity = 1;
+                    zIndex = 20;
+                    pointerEvents = 'auto';
+                  } else {
+                    // Buffer oculto en los extremos para animación continua simétrica tanto al avanzar como al retroceder
+                    const offsetPx = isLeft ? -300 : 300;
+                    const rotY = isLeft ? 45 : -45;
+                    transformStyle = `translateX(${offsetPx}px) translateZ(-300px) rotateY(${rotY}deg) scale(0.65)`;
+                    filter = 'brightness(0.2) blur(2px)';
+                    opacity = 0;
+                    zIndex = 5;
+                    pointerEvents = 'none';
                   }
 
                   return (
@@ -255,15 +287,15 @@ export default function HeroEscenico() {
                       onClick={() => !isCenter && setActiveIndex(idx)}
                       className="hero-preview-card p-3 shadow-2xl position-absolute top-0 w-100"
                       style={{
-                        maxWidth: '410px',
+                        maxWidth: 'min(410px, calc(100vw - 2.5rem))',
                         transform: transformStyle,
                         zIndex,
                         opacity,
                         filter,
                         transformStyle: 'preserve-3d',
-                        transition: 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease, filter 0.45s ease',
+                        transition: 'transform 0.55s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease, filter 0.45s ease',
                         cursor: isCenter ? 'default' : 'pointer',
-                        pointerEvents: 'auto',
+                        pointerEvents,
                         boxShadow: isCenter
                           ? '0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 25px rgba(201, 168, 76, 0.25)'
                           : '0 15px 30px rgba(0,0,0,0.5)',
@@ -298,12 +330,12 @@ export default function HeroEscenico() {
                       </div>
 
                       {/* Card footer details & direct link */}
-                      <div className="d-flex align-items-center justify-content-between pt-1 px-1">
-                        <div>
+                      <div className="d-flex align-items-center justify-content-between pt-1 px-1 gap-2">
+                        <div className="flex-grow-1" style={{ minWidth: 0 }}>
                           <span className="font-montserrat text-muted d-block" style={{ fontSize: '0.7rem' }}>
                             Acabado & Soporte
                           </span>
-                          <span className="font-montserrat fw-semibold text-text small text-truncate d-block" style={{ maxWidth: '180px' }}>
+                          <span className="font-montserrat fw-semibold text-text small text-truncate d-block">
                             {card.materialText}
                           </span>
                         </div>
@@ -312,7 +344,7 @@ export default function HeroEscenico() {
                             e.stopPropagation();
                             navigate(`${card.tipoItem === 'drinkware' ? '/drinkware' : '/catalogo'}/${card.slug}`);
                           }}
-                          className="btn btn-primary btn-sm px-3 py-2 rounded-3 d-flex align-items-center gap-1 font-montserrat fw-semibold"
+                          className="btn btn-primary btn-sm px-3 py-2 rounded-3 d-flex align-items-center gap-1 font-montserrat fw-semibold flex-shrink-0"
                           style={{ fontSize: '0.78rem' }}
                         >
                           <span>Ver Detalle</span>

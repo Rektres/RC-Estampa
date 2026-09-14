@@ -302,7 +302,9 @@ export default function ProductoDetalle() {
 
           <div>
             <h3 className="font-montserrat fw-semibold small text-text mb-2">Descripción</h3>
-            <p className="font-montserrat small text-muted lh-base mb-0">{producto.descripcion}</p>
+            <p className="font-montserrat small text-muted lh-base mb-0" style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+              {producto.descripcion}
+            </p>
           </div>
         </div>
       </div>

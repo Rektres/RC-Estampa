@@ -193,6 +193,18 @@ p {
   text-justify: inter-word;
   text-align-last: left;
   hyphens: auto;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+// En pantallas móviles / tamaño phone, alinear texto a la izquierda para evitar que se desborde o genere espacios excesivos
+@media (max-width: 767.98px) {
+  p {
+    text-align: left !important;
+    text-justify: auto !important;
+    text-align-last: left !important;
+    hyphens: manual !important;
+  }
 }
 
 // Excepciones para mantener simetría en elementos UI

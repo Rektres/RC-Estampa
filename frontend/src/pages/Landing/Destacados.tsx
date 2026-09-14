@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Sparkles, X, ShieldCheck, Shirt, Thermometer } from 'lucide-react';
 import HoverSwapCard from '../../components/shared/HoverSwapCard';
 import ShareButton from '../../components/shared/ShareButton';
@@ -18,6 +19,18 @@ export default function Destacados() {
     ...(prod ?? []).filter((p) => p.destacado),
     ...(vaj ?? []).filter((p) => p.destacado),
   ];
+
+  // Bloquear scroll al abrir ficha técnica
+  useEffect(() => {
+    if (specProduct) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [specProduct]);
 
   const distinctLineas = useMemo(() => {
     const set = new Set(allDestacados.map((p) => p.linea).filter(Boolean));
@@ -87,23 +100,23 @@ export default function Destacados() {
       </div>
 
       {/* Modal de Especificaciones Técnicas (Componente F de la Guía) */}
-      {specProduct && (
+      {specProduct && typeof document !== 'undefined' && createPortal(
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center px-3 modal-backdrop-custom"
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3 modal-backdrop-custom"
           style={{
-            zIndex: 1070,
+            zIndex: 99999,
           }}
           onClick={() => setSpecProduct(null)}
         >
           <div
-            className="bg-card border border-primary-30 rounded-4 p-4 p-md-5 shadow-2xl position-relative"
-            style={{ maxWidth: '36rem', width: '100%' }}
+            className="bg-card border border-primary-30 rounded-4 p-4 p-md-5 shadow-2xl position-relative overflow-y-auto"
+            style={{ maxWidth: '36rem', width: '100%', maxHeight: '90vh' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
               onClick={() => setSpecProduct(null)}
-              className="btn btn-link p-0 position-absolute top-0 end-0 m-4 text-muted hover-lift"
+              className="btn btn-link p-0 position-absolute top-0 end-0 m-3 m-md-4 text-muted hover-lift"
               aria-label="Cerrar modal"
             >
               <X size={22} />
@@ -173,7 +186,8 @@ export default function Destacados() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );
