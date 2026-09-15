@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, HelpCircle, Sparkles } from 'lucide-react';
+import { ChevronDown, HelpCircle, MessageCircle } from 'lucide-react';
 
 interface FAQItem {
   pregunta: string;
@@ -35,16 +35,13 @@ const FAQS: FAQItem[] = [
   {
     pregunta: '¿Cómo solicito una cotización formal para mi empresa o evento?',
     respuesta:
-      'Puedes ingresar a la sección de Cotización en el menú, seleccionar las cantidades estimadas y cargar tus detalles. También puedes escribirnos directamente por WhatsApp al +56 9 4483 0378 y recibirás atención y presupuesto en menos de 2 horas hábiles.',
+      'Puedes ingresar a la sección de Cotización en el menú, seleccionar las cantidades estimadas y cargar tus detalles. También puedes escribirnos directamente por WhatsApp al +56 9 7441 9828 y recibirás atención y presupuesto en menos de 2 horas hábiles.',
   },
 ];
 
 export default function FAQEscenico() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  const toggle = (idx: number) => {
-    setOpenIndex((prev) => (prev === idx ? null : idx));
-  };
 
   // Schema FAQPage para rich snippets de Google
   const faqSchema = {

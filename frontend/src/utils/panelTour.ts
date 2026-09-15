@@ -15,7 +15,7 @@ const DEFAULT_OPTIONS = {
 /**
  * 1. Tour Exhaustivo del Panel según Pestaña Activa (Español Latinoamericano)
  */
-export function startPanelTabTour(tab: 'estadisticas' | 'ropa' | 'drinkware' | 'categorias' | 'lineas') {
+export function startPanelTabTour(tab: 'estadisticas' | 'ropa' | 'drinkware' | 'categorias' | 'lineas' | 'correos') {
   const tour = new Shepherd.Tour(DEFAULT_OPTIONS);
 
   // Paso Inicial: Cabecera Principal
@@ -773,6 +773,28 @@ export function startPanelTabTour(tab: 'estadisticas' | 'ropa' | 'drinkware' | '
       attachTo: {
         element: '#tour-lineas-container',
         on: 'top',
+      },
+      buttons: [
+        {
+          text: '← Anterior',
+          classes: 'shepherd-button-secondary',
+          action: () => tour.back(),
+        },
+        {
+          text: '¡Entendido! Finalizar ✓',
+          classes: 'shepherd-button-primary',
+          action: () => tour.complete(),
+        },
+      ],
+    });
+  } else if (tab === 'correos') {
+    tour.addStep({
+      id: 'correos-mgmt-step',
+      title: 'Centro de Gestión de Correos',
+      text: 'Desde este módulo puedes redactar emails oficiales con vista previa interactiva en tono Light, auditar el historial de envíos transaccionales y consultar los parámetros de conexión.',
+      attachTo: {
+        element: '#tour-panel-header',
+        on: 'bottom',
       },
       buttons: [
         {
