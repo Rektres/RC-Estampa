@@ -56,6 +56,9 @@ class PedidoViewSet(
             )
 
         estado_anterior = pedido.estado
+        if nuevo_estado == estado_anterior:
+            return Response(PedidoSerializer(pedido).data, status=status.HTTP_200_OK)
+
         pedido.estado = nuevo_estado
         if nuevo_estado == 'pagado' and not pedido.pagado_en:
             pedido.pagado_en = timezone.now()
@@ -70,10 +73,14 @@ class PedidoViewSet(
             'nota': nota,
         })
         pedido.historial_estados = historial
+        pedido._skip_email_save = True
         pedido.save(update_fields=['estado', 'pagado_en', 'historial_estados'])
 
-        # Enviar notificación por correo al cliente
-        enviar_email_cambio_estado(pedido, nuevo_estado, nota=nota)
+        # Enviar notificación única por correo al cliente
+        try:
+            enviar_email_cambio_estado(pedido, nuevo_estado, nota=nota)
+        except Exception as e:
+            logger.error(f"Error enviando correo de cambio de estado: {e}")
 
         return Response(PedidoSerializer(pedido).data, status=status.HTTP_200_OK)
 

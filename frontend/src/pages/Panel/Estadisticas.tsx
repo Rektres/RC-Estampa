@@ -30,11 +30,24 @@ import {
   Shirt,
 } from 'lucide-react';
 import { Modal } from 'react-bootstrap';
+import Swal from 'sweetalert2';
 import { panelApi, pedidosApi, type EstadisticasData } from '../../api';
 import { useAsync } from '../../api/hooks';
 import { formatPrice } from '../../utils';
 import { startOrderModalTour } from '../../utils/panelTour';
 import PedidoTimeline from '../../components/shared/PedidoTimeline';
+
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3500,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+  },
+});
 
 const PERIODOS = [
   { key: 'todo', label: 'Todo el tiempo' },
@@ -249,13 +262,35 @@ export default function Estadisticas() {
   }
 
   async function handleCambiarEstado(numero: string, nuevoEstado: string, nota: string = '') {
+    if (updatingNumero === numero) return;
+
+    const estadoObj = ESTADOS_DISPONIBLES.find((e) => e.key === nuevoEstado);
+    const estadoLabel = estadoObj ? estadoObj.label : nuevoEstado;
+
+    const currentTx = data?.ultimas_transacciones?.find((t) => t.numero === numero) || activeModalTx;
+    if (currentTx && currentTx.estado === nuevoEstado) {
+      Toast.fire({
+        icon: 'info',
+        title: `El pedido ${numero} ya está en estado "${estadoLabel}"`,
+      });
+      return;
+    }
+
     setUpdatingNumero(numero);
+
+    Toast.fire({
+      icon: 'info',
+      title: `Actualizando estado a "${estadoLabel}"...`,
+      text: 'Enviando notificación al cliente por correo',
+      timer: 2000,
+    });
+
     try {
       await pedidosApi.cambiarEstado(numero, nuevoEstado, nota);
       setReload((n) => n + 1);
       
       const nuevoEvento = {
-        estado_anterior: activeModalTx?.estado || 'pendiente',
+        estado_anterior: currentTx?.estado || 'pendiente',
         estado_nuevo: nuevoEstado,
         fecha: new Date().toISOString(),
         autor: 'Administrador (Panel)',
@@ -270,8 +305,19 @@ export default function Estadisticas() {
         });
         setNotaCambio('');
       }
+
+      Toast.fire({
+        icon: 'success',
+        title: `¡Estado actualizado a "${estadoLabel}"!`,
+        text: `Pedido ${numero} modificado y correo enviado al cliente.`,
+        timer: 4000,
+      });
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'No se pudo actualizar el estado.');
+      Toast.fire({
+        icon: 'error',
+        title: 'Error al actualizar estado',
+        text: err.response?.data?.detail || 'No se pudo actualizar el estado del pedido.',
+      });
     } finally {
       setUpdatingNumero(null);
     }

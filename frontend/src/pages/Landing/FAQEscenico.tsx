@@ -66,18 +66,11 @@ export default function FAQEscenico() {
       />
 
       <div className="container py-4">
-        {/* Eyebrow & Titular */}
+        {/* Titular */}
         <div className="text-center max-w-xl mx-auto mb-5">
-          <div className="eyebrow-badge mb-3">
-            <span className="live-dot" />
-            <span>Resolución de Dudas Frecuentes</span>
-          </div>
-          <h2 className="font-italiana display-5 fw-bold text-text mb-3">
-            Preguntas Frecuentes & SRE Operativo
+          <h2 className="font-italiana display-5 fw-bold text-text mb-2">
+            Preguntas Frecuentes o FAQ
           </h2>
-          <p className="font-montserrat text-muted small mb-0">
-            Todo lo que necesitas saber sobre tiempos de producción, despacho a todo Chile y cotizaciones corporativas.
-          </p>
         </div>
 
         {/* Acordeón Escénico */}

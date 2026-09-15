@@ -87,6 +87,7 @@ class Pedido(models.Model):
             and hasattr(self, '_estado_anterior')
             and self._estado_anterior
             and self._estado_anterior != self.estado
+            and not getattr(self, '_skip_email_save', False)
         )
         super().save(*args, **kwargs)
 

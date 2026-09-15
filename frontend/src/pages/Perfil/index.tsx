@@ -13,6 +13,7 @@ import { useSEO } from '../../hooks/useSEO';
 import PedidoTimeline from '../../components/shared/PedidoTimeline';
 import { REGIONES_CHILE, obtenerComunasPorRegion } from '../../data/chile';
 import { formatChilePhoneDisplay } from '../../utils/phone';
+import { formatRut } from '../../utils/rut';
 
 export default function Perfil() {
   useSEO({ title: 'Mi Cuenta — Historial & Seguimiento | RC Estampa' });
@@ -38,7 +39,7 @@ export default function Perfil() {
   const [formData, setFormData] = useState({
     nombre: user?.nombre || '',
     telefono: user?.telefono ? formatChilePhoneDisplay(user.telefono) : '+56 9 ',
-    rut: user?.rut || '',
+    rut: user?.rut ? formatRut(user.rut) : '',
     direccion: user?.direccion || '',
     comuna: user?.comuna || '',
     ciudad: user?.ciudad || '',
@@ -58,7 +59,7 @@ export default function Perfil() {
         ...prev,
         nombre: user.nombre || prev.nombre,
         telefono: user.telefono ? formatChilePhoneDisplay(user.telefono) : prev.telefono,
-        rut: user.rut || prev.rut,
+        rut: user.rut ? formatRut(user.rut) : prev.rut,
         direccion: user.direccion || prev.direccion,
         comuna: user.comuna || prev.comuna,
         ciudad: user.ciudad || prev.ciudad,
@@ -605,7 +606,7 @@ export default function Perfil() {
                 <label className="form-label text-muted small fw-semibold">RUT / Identificación</label>
                 <input
                   type="text"
-                  value={formData.rut || user?.rut || ''}
+                  value={formatRut(formData.rut || user?.rut || '')}
                   disabled
                   className="form-control bg-elevated text-muted border-border opacity-75"
                   placeholder="Sin RUT registrado"
