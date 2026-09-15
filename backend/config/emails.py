@@ -299,3 +299,63 @@ def enviar_email_cambio_estado(pedido, nuevo_estado, nota=""):
         logger.error(f"Error al enviar email de cambio de estado para pedido {pedido.numero}: {exc}")
         return False
 
+
+def enviar_email_nuevo_pedido_admin(pedido):
+    """
+    Notifica al equipo de administración/taller cuando entra un nuevo pedido pagado o confirmado.
+    """
+    try:
+        destinatario = getattr(settings, 'ADMIN_EMAIL_NOTIFICATION', 'admin@rcestampa.cl')
+        asunto = f"🚨 ¡Nuevo Pedido {pedido.numero}! — Total: {formatear_precio(pedido.total)}"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #0d0d0f; color: #e5e5e8; margin: 0; padding: 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; background-color: #16161a; border-radius: 12px; border: 1px solid #d4af37; padding: 32px; }}
+                .header {{ text-align: center; border-bottom: 1px solid #2a2a30; padding-bottom: 16px; margin-bottom: 20px; }}
+                .badge {{ background-color: #d4af37; color: #0d0d0f; font-weight: bold; padding: 4px 12px; border-radius: 12px; font-size: 12px; }}
+                .info-row {{ padding: 8px 0; border-bottom: 1px solid #24242c; font-size: 14px; }}
+                .label {{ color: #a0a0a8; width: 140px; display: inline-block; }}
+                .val {{ color: #ffffff; font-weight: bold; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <span class="badge">NUEVA VENTA CONFIRMADA</span>
+                    <h2 style="color: #ffffff; margin: 12px 0 0 0;">Pedido #{pedido.numero}</h2>
+                </div>
+                <div class="info-row"><span class="label">Cliente:</span><span class="val">{pedido.nombre}</span></div>
+                <div class="info-row"><span class="label">Email:</span><span class="val">{pedido.email}</span></div>
+                <div class="info-row"><span class="label">Teléfono:</span><span class="val">{pedido.telefono or 'No registrado'}</span></div>
+                <div class="info-row"><span class="label">Total:</span><span class="val" style="color: #d4af37;">{formatear_precio(pedido.total)}</span></div>
+                <div class="info-row"><span class="label">Método Pago:</span><span class="val">{pedido.payment_method_id or 'Mercado Pago'}</span></div>
+                <div class="info-row"><span class="label">Destino:</span><span class="val">{pedido.direccion}, {pedido.ciudad} ({pedido.region})</span></div>
+                
+                <div style="margin-top: 24px; text-align: center;">
+                    <a href="https://rcestampa.cl/panel" style="background: #d4af37; color: #0d0d0f; text-decoration: none; font-weight: bold; padding: 12px 24px; border-radius: 6px; display: inline-block;">
+                        Ir al Panel de Administración
+                    </a>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = strip_tags(html_content)
+        from_email = getattr(settings, 'SERVER_EMAIL', 'RC Estampa <no-reply@rcestampa.cl>')
+
+        msg = EmailMultiAlternatives(asunto, text_content, from_email, [destinatario])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send(fail_silently=False)
+        logger.info(f"Notificación de nuevo pedido {pedido.numero} enviada a admin ({destinatario})")
+        return True
+    except Exception as exc:
+        logger.error(f"Error al enviar notificación a admin para pedido {pedido.numero}: {exc}")
+        return False
+
+

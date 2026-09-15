@@ -243,18 +243,21 @@ MERCADOPAGO_WEBHOOK_SECRET = env('MERCADOPAGO_WEBHOOK_SECRET', default='')
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:5173')
 BACKEND_PUBLIC_URL = env('BACKEND_PUBLIC_URL', default='http://localhost:8000')
 
-# Configuración de Correo Electrónico (Gmail SMTP / Console)
-EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+# Configuración de Correo Electrónico (SMTP Relay - Resend / Brevo / Custom)
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.resend.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_USE_SSL = env.bool('EMAIL_USE_SSL', default=False)
+EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=10)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='resend')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='RC Estampa <contacto@rcestampa.cl>')
+SERVER_EMAIL = env('SERVER_EMAIL', default='RC Estampa <no-reply@rcestampa.cl>')
 
-if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
-    EMAIL_PORT = env.int('EMAIL_PORT', default=587)
-    EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+if EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 else:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 
 # Configuración de Logging Estructurado & Auditoría
 LOGGING = {

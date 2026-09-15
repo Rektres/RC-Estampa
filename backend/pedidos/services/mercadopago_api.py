@@ -61,10 +61,11 @@ def descontar_stock_y_notificar(pedido):
         logger.error(f"Error al descontar stock para pedido {pedido.numero}: {exc}")
 
     try:
-        from config.emails import enviar_email_confirmacion_pedido
+        from config.emails import enviar_email_confirmacion_pedido, enviar_email_nuevo_pedido_admin
         enviar_email_confirmacion_pedido(pedido)
+        enviar_email_nuevo_pedido_admin(pedido)
     except Exception as exc:
-        logger.error(f"Error al disparar email de confirmación para pedido {pedido.numero}: {exc}")
+        logger.error(f"Error al disparar emails de confirmación/notificación para pedido {pedido.numero}: {exc}")
 
 
 def poblar_datos_auditoria_pedido(
