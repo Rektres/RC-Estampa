@@ -67,7 +67,6 @@ class VerificarCodigoView(APIView):
         return self._procesar_verificacion(email, codigo)
 
     def _procesar_verificacion(self, email, codigo):
-
         if not email or not codigo:
             return Response(
                 {"success": False, "message": "Debes ingresar tu correo y el código de verificación."},
@@ -81,22 +80,46 @@ class VerificarCodigoView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Si el usuario ya estaba verificado o si ingresó el código correcto
-        if user.codigo_verificacion and user.codigo_verificacion != codigo and codigo != '123456':
-            if user.codigo_expiracion and timezone.now() > user.codigo_expiracion:
-                return Response(
-                    {"success": False, "message": "El código ha expirado. Solicita un nuevo código."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        # Si el usuario ya fue verificado y el código ya fue consumido/inhabilitado
+        if user.email_verificado and not user.codigo_verificacion:
+            return Response(
+                {
+                    "success": False,
+                    "ya_verificado": True,
+                    "message": "Este enlace de verificación ya ha sido utilizado. Tu cuenta ya se encuentra activa.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Si no tiene código de verificación activo
+        if not user.codigo_verificacion:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Este código de verificación ya no es válido o ya fue utilizado.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Si el código expiró
+        if user.codigo_expiracion and timezone.now() > user.codigo_expiracion:
+            return Response(
+                {"success": False, "message": "El código de verificación ha expirado. Solicita un nuevo código."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validar código
+        if user.codigo_verificacion != codigo and codigo != '123456':
             return Response(
                 {"success": False, "message": "El código de verificación no es correcto."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Activar cuenta
+        # Activar cuenta e inhabilitar código de forma permanente
         user.email_verificado = True
         user.codigo_verificacion = ''
-        user.save(update_fields=['email_verificado', 'codigo_verificacion'])
+        user.codigo_expiracion = None
+        user.save(update_fields=['email_verificado', 'codigo_verificacion', 'codigo_expiracion'])
 
         # Generar tokens de sesión
         refresh = RefreshToken.for_user(user)

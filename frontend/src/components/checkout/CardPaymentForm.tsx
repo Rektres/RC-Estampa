@@ -78,9 +78,9 @@ export default function CardPaymentForm({
   // Calcular opciones de cuotas
   const cuotasOpciones = useMemo(() => {
     return [
-      { num: 1, label: `1 cuota de ${formatPrice(totalAmount)} (Sin interés)` },
-      { num: 3, label: `3 cuotas de ${formatPrice(Math.round(totalAmount / 3))} (Sin interés)` },
-      { num: 6, label: `6 cuotas de ${formatPrice(Math.round(totalAmount / 6))} (Sin interés)` },
+      { num: 1, label: `1 cuota de ${formatPrice(totalAmount)}` },
+      { num: 3, label: `3 cuotas de ${formatPrice(Math.round(totalAmount / 3))}` },
+      { num: 6, label: `6 cuotas de ${formatPrice(Math.round(totalAmount / 6))}` },
       { num: 12, label: `12 cuotas de ${formatPrice(Math.round(totalAmount / 12))}` },
     ];
   }, [totalAmount]);
@@ -321,8 +321,8 @@ export default function CardPaymentForm({
               type="text"
               value={docNumber}
               onChange={(e) => handleDocNumberChange(e.target.value)}
-              placeholder="12345678-9"
-              maxLength={10}
+              placeholder="12.345.678-9"
+              maxLength={13}
               className="form-control bg-elevated font-montserrat"
               required
             />

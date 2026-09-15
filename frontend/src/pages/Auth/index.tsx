@@ -96,8 +96,12 @@ export default function Auth() {
           }, 1200);
         })
         .catch((err: unknown) => {
-          const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-          setError(msg || 'El enlace de activación expiró. Por favor ingresa el código o solicita uno nuevo.');
+          const resp = (err as { response?: { data?: { message?: string; ya_verificado?: boolean } } })?.response?.data;
+          if (resp?.ya_verificado) {
+            setError('Este enlace de verificación ya ha sido utilizado. Tu cuenta ya se encuentra activa.');
+          } else {
+            setError(resp?.message || 'El enlace de verificación ya ha sido utilizado o ha expirado.');
+          }
         })
         .finally(() => {
           setIsVerifying(false);
