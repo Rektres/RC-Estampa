@@ -22,3 +22,7 @@ dist/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Workspace temporary assets
+images/
+

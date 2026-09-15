@@ -89,3 +89,23 @@ class Favorito(models.Model):
         item_nombre = self.producto.nombre if self.producto else (self.drinkware.nombre if self.drinkware else 'Item')
         return f'{self.user.email} - {item_nombre}'
 
+
+class EmailLog(models.Model):
+    remitente = models.CharField(max_length=255, default='contacto@rcestampa.cl')
+    destinatario = models.EmailField()
+    asunto = models.CharField(max_length=255)
+    mensaje = models.TextField()
+    estado = models.CharField(max_length=20, default='enviado')
+    error = models.TextField(blank=True)
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-creado_en',)
+        verbose_name = 'Registro de Email'
+        verbose_name_plural = 'Registros de Emails'
+
+    def __str__(self):
+        return f"{self.asunto} -> {self.destinatario} ({self.creado_en.strftime('%Y-%m-%d %H:%M')})"
+
+

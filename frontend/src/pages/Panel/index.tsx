@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
   ShoppingBag,
   HelpCircle,
+  Mail,
 } from 'lucide-react';
 import { panelApi } from '../../api';
 import { useAsync } from '../../api/hooks';
@@ -26,11 +27,12 @@ import LineaBadge from '../../components/shared/LineaBadge';
 import Categorias from './Categorias';
 import Lineas from './Lineas';
 import Estadisticas from './Estadisticas';
+import Correos from './Correos';
 import ProductoModalForm from './ProductoModalForm';
 import { startPanelTabTour } from '../../utils/panelTour';
 import type { Producto, ProductoVajilla } from '../../types';
 
-type Tab = 'estadisticas' | 'ropa' | 'drinkware' | 'categorias' | 'lineas';
+type Tab = 'estadisticas' | 'ropa' | 'drinkware' | 'categorias' | 'lineas' | 'correos';
 
 const TABS: { key: Tab; label: string; icon: typeof BarChart3 }[] = [
   { key: 'estadisticas', label: 'Estadísticas & Ventas', icon: BarChart3 },
@@ -38,6 +40,7 @@ const TABS: { key: Tab; label: string; icon: typeof BarChart3 }[] = [
   { key: 'drinkware', label: 'Colección Drinkware', icon: Coffee },
   { key: 'categorias', label: 'Categorías', icon: Tags },
   { key: 'lineas', label: 'Líneas & Colecciones', icon: Sparkles },
+  { key: 'correos', label: 'Gestión de Correos', icon: Mail },
 ];
 
 export default function Panel() {
@@ -69,7 +72,7 @@ export default function Panel() {
   const recurso = tab === 'drinkware' ? panelApi.drinkware : panelApi.productos;
 
   const { data: items, loading } = useAsync<(Producto | ProductoVajilla)[]>(
-    () => (tab === 'categorias' || tab === 'estadisticas' || tab === 'lineas' ? Promise.resolve([]) : recurso.list()),
+    () => (tab === 'categorias' || tab === 'estadisticas' || tab === 'lineas' || tab === 'correos' ? Promise.resolve([]) : recurso.list()),
     [tab, reload]
   );
 
@@ -291,6 +294,8 @@ export default function Panel() {
           <Categorias />
         ) : tab === 'lineas' ? (
           <Lineas />
+        ) : tab === 'correos' ? (
+          <Correos />
         ) : (
           <div className="d-flex flex-column gap-3">
             {/* Barra de Filtros y Selector de Modo de Vista */}

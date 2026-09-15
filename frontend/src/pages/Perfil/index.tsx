@@ -429,7 +429,7 @@ export default function Perfil() {
                           <strong>📍 Dirección de Despacho:</strong> {pedido.direccion}, {pedido.comuna || ''} {pedido.ciudad} ({pedido.region})
                         </div>
                         <a
-                          href={`https://wa.me/56944830378?text=${encodeURIComponent(`Hola RC Estampa, consulto por el estado de mi pedido ${pedido.numero}`)}`}
+                          href={`https://wa.me/56974419828?text=${encodeURIComponent(`Hola RC Estampa, consulto por el estado de mi pedido ${pedido.numero}`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"

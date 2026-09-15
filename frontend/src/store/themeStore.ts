@@ -16,8 +16,8 @@ const getInitialTheme = (): Theme => {
       return saved;
     }
   }
-  document.documentElement.setAttribute('data-bs-theme', 'dark');
-  return 'dark';
+  document.documentElement.setAttribute('data-bs-theme', 'light');
+  return 'light';
 };
 
 export const useThemeStore = create<ThemeState>((set, get) => ({

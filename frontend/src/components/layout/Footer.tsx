@@ -47,7 +47,7 @@ export default function Footer() {
                 <Facebook size={17} />
               </a>
               <a
-                href="https://wa.me/56944830378"
+                href="https://wa.me/56974419828"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-circle bg-elevated border border-border text-primary text-decoration-none hover-lift"
@@ -99,13 +99,13 @@ export default function Footer() {
             <ul className="list-unstyled d-flex flex-column gap-3 mb-0 font-montserrat small text-muted">
               <li>
                 <a
-                  href="https://wa.me/56944830378"
+                  href="https://wa.me/56974419828"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-text text-decoration-none d-flex align-items-center gap-2 hover-lift"
                 >
                   <MessageCircle size={16} className="text-primary" />
-                  +56 9 4483 0378 (WhatsApp Directo)
+                  +56 9 7441 9828 (WhatsApp Directo)
                 </a>
               </li>
               <li className="d-flex align-items-start gap-2">

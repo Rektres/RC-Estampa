@@ -75,7 +75,7 @@ export default function Personalizado() {
             Nuestro equipo técnico revisará tus requerimientos gráficos y te enviará una propuesta detallada en menos de 24 horas hábiles.
           </p>
           <a
-            href="https://wa.me/56944830378"
+            href="https://wa.me/56974419828"
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-primary px-4 py-3 d-inline-flex align-items-center gap-2 justify-content-center rounded-3 hover-lift"
@@ -241,7 +241,7 @@ export default function Personalizado() {
           <div className="d-flex align-items-center justify-content-center gap-2 text-center pt-2">
             <MessageCircle size={15} className="text-primary" />
             <a
-              href="https://wa.me/56944830378"
+              href="https://wa.me/56974419828"
               target="_blank"
               rel="noopener noreferrer"
               className="font-montserrat text-muted text-decoration-none small hover-lift"

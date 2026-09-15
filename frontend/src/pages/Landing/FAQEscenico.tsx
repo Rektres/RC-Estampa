@@ -61,96 +61,97 @@ export default function FAQEscenico() {
   };
 
   return (
-    <section className="container-xxl py-5 my-4">
+    <section className="py-5 bg-base position-relative overflow-hidden">
       {/* Inyección JSON-LD para Schema.org FAQ */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <div className="text-center mb-5">
-        <div className="eyebrow-badge mb-2">
-          <span className="glyph">★</span>
-          <span>RESPUESTAS & ASISTENCIA TÉCNICA</span>
+      <div className="container py-4">
+        {/* Eyebrow & Titular */}
+        <div className="text-center max-w-xl mx-auto mb-5">
+          <div className="eyebrow-badge mb-3">
+            <span className="live-dot" />
+            <span>Resolución de Dudas Frecuentes</span>
+          </div>
+          <h2 className="font-italiana display-5 fw-bold text-text mb-3">
+            Preguntas Frecuentes & SRE Operativo
+          </h2>
+          <p className="font-montserrat text-muted small mb-0">
+            Todo lo que necesitas saber sobre tiempos de producción, despacho a todo Chile y cotizaciones corporativas.
+          </p>
         </div>
-        <h2 className="font-italiana fs-1 text-text mb-2">Preguntas Frecuentes</h2>
-        <p className="font-montserrat small text-muted mx-auto text-center" style={{ maxWidth: '34rem' }}>
-          Todo lo que necesitas saber sobre nuestros procesos de estampado, calidades textiles, tiempos y pedidos a medida.
-        </p>
-      </div>
 
-      <div className="mx-auto" style={{ maxWidth: '48rem' }}>
-        <div className="d-flex flex-column gap-3">
-          {FAQS.map((faq, idx) => {
-            const isOpen = openIndex === idx;
-            return (
-              <div
-                key={idx}
-                className="bg-card border border-border rounded-3 overflow-hidden transition-all"
-                style={{
-                  borderColor: isOpen ? 'var(--card-border-gold)' : 'var(--card-border)',
-                  boxShadow: isOpen ? 'var(--card-shadow)' : 'none',
-                }}
-              >
-                <button
-                  onClick={() => toggle(idx)}
-                  className="w-100 p-4 d-flex align-items-center justify-content-between text-start bg-transparent border-0 font-montserrat fw-semibold text-text gap-3"
-                  style={{ fontSize: '0.95rem' }}
-                  aria-expanded={isOpen}
-                >
-                  <div className="d-flex align-items-center gap-3">
-                    <HelpCircle
-                      size={18}
-                      className={isOpen ? 'text-primary flex-shrink-0' : 'text-muted flex-shrink-0'}
-                    />
-                    <span>{faq.pregunta}</span>
-                  </div>
-                  <ChevronDown
-                    size={18}
-                    className="text-muted flex-shrink-0 transition-transform"
+        {/* Acordeón Escénico */}
+        <div className="row justify-content-center">
+          <div className="col-12 col-lg-9">
+            <div className="d-flex flex-column gap-3">
+              {FAQS.map((faq, idx) => {
+                const isOpen = openIndex === idx;
+                return (
+                  <div
+                    key={faq.pregunta}
+                    className="stage-card p-4 transition-all"
                     style={{
-                      transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.25s ease',
+                      cursor: 'pointer',
+                      borderLeft: isOpen ? '3px solid var(--brand-primary)' : undefined,
                     }}
-                  />
-                </button>
+                    onClick={() => setOpenIndex(isOpen ? null : idx)}
+                  >
+                    <div className="d-flex align-items-center justify-content-between gap-3">
+                      <div className="d-flex align-items-center gap-3">
+                        <HelpCircle size={18} className="text-primary flex-shrink-0" />
+                        <h3 className="font-montserrat fw-semibold text-text mb-0 fs-6">
+                          {faq.pregunta}
+                        </h3>
+                      </div>
+                      <ChevronDown
+                        size={18}
+                        className="text-muted flex-shrink-0 transition-all"
+                        style={{
+                          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        }}
+                      />
+                    </div>
 
-                {isOpen && (
-                  <div className="px-4 pb-4 pt-0 border-top border-border">
-                    <p
-                      className="font-montserrat text-muted small mb-0 pt-3"
-                      style={{ lineHeight: '1.75' }}
-                    >
-                      {faq.respuesta}
-                    </p>
+                    {isOpen && (
+                      <div className="mt-3 pt-3 border-top border-border">
+                        <p className="font-montserrat text-muted small mb-0 leading-relaxed">
+                          {faq.respuesta}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
 
-        {/* Support Micro Banner */}
-        <div className="text-center mt-5 p-4 rounded-4 bg-elevated border border-border d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3">
-          <div className="d-flex align-items-center gap-2 text-start">
-            <Sparkles size={20} className="text-primary flex-shrink-0" />
-            <div>
-              <span className="font-montserrat fw-semibold text-text small d-block">
-                ¿Tienes una consulta específica sobre tu proyecto?
-              </span>
-              <span className="font-montserrat text-muted" style={{ fontSize: '0.75rem' }}>
-                Nuestro equipo técnico te responde por WhatsApp de lunes a sábado.
-              </span>
+            {/* Asistencia Directa Banner */}
+            <div className="stage-card p-4 mt-4 d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 text-center text-md-start">
+              <div className="d-flex align-items-center gap-3">
+                <div className="p-3 rounded-circle bg-primary-10 text-primary">
+                  <MessageCircle size={22} />
+                </div>
+                <div>
+                  <h4 className="font-montserrat fw-semibold text-text fs-6 mb-1">
+                    ¿Tienes un requerimiento especial o diseño a medida?
+                  </h4>
+                  <p className="font-montserrat text-muted small mb-0">
+                    Habla directamente con un asesor técnico de taller en tiempo real.
+                  </p>
+                </div>
+              </div>
+              <a
+                href="https://wa.me/56974419828"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary btn-sm px-4 py-2 text-nowrap rounded-3 hover-lift"
+              >
+                Hablar con un Asesor
+              </a>
             </div>
           </div>
-          <a
-            href="https://wa.me/56944830378"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary btn-sm px-4 py-2 text-nowrap rounded-3 hover-lift"
-          >
-            Hablar con un Asesor
-          </a>
         </div>
       </div>
     </section>

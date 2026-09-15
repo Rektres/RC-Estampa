@@ -124,7 +124,7 @@ export default function Confirmacion() {
           Volver a la tienda
         </Link>
         <a
-          href={`https://wa.me/56944830378?text=${encodeURIComponent(`Hola RC Estampa, acabo de realizar el pedido ${pedidoId}.`)}`}
+          href={`https://wa.me/56974419828?text=${encodeURIComponent(`Hola RC Estampa, acabo de realizar el pedido ${pedidoId}.`)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="btn btn-secondary d-inline-flex align-items-center gap-2 justify-content-center px-4 py-2"

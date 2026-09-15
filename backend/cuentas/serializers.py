@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import DireccionEnvio, Favorito
+from .models import DireccionEnvio, Favorito, EmailLog
 from catalogo.serializers import ProductoSerializer, ProductoVajillaSerializer
 
 User = get_user_model()
@@ -79,6 +79,19 @@ class FavoritoSerializer(serializers.ModelSerializer):
         if not producto and not drinkware:
             raise serializers.ValidationError('Debes indicar un producto o un artículo de drinkware.')
         return attrs
+
+
+class EmailLogSerializer(serializers.ModelSerializer):
+    creado_por_email = serializers.ReadOnlyField(source='creado_por.email')
+
+    class Meta:
+        model = EmailLog
+        fields = (
+            'id', 'remitente', 'destinatario', 'asunto', 'mensaje',
+            'estado', 'error', 'creado_por', 'creado_por_email', 'creado_en'
+        )
+        read_only_fields = ('id', 'estado', 'error', 'creado_por', 'creado_en')
+
 
 
 

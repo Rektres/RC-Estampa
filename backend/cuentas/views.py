@@ -8,15 +8,16 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .models import DireccionEnvio, Favorito
+from .models import DireccionEnvio, Favorito, EmailLog
 from .serializers import (
     DireccionEnvioSerializer,
     EmailTokenObtainPairSerializer,
     FavoritoSerializer,
     RegisterSerializer,
     UserSerializer,
+    EmailLogSerializer,
 )
-from config.emails import enviar_email_codigo_verificacion
+from config.emails import enviar_email_codigo_verificacion, enviar_email_personalizado
 
 User = get_user_model()
 
@@ -177,5 +178,81 @@ class FavoritoViewSet(viewsets.ModelViewSet):
         elif drinkware:
             Favorito.objects.filter(user=self.request.user, drinkware=drinkware).delete()
         serializer.save(user=self.request.user)
+
+
+class EnviarEmailAdminView(APIView):
+    """
+    Permite al administrador enviar un correo oficial (@rcestampa.cl) desde el panel de control.
+    """
+    permission_classes = [permissions.IsAdminUser]
+
+    def post(self, request):
+        remitente = request.data.get('remitente', 'contacto@rcestampa.cl').strip()
+        destinatario = request.data.get('destinatario', '').strip().lower()
+        asunto = request.data.get('asunto', '').strip()
+        mensaje = request.data.get('mensaje', '').strip()
+        titulo_pre = request.data.get('titulo_pre', 'Mensaje Oficial').strip()
+
+        if not destinatario or not asunto or not mensaje:
+            return Response(
+                {"success": False, "message": "Destinatario, asunto y mensaje son obligatorios."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validar dominio de remitente
+        if not remitente.endswith('@rcestampa.cl'):
+            remitente = f"{remitente}@rcestampa.cl" if '@' not in remitente else 'contacto@rcestampa.cl'
+
+        try:
+            enviar_email_personalizado(
+                remitente=f"RC Estampa <{remitente}>",
+                destinatario=destinatario,
+                asunto=asunto,
+                mensaje=mensaje,
+                titulo_pre=titulo_pre
+            )
+
+            log = EmailLog.objects.create(
+                remitente=remitente,
+                destinatario=destinatario,
+                asunto=asunto,
+                mensaje=mensaje,
+                estado='enviado',
+                creado_por=request.user if request.user.is_authenticated else None
+            )
+
+            return Response({
+                "success": True,
+                "message": f"Correo enviado exitosamente a {destinatario}.",
+                "email": EmailLogSerializer(log).data
+            }, status=status.HTTP_200_OK)
+
+        except Exception as exc:
+            EmailLog.objects.create(
+                remitente=remitente,
+                destinatario=destinatario,
+                asunto=asunto,
+                mensaje=mensaje,
+                estado='fallido',
+                error=str(exc),
+                creado_por=request.user if request.user.is_authenticated else None
+            )
+            return Response({
+                "success": False,
+                "message": f"Error al enviar el correo: {str(exc)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class EmailLogListView(generics.ListAPIView):
+    """
+    Lista los últimos correos enviados desde el panel para auditoría y visualización.
+    """
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = EmailLogSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return EmailLog.objects.all()[:60]
+
 
 

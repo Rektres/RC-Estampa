@@ -10,6 +10,8 @@ from .views import (
     ReenviarCodigoView,
     RegisterView,
     VerificarCodigoView,
+    EnviarEmailAdminView,
+    EmailLogListView,
 )
 
 router = DefaultRouter()
@@ -23,5 +25,7 @@ urlpatterns = [
     path('token/', EmailTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('me/', MeView.as_view(), name='me'),
+    path('emails/enviar/', EnviarEmailAdminView.as_view(), name='admin_enviar_email'),
+    path('emails/historial/', EmailLogListView.as_view(), name='admin_emails_historial'),
 ] + router.urls
 

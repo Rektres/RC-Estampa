@@ -117,7 +117,7 @@ export default function LuxuryBoxCotizacion() {
 
                 <div className="text-center pt-2">
                   <a
-                    href="https://wa.me/56944830378"
+                    href="https://wa.me/56974419828"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-montserrat small text-muted text-decoration-none d-inline-flex align-items-center gap-1 hover-lift"

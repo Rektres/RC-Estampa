@@ -35,7 +35,7 @@ export default function TerminosYPrivacidad() {
             El presente sitio web y sus servicios de comercio electrónico son operados por <strong>RC Estampa SpA</strong> (en adelante, «RC Estampa»), sociedad constituida bajo las leyes de la República de Chile, con domicilio en Santiago, Región Metropolitana, Chile.
           </p>
           <p className="text-muted mb-0">
-            Para efectos de consultas, ejercicio de derechos de privacidad o atención al cliente, nuestro canal oficial es el correo electrónico <a href="mailto:privacidad@rcestampa.cl" className="text-primary text-decoration-none fw-semibold">privacidad@rcestampa.cl</a> y nuestra línea WhatsApp <a href="https://wa.me/56944830378" className="text-primary text-decoration-none fw-semibold">+56 9 4483 0378</a>.
+            Para efectos de consultas, ejercicio de derechos de privacidad o atención al cliente, nuestro canal oficial es el correo electrónico <a href="mailto:privacidad@rcestampa.cl" className="text-primary text-decoration-none fw-semibold">privacidad@rcestampa.cl</a> y nuestra línea WhatsApp <a href="https://wa.me/56974419828" className="text-primary text-decoration-none fw-semibold">+56 9 7441 9828</a>.
           </p>
         </section>
 

@@ -40,7 +40,7 @@ export default function MobileStickyBar() {
         </Link>
 
         <a
-          href="https://wa.me/56944830378"
+          href="https://wa.me/56974419828"
           target="_blank"
           rel="noopener noreferrer"
           className="btn btn-outline-primary btn-sm p-2 rounded-3 d-flex align-items-center justify-content-center text-decoration-none"

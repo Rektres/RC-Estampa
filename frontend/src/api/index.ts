@@ -364,4 +364,18 @@ export const panelApi = {
     link.remove();
     window.URL.revokeObjectURL(downloadUrl);
   },
+  emails: {
+    send: (data: {
+      remitente?: string;
+      destinatario: string;
+      asunto: string;
+      mensaje: string;
+      titulo_pre?: string;
+    }) =>
+      api
+        .post<{ success: boolean; message: string; email: any }>('/auth/emails/enviar/', data)
+        .then((r) => r.data),
+    history: () => api.get<any[]>('/auth/emails/historial/').then((r) => r.data),
+  },
 };
+
