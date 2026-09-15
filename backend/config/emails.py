@@ -178,7 +178,7 @@ def enviar_email_codigo_verificacion(user, codigo):
             return False
 
         frontend_url = getattr(settings, 'FRONTEND_URL', 'https://rcestampa.cl').rstrip('/')
-        url_auth = f"{frontend_url}/auth"
+        url_auth = f"{frontend_url}/auth?action=verificar&email={destinatario}&codigo={codigo}"
 
         asunto = f"🔑 {codigo} es tu código de activación — RC Estampa"
 
@@ -198,8 +198,8 @@ def enviar_email_codigo_verificacion(user, codigo):
         <div style="background-color: #faf8f5; border-radius: 10px; border: 1px solid rgba(18, 19, 36, 0.08); padding: 18px; margin: 20px 0;">
             <h4 style="margin: 0 0 8px 0; color: #121324; font-size: 14px; font-weight: 700;">Instrucciones para activar tu cuenta:</h4>
             <ol style="margin: 0; padding-left: 20px; font-size: 13px; color: #585a6f; line-height: 1.6;">
-                <li>Regresa a la pantalla de verificación en tu navegador o haz clic en el botón inferior.</li>
-                <li>Ingresa el código numérico de 6 dígitos mostrado arriba.</li>
+                <li>Haz clic en el botón inferior para <strong>activar tu cuenta de manera automática</strong>.</li>
+                <li>O si lo prefieres, ingresa en la web e introduce el código de 6 dígitos mostrado arriba.</li>
                 <li>¡Listo! Tu cuenta quedará activa para guardar tus diseños 3D y hacer pedidos.</li>
             </ol>
         </div>
@@ -209,7 +209,7 @@ def enviar_email_codigo_verificacion(user, codigo):
             titulo_pre="✦ Verificación de Cuenta",
             titulo_principal="Activa tu cuenta en RC Estampa",
             contenido_central=contenido,
-            boton_texto="Completar Activación en la Web",
+            boton_texto="Activar mi Cuenta de Forma Automática",
             boton_url=url_auth,
             nota_pie="Si tú no solicitaste crear esta cuenta, puedes desestimar este mensaje con total seguridad."
         )

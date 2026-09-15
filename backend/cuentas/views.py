@@ -56,9 +56,17 @@ class VerificarCodigoView(APIView):
     permission_classes = [permissions.AllowAny]
     throttle_scope = 'auth'
 
+    def get(self, request):
+        email = request.query_params.get('email', '').strip().lower()
+        codigo = str(request.query_params.get('codigo', '')).strip()
+        return self._procesar_verificacion(email, codigo)
+
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
         codigo = str(request.data.get('codigo', '')).strip()
+        return self._procesar_verificacion(email, codigo)
+
+    def _procesar_verificacion(self, email, codigo):
 
         if not email or not codigo:
             return Response(

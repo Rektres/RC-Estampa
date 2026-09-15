@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { CreditCard, ShieldCheck, Lock, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { formatPrice } from '../../utils';
+import { formatRut, validateRut, cleanRut } from '../../utils/rut';
 
 interface CardPaymentFormProps {
   totalAmount: number;
@@ -46,6 +47,7 @@ export default function CardPaymentForm({
   const [docNumber, setDocNumber] = useState('');
   const [installments, setInstallments] = useState(1);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isLocalSubmitting, setIsLocalSubmitting] = useState(false);
 
   // Limpieza y detección de marca
   const cleanNumber = useMemo(() => cardNumber.replace(/\D/g, ''), [cardNumber]);
@@ -58,26 +60,19 @@ export default function CardPaymentForm({
     setCardNumber(parts.join(' '));
   }
 
-  // Formato fecha de expiración (MM/AA)
+  // Formato fecha vencimiento MM/AA
   function handleExpirationChange(val: string) {
     const raw = val.replace(/\D/g, '').slice(0, 4);
-    if (raw.length >= 3) {
-      setExpiration(`${raw.slice(0, 2)}/${raw.slice(2)}`);
+    if (raw.length >= 2) {
+      setExpiration(`${raw.slice(0, 2)}/${raw.slice(2, 4)}`);
     } else {
       setExpiration(raw);
     }
   }
 
-  // Formato RUT chileno
+  // Formato RUT
   function handleDocNumberChange(val: string) {
-    const raw = val.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9);
-    if (raw.length > 1) {
-      const cuerpo = raw.slice(0, -1);
-      const dv = raw.slice(-1);
-      setDocNumber(`${cuerpo}-${dv}`);
-    } else {
-      setDocNumber(raw);
-    }
+    setDocNumber(formatRut(val));
   }
 
   // Calcular opciones de cuotas
@@ -92,29 +87,46 @@ export default function CardPaymentForm({
 
   async function handleSubmitForm(e: React.FormEvent) {
     e.preventDefault();
+    if (isSubmitting || isLocalSubmitting) return;
+
     setFormError(null);
 
-    if (cleanNumber.length < 13) {
-      setFormError('Ingresa un número de tarjeta válido (mínimo 13 dígitos).');
+    if (cleanNumber.length < 15) {
+      setFormError('Ingresa un número de tarjeta válido (15 a 16 dígitos).');
       return;
     }
-    if (!cardHolder.trim()) {
-      setFormError('Ingresa el nombre del titular tal como figura en la tarjeta.');
+
+    if (!cardHolder.trim() || cardHolder.trim().length < 3) {
+      setFormError('Ingresa el nombre completo del titular de la tarjeta.');
       return;
     }
-    const [month, year] = expiration.split('/');
-    if (!month || !year || parseInt(month, 10) < 1 || parseInt(month, 10) > 12) {
+
+    const expParts = expiration.split('/');
+    if (expParts.length !== 2 || expParts[0].length !== 2 || expParts[1].length !== 2) {
       setFormError('Ingresa una fecha de expiración válida (MM/AA).');
       return;
     }
-    if (cvv.length < 3) {
-      setFormError('Ingresa el código de seguridad (CVV) de 3 o 4 dígitos.');
+
+    const expMonth = parseInt(expParts[0], 10);
+    const expYear = parseInt(`20${expParts[1]}`, 10);
+
+    if (expMonth < 1 || expMonth > 12) {
+      setFormError('El mes de vencimiento debe estar entre 01 y 12.');
       return;
     }
 
-    const expMonth = parseInt(month, 10);
-    const expYear = parseInt(`20${year}`, 10);
+    if (cvv.length < 3) {
+      setFormError('Ingresa un código de seguridad (CVV) válido.');
+      return;
+    }
 
+    const rawRut = cleanRut(docNumber);
+    if (rawRut.length < 7 || !validateRut(rawRut)) {
+      setFormError('Ingresa un RUT de titular válido (ej: 12.345.678-9).');
+      return;
+    }
+
+    setIsLocalSubmitting(true);
     let token = '';
 
     try {
@@ -128,7 +140,7 @@ export default function CardPaymentForm({
             name: cardHolder,
             identification: {
               type: 'RUT',
-              number: docNumber.replace(/[^0-9kK]/g, ''),
+              number: rawRut,
             },
           },
           expiration_month: expMonth,
@@ -156,15 +168,19 @@ export default function CardPaymentForm({
       cleanNumber.startsWith('4024') ||
       cleanNumber.startsWith('1111');
 
-    await onSubmit({
-      token,
-      payment_method_id: brand.id === 'other' ? 'visa' : brand.id,
-      installments,
-      doc_type: 'RUT',
-      doc_number: docNumber,
-      is_test_card: isTestCard,
-      card_last_digits: cleanNumber.slice(-4),
-    });
+    try {
+      await onSubmit({
+        token,
+        payment_method_id: brand.id === 'other' ? 'visa' : brand.id,
+        installments,
+        doc_type: 'RUT',
+        doc_number: rawRut,
+        is_test_card: isTestCard,
+        card_last_digits: cleanNumber.slice(-4),
+      });
+    } finally {
+      setIsLocalSubmitting(false);
+    }
   }
 
   return (
@@ -331,11 +347,15 @@ export default function CardPaymentForm({
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isLocalSubmitting}
+          style={isSubmitting || isLocalSubmitting ? { pointerEvents: 'none', opacity: 0.8 } : {}}
           className="btn btn-primary w-100 py-3 mt-2 d-flex align-items-center justify-content-center gap-2 font-montserrat fw-bold shadow-sm"
         >
-          {isSubmitting ? (
-            <span>Procesando pago seguro...</span>
+          {isSubmitting || isLocalSubmitting ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+              <span>Procesando pago seguro...</span>
+            </>
           ) : (
             <>
               <Lock size={16} />

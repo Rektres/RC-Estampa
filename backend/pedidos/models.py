@@ -71,13 +71,32 @@ class Pedido(models.Model):
     class Meta:
         ordering = ('-creado_en',)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._estado_anterior = self.estado
+
     def save(self, *args, **kwargs):
         if not self.numero:
             numero = _numero('RC', 8)
             while Pedido.objects.filter(numero=numero).exists():
                 numero = _numero('RC', 8)
             self.numero = numero
+
+        hubo_cambio_estado = bool(
+            self.pk
+            and hasattr(self, '_estado_anterior')
+            and self._estado_anterior
+            and self._estado_anterior != self.estado
+        )
         super().save(*args, **kwargs)
+
+        if hubo_cambio_estado:
+            try:
+                from config.emails import enviar_email_cambio_estado
+                enviar_email_cambio_estado(self, self.estado)
+            except Exception:
+                pass
+            self._estado_anterior = self.estado
 
     def __str__(self):
         return self.numero

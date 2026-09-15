@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Modal } from 'react-bootstrap';
 import {
   Mail,
   Send,
@@ -12,6 +13,10 @@ import {
   RefreshCw,
   Eye,
   FileText,
+  ArrowDownLeft,
+  ArrowUpRight,
+  CheckCircle2,
+  HelpCircle,
 } from 'lucide-react';
 import { panelApi } from '../../api';
 
@@ -28,7 +33,7 @@ interface EmailLogItem {
 }
 
 export default function Correos() {
-  const [subTab, setSubTab] = useState<'redactar' | 'historial' | 'configuracion'>('redactar');
+  const [subTab, setSubTab] = useState<'entrada' | 'redactar' | 'historial' | 'configuracion'>('redactar');
 
   // Formulario de envío
   const [remitente, setRemitente] = useState('contacto@rcestampa.cl');
@@ -163,14 +168,22 @@ export default function Correos() {
       </div>
 
       {/* Selector de Pestañas */}
-      <div className="d-flex align-items-center gap-2 border-bottom border-border pb-2">
+      <div className="d-flex align-items-center gap-2 border-bottom border-border pb-2 flex-wrap">
+        <button
+          onClick={() => setSubTab('entrada')}
+          className={`btn btn-sm px-4 py-2 font-montserrat fw-semibold d-inline-flex align-items-center gap-2 rounded-3 ${
+            subTab === 'entrada' ? 'btn-primary' : 'btn-outline-secondary border-0 text-muted'
+          }`}
+        >
+          <Inbox size={15} /> Bandeja de Entrada (Recibidos)
+        </button>
         <button
           onClick={() => setSubTab('redactar')}
           className={`btn btn-sm px-4 py-2 font-montserrat fw-semibold d-inline-flex align-items-center gap-2 rounded-3 ${
             subTab === 'redactar' ? 'btn-primary' : 'btn-outline-secondary border-0 text-muted'
           }`}
         >
-          <Send size={15} /> Redactar Correo Oficial
+          <Send size={15} /> Redactar Correo (contacto@rcestampa.cl)
         </button>
         <button
           onClick={() => {
@@ -181,7 +194,7 @@ export default function Correos() {
             subTab === 'historial' ? 'btn-primary' : 'btn-outline-secondary border-0 text-muted'
           }`}
         >
-          <Clock size={15} /> Historial de Envíos ({historial.length})
+          <Clock size={15} /> Bandeja de Salida ({historial.length})
         </button>
         <button
           onClick={() => setSubTab('configuracion')}
@@ -193,9 +206,130 @@ export default function Correos() {
         </button>
       </div>
 
+      {/* PESTAÑA 0: BANDEJA DE ENTRADA */}
+      {subTab === 'entrada' && (
+        <div className="d-flex flex-column gap-4 animate-tab-fade">
+          <div className="stage-card p-4 rounded-4">
+            <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+              <div>
+                <h4 className="font-montserrat fw-semibold text-text fs-6 mb-1 d-flex align-items-center gap-2">
+                  <ArrowDownLeft size={18} className="text-primary" /> Casillas de Recepción Corporativa (@rcestampa.cl)
+                </h4>
+                <p className="font-montserrat small text-muted mb-0">
+                  Enrutamiento activo y sincronizado vía Cloudflare Email Routing con entrega instantánea.
+                </p>
+              </div>
+
+              <div className="d-flex align-items-center gap-2">
+                <a
+                  href="https://mail.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary btn-sm d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm hover-lift"
+                >
+                  <Inbox size={15} /> Abrir Bandeja en Gmail <ExternalLink size={13} />
+                </a>
+                <button
+                  onClick={() => setSubTab('redactar')}
+                  className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3"
+                >
+                  <Send size={15} /> Redactar Respuesta
+                </button>
+              </div>
+            </div>
+
+            {/* Listado de Casillas Oficiales */}
+            <div className="row g-3">
+              {[
+                {
+                  email: 'contacto@rcestampa.cl',
+                  titulo: 'Atención al Cliente & General',
+                  desc: 'Recepción de consultas generales, cotizaciones directas y dudas sobre estampados o grabados.',
+                  badge: 'Principal',
+                  color: 'primary',
+                },
+                {
+                  email: 'ventas@rcestampa.cl',
+                  titulo: 'Ventas & Cotizaciones Corporativas',
+                  desc: 'Solicitudes de empresas, pedidos mayoristas y presupuestos de personalización.',
+                  badge: 'Comercial',
+                  color: 'primary',
+                },
+                {
+                  email: 'pedidos@rcestampa.cl',
+                  titulo: 'Gestión y Seguimiento de Pedidos',
+                  desc: 'Comprobantes de transferencia, estados de entrega y consultas de tracking de clientes.',
+                  badge: 'Operaciones',
+                  color: 'primary',
+                },
+                {
+                  email: 'admin@rcestampa.cl',
+                  titulo: 'Administración & Facturación',
+                  desc: 'Comunicaciones administrativas, proveedores y notificaciones del sistema.',
+                  badge: 'Admin',
+                  color: 'secondary',
+                },
+              ].map((casilla) => (
+                <div key={casilla.email} className="col-12 col-md-6">
+                  <div className="p-3 rounded-3 bg-elevated border border-border h-100 d-flex flex-column justify-content-between">
+                    <div>
+                      <div className="d-flex align-items-center justify-content-between mb-2">
+                        <strong className="text-text font-montserrat fs-6">{casilla.email}</strong>
+                        <span className={`badge bg-${casilla.color}-10 text-${casilla.color} border border-${casilla.color}-20 small`}>
+                          {casilla.badge}
+                        </span>
+                      </div>
+                      <div className="font-montserrat small text-primary fw-semibold mb-1">{casilla.titulo}</div>
+                      <p className="font-montserrat text-muted small mb-0">{casilla.desc}</p>
+                    </div>
+
+                    <div className="mt-3 pt-2 border-top border-border d-flex align-items-center justify-content-between">
+                      <span className="small text-muted font-montserrat d-inline-flex align-items-center gap-1">
+                        <CheckCircle2 size={13} className="text-success" /> Redirección a rektres.development@gmail.com
+                      </span>
+                      <button
+                        onClick={() => {
+                          setRemitente(casilla.email);
+                          setSubTab('redactar');
+                        }}
+                        className="btn btn-ghost btn-sm p-1 text-primary small d-inline-flex align-items-center gap-1"
+                        title="Redactar correo con este remitente"
+                      >
+                        <ArrowUpRight size={13} /> Usar remitente
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Guía Rápida de Funcionamiento */}
+            <div className="mt-4 p-3 rounded-3 bg-card border border-border">
+              <h5 className="font-montserrat fw-semibold text-text fs-6 mb-2 d-flex align-items-center gap-2">
+                <HelpCircle size={15} className="text-primary" /> ¿Cómo funciona la recepción y respuesta de correos?
+              </h5>
+              <div className="row g-3 font-montserrat small text-muted">
+                <div className="col-12 col-md-4">
+                  <strong className="text-text d-block mb-1">1. Recepción en Gmail</strong>
+                  Cuando un cliente escribe a cualquier correo <code>@rcestampa.cl</code>, Cloudflare lo entrega instantáneamente a tu cuenta personal configurada (<strong>rektres.development@gmail.com</strong>).
+                </div>
+                <div className="col-12 col-md-4">
+                  <strong className="text-text d-block mb-1">2. Respuesta Oficial</strong>
+                  Puedes responder a tus clientes directamente desde la pestaña <strong>"Redactar Correo"</strong> con remitente verificado <strong>contacto@rcestampa.cl</strong> y diseño corporativo en tono light.
+                </div>
+                <div className="col-12 col-md-4">
+                  <strong className="text-text d-block mb-1">3. Conexión Outlook / Móvil</strong>
+                  También puedes configurar tu Outlook o app móvil usando los datos de la pestaña <strong>"Parámetros de Conexión"</strong> para enviar y recibir desde cualquier cliente.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* PESTAÑA 1: REDACTAR */}
       {subTab === 'redactar' && (
-        <div className="row g-4">
+        <div className="row g-4 animate-tab-fade">
           {/* Formulario */}
           <div className="col-12 col-xl-7">
             <div className="stage-card p-4 rounded-4">
@@ -409,9 +543,9 @@ export default function Correos() {
         </div>
       )}
 
-      {/* PESTAÑA 2: HISTORIAL */}
+      {/* PESTAÑA 2: HISTORIAL (BANDEJA DE SALIDA) */}
       {subTab === 'historial' && (
-        <div className="stage-card p-4 rounded-4">
+        <div className="stage-card p-4 rounded-4 animate-tab-fade">
           <div className="d-flex align-items-center justify-content-between mb-3">
             <h4 className="font-montserrat fw-semibold text-text fs-6 mb-0 d-flex align-items-center gap-2">
               <Clock size={16} className="text-primary" /> Registro de Correos Enviados ({historial.length})
@@ -488,63 +622,60 @@ export default function Correos() {
             </div>
           )}
 
-          {/* Modal de Detalle de Correo */}
-          {logSeleccionado && (
-            <div
-              className="modal show d-block"
-              style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-            >
-              <div className="modal-dialog modal-dialog-centered modal-lg">
-                <div className="modal-content bg-card border border-border rounded-4">
-                  <div className="modal-header border-border">
-                    <h5 className="modal-title font-montserrat fw-semibold text-text fs-6 d-flex align-items-center gap-2">
-                      <Mail size={16} className="text-primary" /> Detalle de Correo Enviado
-                    </h5>
-                    <button
-                      type="button"
-                      className="btn-close btn-close-white"
-                      onClick={() => setLogSeleccionado(null)}
-                    />
-                  </div>
-                  <div className="modal-body p-4">
-                    <div className="row g-3 mb-3 font-montserrat small">
-                      <div className="col-sm-6">
-                        <span className="text-muted d-block">De:</span>
-                        <strong className="text-text">{logSeleccionado.remitente}</strong>
-                      </div>
-                      <div className="col-sm-6">
-                        <span className="text-muted d-block">Para:</span>
-                        <strong className="text-primary">{logSeleccionado.destinatario}</strong>
-                      </div>
-                      <div className="col-12">
-                        <span className="text-muted d-block">Asunto:</span>
-                        <strong className="text-text fs-6">{logSeleccionado.asunto}</strong>
-                      </div>
+          {/* Modal de Detalle de Correo con React-Bootstrap Modal (Portal DOM) */}
+          <Modal
+            show={!!logSeleccionado}
+            onHide={() => setLogSeleccionado(null)}
+            size="lg"
+            centered
+            backdrop="static"
+            keyboard={true}
+          >
+            <Modal.Header closeButton className="bg-card border-border">
+              <Modal.Title className="font-montserrat fw-semibold text-text fs-6 d-flex align-items-center gap-2">
+                <Mail size={16} className="text-primary" /> Detalle de Correo Enviado
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="bg-card p-4">
+              {logSeleccionado && (
+                <>
+                  <div className="row g-3 mb-3 font-montserrat small">
+                    <div className="col-sm-6">
+                      <span className="text-muted d-block">De:</span>
+                      <strong className="text-text">{logSeleccionado.remitente}</strong>
                     </div>
-
-                    <div className="p-3 rounded-3 bg-elevated border border-border font-montserrat text-muted small whitespace-pre-wrap">
-                      {logSeleccionado.mensaje}
+                    <div className="col-sm-6">
+                      <span className="text-muted d-block">Para:</span>
+                      <strong className="text-primary">{logSeleccionado.destinatario}</strong>
                     </div>
+                    <div className="col-12">
+                      <span className="text-muted d-block">Asunto:</span>
+                      <strong className="text-text fs-6">{logSeleccionado.asunto}</strong>
+                    </div>
+                  </div>
 
-                    {logSeleccionado.error && (
-                      <div className="alert alert-danger mt-3 small mb-0">
-                        <strong>Error registrado:</strong> {logSeleccionado.error}
-                      </div>
-                    )}
+                  <div className="p-3 rounded-3 bg-elevated border border-border font-montserrat text-muted small whitespace-pre-wrap">
+                    {logSeleccionado.mensaje}
                   </div>
-                  <div className="modal-footer border-border">
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => setLogSeleccionado(null)}
-                    >
-                      Cerrar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+
+                  {logSeleccionado.error && (
+                    <div className="alert alert-danger mt-3 small mb-0">
+                      <strong>Error registrado:</strong> {logSeleccionado.error}
+                    </div>
+                  )}
+                </>
+              )}
+            </Modal.Body>
+            <Modal.Footer className="bg-card border-border">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setLogSeleccionado(null)}
+              >
+                Cerrar
+              </button>
+            </Modal.Footer>
+          </Modal>
         </div>
       )}
 

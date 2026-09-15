@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -8,18 +8,19 @@ import CardPaymentForm from '../../components/checkout/CardPaymentForm';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
 import { formatPrice } from '../../utils';
-import { catalogoApi, pedidosApi, direccionesApi, type PedidoInput } from '../../api';
-import { useAsync } from '../../api/hooks';
+import { pedidosApi, direccionesApi, type PedidoInput } from '../../api';
 import { useSEO } from '../../hooks/useSEO';
+import { REGIONES_CHILE, obtenerComunasPorRegion, normalizarNombreRegion } from '../../data/chile';
+import { formatChilePhoneDisplay, cleanChilePhone } from '../../utils/phone';
 
 const schema = z.object({
-  nombre: z.string().min(2, 'Requerido'),
+  nombre: z.string().min(2, 'Ingresa tu nombre completo'),
   email: z.string().email('Email inválido'),
-  telefono: z.string().optional(),
-  direccion: z.string().min(5, 'Ingresa la dirección completa'),
-  comuna: z.string().min(2, 'Ingresa la comuna'),
-  ciudad: z.string().min(2, 'Requerido'),
+  telefono: z.string().min(8, 'Ingresa un teléfono o WhatsApp de contacto'),
+  direccion: z.string().min(5, 'Ingresa calle y número'),
   region: z.string().min(2, 'Selecciona una región'),
+  comuna: z.string().min(2, 'Selecciona una comuna'),
+  ciudad: z.string().min(2, 'Ingresa tu ciudad o localidad'),
   notas: z.string().optional(),
 });
 
@@ -36,42 +37,45 @@ export default function Checkout() {
   const [step, setStep] = useState(1);
   const [metodoPago, setMetodoPago] = useState<'mercadopago' | 'transferencia'>('mercadopago');
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const { items, total, clearCart } = useCartStore();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const totalAmount = total();
-  const { data: editorCfg } = useAsync(() => catalogoApi.editor(), []);
-  const regiones = editorCfg?.regiones ?? [];
 
   const [tipoDireccion, setTipoDireccion] = useState<'perfil' | 'otra'>(
     user?.direccion ? 'perfil' : 'otra'
   );
   const [guardarDireccion, setGuardarDireccion] = useState(false);
 
-  const { register, handleSubmit, getValues, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, getValues, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       nombre: user?.nombre ?? '',
       email: user?.email ?? '',
-      telefono: user?.telefono ?? '',
+      telefono: user?.telefono ? formatChilePhoneDisplay(user.telefono) : '+56 9 ',
       direccion: user?.direccion ?? '',
+      region: user?.region ? normalizarNombreRegion(user.region) : REGIONES_CHILE[6].nombre,
       comuna: user?.comuna ?? '',
-      ciudad: user?.ciudad ?? '',
-      region: user?.region ?? 'Región Metropolitana',
+      ciudad: user?.ciudad ?? (user?.comuna || 'Santiago'),
     },
   });
 
+  const watchedRegion = watch('region');
+  const comunasDisponibles = useMemo(() => obtenerComunasPorRegion(watchedRegion), [watchedRegion]);
+
   useEffect(() => {
     if (user && tipoDireccion === 'perfil') {
+      const reg = user.region ? normalizarNombreRegion(user.region) : REGIONES_CHILE[6].nombre;
       setValue('nombre', user.nombre || '');
       setValue('email', user.email || '');
-      setValue('telefono', user.telefono || '');
+      setValue('telefono', user.telefono ? formatChilePhoneDisplay(user.telefono) : '+56 9 ');
       setValue('direccion', user.direccion || '');
+      setValue('region', reg);
       setValue('comuna', user.comuna || '');
-      setValue('ciudad', user.ciudad || '');
-      setValue('region', user.region || 'Región Metropolitana');
+      setValue('ciudad', user.ciudad || user.comuna || 'Santiago');
     }
-  }, [user, tipoDireccion, setValue, editorCfg]);
+  }, [user, tipoDireccion, setValue]);
 
   if (items.length === 0) {
     return (
@@ -101,37 +105,41 @@ export default function Checkout() {
   }
 
   async function onSubmit(data: FormData) {
+    if (isSubmitting || isProcessingPayment) return;
+    setIsProcessingPayment(true);
     setSubmitError(null);
-    await handleGuardarDireccionSiAplica(data);
 
-    const payload: PedidoInput = {
-      nombre: data.nombre,
-      email: data.email,
-      telefono: data.telefono,
-      direccion: data.direccion,
-      comuna: data.comuna,
-      ciudad: data.ciudad,
-      region: data.region,
-      notas: data.notas,
-      total: totalAmount,
-      metodo_pago: metodoPago,
-      items: items.map((it) => ({
-        tipo: it.tipo,
-        nombre: it.nombre,
-        imagen: it.imagen,
-        talla: it.talla,
-        color: it.tipo === 'catalogo' ? it.color : undefined,
-        prenda: it.tipo === 'diseno' ? it.prenda : undefined,
-        color_base: it.tipo === 'diseno' ? it.color_base : undefined,
-        linea: it.tipo === 'catalogo' ? it.linea : undefined,
-        precio: it.precio ?? null,
-        cantidad: it.cantidad,
-        producto_id: it.tipo === 'catalogo' ? it.productoId : undefined,
-        variante_id: it.tipo === 'catalogo' ? it.varianteId : undefined,
-        diseno_id: it.tipo === 'diseno' ? it.disenoId : undefined,
-      })),
-    };
     try {
+      await handleGuardarDireccionSiAplica(data);
+
+      const payload: PedidoInput = {
+        nombre: data.nombre,
+        email: data.email,
+        telefono: cleanChilePhone(data.telefono),
+        direccion: data.direccion,
+        comuna: data.comuna,
+        ciudad: data.ciudad,
+        region: data.region,
+        notas: data.notas,
+        total: totalAmount,
+        metodo_pago: metodoPago,
+        items: items.map((it) => ({
+          tipo: it.tipo,
+          nombre: it.nombre,
+          imagen: it.imagen,
+          talla: it.talla,
+          color: it.tipo === 'catalogo' ? it.color : undefined,
+          prenda: it.tipo === 'diseno' ? it.prenda : undefined,
+          color_base: it.tipo === 'diseno' ? it.color_base : undefined,
+          linea: it.tipo === 'catalogo' ? it.linea : undefined,
+          precio: it.precio ?? null,
+          cantidad: it.cantidad,
+          producto_id: it.tipo === 'catalogo' ? it.productoId : undefined,
+          variante_id: it.tipo === 'catalogo' ? it.varianteId : undefined,
+          diseno_id: it.tipo === 'diseno' ? it.disenoId : undefined,
+        })),
+      };
+
       const pedido = await pedidosApi.crear(payload);
       clearCart();
 
@@ -142,6 +150,8 @@ export default function Checkout() {
       }
     } catch {
       setSubmitError('No se pudo procesar el pedido. Intenta nuevamente.');
+    } finally {
+      setIsProcessingPayment(false);
     }
   }
 
@@ -275,54 +285,67 @@ export default function Checkout() {
 
                 <div>
                   <label className="form-label fw-semibold text-text small">Teléfono / WhatsApp *</label>
-                  <input {...register('telefono')} placeholder="+56 9 XXXX XXXX" className="form-control bg-elevated" />
+                  <input
+                    {...register('telefono')}
+                    onChange={(e) => setValue('telefono', formatChilePhoneDisplay(e.target.value))}
+                    placeholder="+56 9 1234 5678"
+                    className="form-control bg-elevated font-montserrat"
+                  />
+                  {errors.telefono && <p className="text-danger mt-1 mb-0 small">{errors.telefono.message}</p>}
                 </div>
 
                 <div>
-                  <label className="form-label fw-semibold text-text small">Dirección *</label>
-                  <input {...register('direccion')} placeholder="Calle, número, depto/casa" className="form-control bg-elevated" />
+                  <label className="form-label fw-semibold text-text small">Dirección de Entrega (Calle y número) *</label>
+                  <input
+                    {...register('direccion')}
+                    placeholder="Ej: Av. Providencia 1234, Depto 502"
+                    className="form-control bg-elevated font-montserrat"
+                  />
                   {errors.direccion && <p className="text-danger mt-1 mb-0 small">{errors.direccion.message}</p>}
                 </div>
 
                 <div className="row g-3">
                   <div className="col-12 col-sm-6">
-                    <label className="form-label fw-semibold text-text small">Comuna *</label>
-                    <input {...register('comuna')} placeholder="Ej: Providencia / Las Condes" className="form-control bg-elevated" />
-                    {errors.comuna && <p className="text-danger mt-1 mb-0 small">{errors.comuna.message}</p>}
-                  </div>
-                  <div className="col-12 col-sm-6">
-                    <label className="form-label fw-semibold text-text small">Ciudad *</label>
-                    <input {...register('ciudad')} placeholder="Ej: Santiago / Valparaíso" className="form-control bg-elevated" />
-                    {errors.ciudad && <p className="text-danger mt-1 mb-0 small">{errors.ciudad.message}</p>}
-                  </div>
-                  <div className="col-12">
                     <label className="form-label fw-semibold text-text small">Región *</label>
-                    <select {...register('region')} className="form-select bg-elevated">
+                    <select
+                      {...register('region')}
+                      onChange={(e) => {
+                        setValue('region', e.target.value);
+                        setValue('comuna', '');
+                      }}
+                      className="form-select bg-elevated font-montserrat"
+                    >
                       <option value="">Selecciona una región...</option>
-                      {regiones.length > 0 ? (
-                        regiones.map((r) => <option key={r} value={r}>{r}</option>)
-                      ) : (
-                        <>
-                          <option value="Región Metropolitana">Región Metropolitana</option>
-                          <option value="Región de Valparaíso">Región de Valparaíso</option>
-                          <option value="Región del Biobío">Región del Biobío</option>
-                          <option value="Región de Antofagasta">Región de Antofagasta</option>
-                          <option value="Región de Los Lagos">Región de Los Lagos</option>
-                          <option value="Región de Coquimbo">Región de Coquimbo</option>
-                          <option value="Región del Maule">Región del Maule</option>
-                          <option value="Región de La Araucanía">Región de La Araucanía</option>
-                          <option value="Región de O'Higgins">Región de O'Higgins</option>
-                          <option value="Región de Tarapacá">Región de Tarapacá</option>
-                          <option value="Región de Los Ríos">Región de Los Ríos</option>
-                          <option value="Región de Arica y Parinacota">Región de Arica y Parinacota</option>
-                          <option value="Región de Ñuble">Región de Ñuble</option>
-                          <option value="Región de Atacama">Región de Atacama</option>
-                          <option value="Región de Aysén">Región de Aysén</option>
-                          <option value="Región de Magallanes">Región de Magallanes</option>
-                        </>
-                      )}
+                      {REGIONES_CHILE.map((r) => (
+                        <option key={r.id} value={r.nombre}>
+                          {r.nombre}
+                        </option>
+                      ))}
                     </select>
                     {errors.region && <p className="text-danger mt-1 mb-0 small">{errors.region.message}</p>}
+                  </div>
+
+                  <div className="col-12 col-sm-6">
+                    <label className="form-label fw-semibold text-text small">Comuna *</label>
+                    <select
+                      {...register('comuna')}
+                      onChange={(e) => {
+                        setValue('comuna', e.target.value);
+                        setValue('ciudad', e.target.value);
+                      }}
+                      className="form-select bg-elevated font-montserrat"
+                      disabled={comunasDisponibles.length === 0}
+                    >
+                      <option value="">
+                        {comunasDisponibles.length > 0 ? 'Selecciona tu comuna...' : 'Primero elige una región'}
+                      </option>
+                      {comunasDisponibles.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.comuna && <p className="text-danger mt-1 mb-0 small">{errors.comuna.message}</p>}
                   </div>
                 </div>
 
@@ -461,14 +484,16 @@ export default function Checkout() {
                   <CardPaymentForm
                     totalAmount={totalAmount}
                     userName={user?.nombre || ''}
-                    isSubmitting={isSubmitting}
+                    isSubmitting={isSubmitting || isProcessingPayment}
                     onSubmit={async (cardData) => {
+                      if (isSubmitting || isProcessingPayment) return;
+                      setIsProcessingPayment(true);
                       setSubmitError(null);
                       const formData = getValues();
                       const payload: PedidoInput = {
                         nombre: formData.nombre,
                         email: formData.email,
-                        telefono: formData.telefono,
+                        telefono: cleanChilePhone(formData.telefono),
                         direccion: formData.direccion,
                         comuna: formData.comuna,
                         ciudad: formData.ciudad,
@@ -525,6 +550,8 @@ export default function Checkout() {
                           translated = 'No se pudo procesar el pago con la tarjeta. Intenta nuevamente.';
                         }
                         setSubmitError(translated);
+                      } finally {
+                        setIsProcessingPayment(false);
                       }
                     }}
                   />
@@ -533,11 +560,21 @@ export default function Checkout() {
                 <div>
                   <button
                     onClick={handleSubmit(onSubmit)}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isProcessingPayment}
+                    style={isSubmitting || isProcessingPayment ? { pointerEvents: 'none', opacity: 0.8 } : {}}
                     className="btn btn-primary w-100 py-3 d-flex align-items-center justify-content-center gap-2 font-montserrat fw-bold shadow-sm"
                   >
-                    <Building2 size={18} />
-                    <span>{isSubmitting ? 'Confirmando pedido...' : 'Confirmar Pedido por Transferencia'}</span>
+                    {isSubmitting || isProcessingPayment ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                        <span>Confirmando pedido...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Building2 size={18} />
+                        <span>Confirmar Pedido por Transferencia</span>
+                      </>
+                    )}
                   </button>
 
                   <div className="d-flex align-items-center justify-content-center gap-2 mt-3 text-muted" style={{ fontSize: '0.75rem' }}>

@@ -11,6 +11,8 @@ import type { Favorito } from '../../types';
 import { formatPrice } from '../../utils';
 import { useSEO } from '../../hooks/useSEO';
 import PedidoTimeline from '../../components/shared/PedidoTimeline';
+import { REGIONES_CHILE, obtenerComunasPorRegion } from '../../data/chile';
+import { formatChilePhoneDisplay } from '../../utils/phone';
 
 export default function Perfil() {
   useSEO({ title: 'Mi Cuenta — Historial & Seguimiento | RC Estampa' });
@@ -35,16 +37,35 @@ export default function Perfil() {
   // Formulario de edición de perfil
   const [formData, setFormData] = useState({
     nombre: user?.nombre || '',
-    telefono: user?.telefono || '',
+    telefono: user?.telefono ? formatChilePhoneDisplay(user.telefono) : '+56 9 ',
     rut: user?.rut || '',
     direccion: user?.direccion || '',
     comuna: user?.comuna || '',
     ciudad: user?.ciudad || '',
-    region: user?.region || 'Región Metropolitana',
+    region: user?.region || 'Región Metropolitana de Santiago',
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const comunasDisponibles = useMemo(() => {
+    return obtenerComunasPorRegion(formData.region);
+  }, [formData.region]);
+
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        nombre: user.nombre || prev.nombre,
+        telefono: user.telefono ? formatChilePhoneDisplay(user.telefono) : prev.telefono,
+        rut: user.rut || prev.rut,
+        direccion: user.direccion || prev.direccion,
+        comuna: user.comuna || prev.comuna,
+        ciudad: user.ciudad || prev.ciudad,
+        region: user.region || prev.region,
+      }));
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -560,7 +581,7 @@ export default function Perfil() {
               </div>
 
               <div className="col-12 col-md-6">
-                <label className="form-label text-muted small fw-semibold">Correo Electrónico (No editable)</label>
+                <label className="form-label text-muted small fw-semibold">Correo Electrónico</label>
                 <input
                   type="email"
                   value={user?.email || ''}
@@ -574,88 +595,66 @@ export default function Perfil() {
                 <input
                   type="tel"
                   value={formData.telefono}
-                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, telefono: formatChilePhoneDisplay(e.target.value) })}
                   className="form-control bg-elevated text-text border-border"
                   placeholder="+56 9 1234 5678"
                 />
               </div>
 
               <div className="col-12 col-md-6">
-                <div className="d-flex align-items-center justify-content-between mb-1">
-                  <label className="form-label text-muted small fw-semibold mb-0">RUT / Identificación</label>
-                  <span className="badge bg-elevated text-muted border border-border" style={{ fontSize: '0.68rem' }}>
-                    🔒 No modificable
-                  </span>
-                </div>
+                <label className="form-label text-muted small fw-semibold">RUT / Identificación</label>
                 <input
                   type="text"
                   value={formData.rut || user?.rut || ''}
                   disabled
-                  readOnly
-                  className="form-control bg-elevated text-muted border-border opacity-75 cursor-not-allowed"
+                  className="form-control bg-elevated text-muted border-border opacity-75"
                   placeholder="Sin RUT registrado"
                 />
-                <span className="form-text text-muted" style={{ fontSize: '0.72rem' }}>
-                  El RUT queda registrado de forma permanente por motivos tributarios y de facturación.
-                </span>
               </div>
 
               <div className="col-12">
-                <label className="form-label text-muted small fw-semibold">Dirección de Entrega</label>
+                <label className="form-label text-muted small fw-semibold">Dirección de Entrega (Calle y número)</label>
                 <input
                   type="text"
                   value={formData.direccion}
                   onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
                   className="form-control bg-elevated text-text border-border"
-                  placeholder="Calle, número, departamento o casa"
+                  placeholder="Ej: Av. Providencia 1234, Depto 502"
                 />
               </div>
 
-              <div className="col-12 col-md-4">
-                <label className="form-label text-muted small fw-semibold">Comuna</label>
-                <input
-                  type="text"
-                  value={formData.comuna}
-                  onChange={(e) => setFormData({ ...formData, comuna: e.target.value })}
-                  className="form-control bg-elevated text-text border-border"
-                  placeholder="Ej. Providencia"
-                />
-              </div>
-
-              <div className="col-12 col-md-4">
-                <label className="form-label text-muted small fw-semibold">Ciudad</label>
-                <input
-                  type="text"
-                  value={formData.ciudad}
-                  onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
-                  className="form-control bg-elevated text-text border-border"
-                  placeholder="Ej. Santiago"
-                />
-              </div>
-
-              <div className="col-12 col-md-4">
+              <div className="col-12 col-md-6">
                 <label className="form-label text-muted small fw-semibold">Región</label>
                 <select
                   value={formData.region}
-                  onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, region: e.target.value, comuna: '', ciudad: '' })}
                   className="form-select bg-elevated text-text border-border"
                 >
-                  <option value="Arica y Parinacota">Arica y Parinacota</option>
-                  <option value="Tarapacá">Tarapacá</option>
-                  <option value="Antofagasta">Antofagasta</option>
-                  <option value="Atacama">Atacama</option>
-                  <option value="Coquimbo">Coquimbo</option>
-                  <option value="Valparaíso">Valparaíso</option>
-                  <option value="Región Metropolitana">Región Metropolitana</option>
-                  <option value="O'Higgins">O'Higgins</option>
-                  <option value="Maule">Maule</option>
-                  <option value="Ñuble">Ñuble</option>
-                  <option value="Biobío">Biobío</option>
-                  <option value="La Araucanía">La Araucanía</option>
-                  <option value="Los Ríos">Los Ríos</option>
-                  <option value="Los Lagos">Los Lagos</option>
-                  <option value="Aysén">Aysén</option>
-                  <option value="Magallanes">Magallanes</option>
+                  <option value="">Selecciona una región...</option>
+                  {REGIONES_CHILE.map((r) => (
+                    <option key={r.id} value={r.nombre}>
+                      {r.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-12 col-md-6">
+                <label className="form-label text-muted small fw-semibold">Comuna</label>
+                <select
+                  value={formData.comuna}
+                  onChange={(e) => setFormData({ ...formData, comuna: e.target.value, ciudad: e.target.value })}
+                  className="form-select bg-elevated text-text border-border"
+                  disabled={comunasDisponibles.length === 0}
+                >
+                  <option value="">
+                    {comunasDisponibles.length > 0 ? 'Selecciona tu comuna...' : 'Primero elige una región'}
+                  </option>
+                  {comunasDisponibles.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

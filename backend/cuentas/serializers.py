@@ -5,7 +5,37 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import DireccionEnvio, Favorito, EmailLog
 from catalogo.serializers import ProductoSerializer, ProductoVajillaSerializer
 
+import re
+
 User = get_user_model()
+
+
+def validar_y_normalizar_rut(rut_str):
+    if not rut_str:
+        return ''
+    clean = re.sub(r'[^0-9kK]', '', str(rut_str)).upper()
+    if len(clean) < 7 or len(clean) > 9:
+        raise serializers.ValidationError('El RUT debe tener entre 7 y 9 dígitos incluyendo el dígito verificador.')
+    cuerpo, dv = clean[:-1], clean[-1]
+    
+    suma = 0
+    multiplo = 2
+    for c in reversed(cuerpo):
+        suma += int(c) * multiplo
+        multiplo = multiplo + 1 if multiplo < 7 else 2
+    
+    resto = 11 - (suma % 11)
+    if resto == 11:
+        dv_esperado = '0'
+    elif resto == 10:
+        dv_esperado = 'K'
+    else:
+        dv_esperado = str(resto)
+        
+    if dv != dv_esperado:
+        raise serializers.ValidationError('El RUT ingresado no es válido (dígito verificador incorrecto).')
+        
+    return f"{cuerpo}-{dv}"
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -27,6 +57,26 @@ class RegisterSerializer(serializers.ModelSerializer):
             'id', 'email', 'nombre', 'password', 'telefono',
             'rut', 'direccion', 'comuna', 'ciudad', 'region'
         )
+
+    def validate_rut(self, value):
+        if not value:
+            return ''
+        norm_rut = validar_y_normalizar_rut(value)
+        if User.objects.filter(rut=norm_rut).exists():
+            raise serializers.ValidationError('Este RUT ya se encuentra registrado en otra cuenta.')
+        return norm_rut
+
+    def validate_telefono(self, value):
+        if not value:
+            return ''
+        digits = re.sub(r'\D', '', str(value))
+        if digits.startswith('569'):
+            digits = digits[3:]
+        elif digits.startswith('9'):
+            digits = digits[1:]
+        if len(digits) != 8:
+            raise serializers.ValidationError('El teléfono debe tener 8 dígitos móviles tras el prefijo +56 9.')
+        return f"+569{digits}"
 
     def create(self, validated_data):
         user = User.objects.create_user(

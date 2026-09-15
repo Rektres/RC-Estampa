@@ -1,12 +1,15 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, ShieldCheck, Mail, ArrowRight, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Mail, ArrowRight, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../api';
 import { useSEO } from '../../hooks/useSEO';
+import { REGIONES_CHILE, obtenerComunasPorRegion } from '../../data/chile';
+import { formatChilePhoneDisplay, cleanChilePhone, validateChilePhone } from '../../utils/phone';
+import { formatRut, validateRut, cleanRut } from '../../utils/rut';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -14,14 +17,18 @@ const loginSchema = z.object({
 });
 
 const registerSchema = z.object({
-  nombre: z.string().min(2, 'El nombre es requerido'),
+  nombre: z.string().min(2, 'Ingresa tu nombre completo'),
   email: z.string().email('Email inválido'),
-  telefono: z.string().min(8, 'Ingresa un teléfono o WhatsApp válido'),
-  rut: z.string().min(8, 'Ingresa un RUT válido (ej: 12345678-9)'),
-  direccion: z.string().min(3, 'Ingresa tu dirección de despacho'),
-  comuna: z.string().min(2, 'Ingresa tu comuna'),
-  ciudad: z.string().min(2, 'Ingresa tu ciudad'),
-  region: z.string().min(2, 'Selecciona o ingresa tu región'),
+  telefono: z.string().refine((val) => validateChilePhone(val), {
+    message: 'Ingresa un teléfono válido (+56 9 XXXX XXXX)',
+  }),
+  rut: z.string().refine((val) => validateRut(val), {
+    message: 'Ingresa un RUT chileno válido (ej: 12.345.678-9)',
+  }),
+  direccion: z.string().min(4, 'Ingresa calle y número de despacho'),
+  region: z.string().min(2, 'Selecciona una región'),
+  comuna: z.string().min(2, 'Selecciona una comuna'),
+  ciudad: z.string().min(2, 'Ingresa tu ciudad o localidad'),
   password: z.string().min(6, 'Mínimo 6 caracteres'),
   confirm: z.string(),
   terminos: z.boolean().refine((v) => v === true, {
@@ -36,6 +43,7 @@ type LoginData = z.infer<typeof loginSchema>;
 type RegisterData = z.infer<typeof registerSchema>;
 
 export default function Auth() {
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<'login' | 'register' | 'verify'>('login');
 
   useSEO({
@@ -55,8 +63,47 @@ export default function Auth() {
   const loginForm = useForm<LoginData>({ resolver: zodResolver(loginSchema) });
   const registerForm = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { region: 'Región Metropolitana', terminos: true },
+    defaultValues: {
+      region: REGIONES_CHILE[6].nombre,
+      comuna: '',
+      ciudad: 'Santiago',
+      telefono: '+56 9 ',
+      terminos: true,
+    },
   });
+
+  const watchedRegion = registerForm.watch('region');
+  const comunasDisponibles = useMemo(() => obtenerComunasPorRegion(watchedRegion), [watchedRegion]);
+
+  // Activación automática de cuenta si el usuario ingresa desde el enlace del correo
+  useEffect(() => {
+    const action = searchParams.get('action');
+    const emailParam = searchParams.get('email');
+    const codeParam = searchParams.get('codigo');
+
+    if (action === 'verificar' && emailParam && codeParam) {
+      setPendingEmail(emailParam);
+      setVerificationCode(codeParam);
+      setMode('verify');
+      setIsVerifying(true);
+      setError(null);
+      authApi.verificarCodigo({ email: emailParam, codigo: codeParam })
+        .then((res) => {
+          login(res.user, res.access, res.refresh);
+          setSuccessMsg('¡Tu cuenta ha sido activada exitosamente!');
+          setTimeout(() => {
+            navigate('/mi-cuenta');
+          }, 1200);
+        })
+        .catch((err: unknown) => {
+          const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+          setError(msg || 'El enlace de activación expiró. Por favor ingresa el código o solicita uno nuevo.');
+        })
+        .finally(() => {
+          setIsVerifying(false);
+        });
+    }
+  }, [searchParams, login, navigate]);
 
   async function handleLogin(data: LoginData) {
     setError(null);
@@ -76,8 +123,8 @@ export default function Auth() {
         email: data.email,
         nombre: data.nombre,
         password: data.password,
-        telefono: data.telefono,
-        rut: data.rut,
+        telefono: cleanChilePhone(data.telefono),
+        rut: cleanRut(data.rut),
         direccion: data.direccion,
         comuna: data.comuna,
         ciudad: data.ciudad,
@@ -87,11 +134,15 @@ export default function Auth() {
       setSuccessMsg(res.message || 'Código de verificación enviado a tu correo.');
       setMode('verify');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { email?: string[]; message?: string } } })?.response?.data;
-      if (msg?.email) {
+      const respData = (err as { response?: { data?: Record<string, string[] | string> } })?.response?.data;
+      if (respData?.email) {
         setError('Este correo electrónico ya está registrado.');
+      } else if (respData?.rut) {
+        const rutMsg = Array.isArray(respData.rut) ? respData.rut[0] : respData.rut;
+        setError(rutMsg || 'Este RUT ya se encuentra registrado con otra cuenta.');
       } else {
-        setError(msg?.message || 'No se pudo crear la cuenta. Por favor verifica los datos.');
+        const msg = (respData?.message as string) || (respData?.detail as string);
+        setError(msg || 'No se pudo crear la cuenta. Por favor verifica los datos ingresados.');
       }
     }
   }
@@ -276,8 +327,9 @@ export default function Auth() {
                   <label className="form-label font-montserrat fw-semibold text-text small">RUT / Identificación *</label>
                   <input
                     {...registerForm.register('rut')}
+                    onChange={(e) => registerForm.setValue('rut', formatRut(e.target.value))}
                     className="form-control bg-elevated font-montserrat"
-                    placeholder="Ej: 12345678-9"
+                    placeholder="Ej: 12.345.678-9"
                   />
                   {registerForm.formState.errors.rut && (
                     <p className="font-montserrat text-danger mt-1 mb-0 small">{registerForm.formState.errors.rut.message}</p>
@@ -302,6 +354,7 @@ export default function Auth() {
                   <input
                     type="tel"
                     {...registerForm.register('telefono')}
+                    onChange={(e) => registerForm.setValue('telefono', formatChilePhoneDisplay(e.target.value))}
                     className="form-control bg-elevated font-montserrat"
                     placeholder="+56 9 1234 5678"
                   />
@@ -311,11 +364,11 @@ export default function Auth() {
                 </div>
 
                 <div className="col-12">
-                  <label className="form-label font-montserrat fw-semibold text-text small">Dirección de Despacho *</label>
+                  <label className="form-label font-montserrat fw-semibold text-text small">Dirección de Despacho (Calle y número) *</label>
                   <input
                     {...registerForm.register('direccion')}
                     className="form-control bg-elevated font-montserrat"
-                    placeholder="Calle, número, depto u oficina"
+                    placeholder="Ej: Av. Providencia 1234, Depto 502"
                   />
                   {registerForm.formState.errors.direccion && (
                     <p className="font-montserrat text-danger mt-1 mb-0 small">{registerForm.formState.errors.direccion.message}</p>
@@ -323,49 +376,50 @@ export default function Auth() {
                 </div>
 
                 <div className="col-12 col-sm-6">
+                  <label className="form-label font-montserrat fw-semibold text-text small">Región *</label>
+                  <select
+                    {...registerForm.register('region')}
+                    onChange={(e) => {
+                      registerForm.setValue('region', e.target.value);
+                      registerForm.setValue('comuna', '');
+                    }}
+                    className="form-select bg-elevated font-montserrat"
+                  >
+                    <option value="">Selecciona tu región...</option>
+                    {REGIONES_CHILE.map((r) => (
+                      <option key={r.id} value={r.nombre}>
+                        {r.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  {registerForm.formState.errors.region && (
+                    <p className="font-montserrat text-danger mt-1 mb-0 small">{registerForm.formState.errors.region.message}</p>
+                  )}
+                </div>
+
+                <div className="col-12 col-sm-6">
                   <label className="form-label font-montserrat fw-semibold text-text small">Comuna *</label>
-                  <input
+                  <select
                     {...registerForm.register('comuna')}
-                    className="form-control bg-elevated font-montserrat"
-                    placeholder="Ej: Providencia / Las Condes / Maipú"
-                  />
+                    onChange={(e) => {
+                      registerForm.setValue('comuna', e.target.value);
+                      registerForm.setValue('ciudad', e.target.value);
+                    }}
+                    className="form-select bg-elevated font-montserrat"
+                    disabled={comunasDisponibles.length === 0}
+                  >
+                    <option value="">
+                      {comunasDisponibles.length > 0 ? 'Selecciona tu comuna...' : 'Primero elige una región'}
+                    </option>
+                    {comunasDisponibles.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
                   {registerForm.formState.errors.comuna && (
                     <p className="font-montserrat text-danger mt-1 mb-0 small">{registerForm.formState.errors.comuna.message}</p>
                   )}
-                </div>
-
-                <div className="col-12 col-sm-6">
-                  <label className="form-label font-montserrat fw-semibold text-text small">Ciudad *</label>
-                  <input
-                    {...registerForm.register('ciudad')}
-                    className="form-control bg-elevated font-montserrat"
-                    placeholder="Ej: Santiago / Viña del Mar / Concepción"
-                  />
-                  {registerForm.formState.errors.ciudad && (
-                    <p className="font-montserrat text-danger mt-1 mb-0 small">{registerForm.formState.errors.ciudad.message}</p>
-                  )}
-                </div>
-
-                <div className="col-12 col-sm-6">
-                  <label className="form-label font-montserrat fw-semibold text-text small">Región *</label>
-                  <select {...registerForm.register('region')} className="form-select bg-elevated font-montserrat">
-                    <option value="Región Metropolitana">Región Metropolitana</option>
-                    <option value="Valparaíso">Valparaíso</option>
-                    <option value="Biobío">Biobío</option>
-                    <option value="Antofagasta">Antofagasta</option>
-                    <option value="Coquimbo">Coquimbo</option>
-                    <option value="O'Higgins">O'Higgins</option>
-                    <option value="Maule">Maule</option>
-                    <option value="La Araucanía">La Araucanía</option>
-                    <option value="Los Lagos">Los Lagos</option>
-                    <option value="Tarapacá">Tarapacá</option>
-                    <option value="Atacama">Atacama</option>
-                    <option value="Los Ríos">Los Ríos</option>
-                    <option value="Arica y Parinacota">Arica y Parinacota</option>
-                    <option value="Ñuble">Ñuble</option>
-                    <option value="Aysén">Aysén</option>
-                    <option value="Magallanes">Magallanes</option>
-                  </select>
                 </div>
 
                 <div className="col-12 col-sm-6">
