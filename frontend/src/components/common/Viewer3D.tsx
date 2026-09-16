@@ -94,8 +94,8 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     baseMaterialsRef.current = [];
     printMaterialsRef.current = [];
 
-    // Helper for PBR base material
-    const createBaseMaterial = (roughness = 0.85, metalness = 0.05, clearcoat = 0.0) => {
+    // Helper for PBR base material (Textile, Glass, Ceramic, Steel)
+    const createBaseMaterial = (roughness = 0.82, metalness = 0.04, clearcoat = 0.0) => {
       const mat = new THREE.MeshStandardMaterial({
         color: new THREE.Color(color),
         roughness,
@@ -110,8 +110,8 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       return mat;
     };
 
-    // Helper for Decal Print Material (Pure white diffuse so graphic colors are 100% faithful)
-    const createPrintMaterial = (roughness = 0.85, metalness = 0.0) => {
+    // Helper for Decal Print Material (Faithful pure diffuse map)
+    const createPrintMaterial = (roughness = 0.8, metalness = 0.0) => {
       const mat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         map: texture || null,
@@ -120,8 +120,8 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
         roughness,
         metalness,
         polygonOffset: true,
-        polygonOffsetFactor: -1,
-        polygonOffsetUnits: -1,
+        polygonOffsetFactor: -1.5,
+        polygonOffsetUnits: -1.5,
         side: THREE.FrontSide,
       });
       printMaterialsRef.current.push(mat);
@@ -130,21 +130,22 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
 
     switch (type) {
       /* ==========================================================
-         1. POLERAS & ROPA (Cuello Redondo, Polo Piqué, Cuello V, Polerón) - SLIM MANNEQUIN FIT
+         1. POLERAS & ROPA (Cuello Redondo, Polo Piqué, Cuello V, Polerón)
       ========================================================== */
       case 'polera': {
         const isPolo = sub === 'polo';
         const isVNeck = sub === 'cuello-v';
         const isPoleron = sub === 'poleron';
 
-        const fabricMat = createBaseMaterial(isPolo ? 0.92 : 0.82, 0.0, 0.0);
+        const fabricMat = createBaseMaterial(isPolo ? 0.92 : isPoleron ? 0.88 : 0.82, 0.0, 0.0);
+        const ribMat = createBaseMaterial(isPolo ? 0.94 : isPoleron ? 0.92 : 0.86, 0.0, 0.0);
         const printMat = createPrintMaterial(0.8, 0.0);
 
-        const widthScale = isPoleron ? 1.06 : isPolo ? 0.98 : 0.95;
-        const depthScale = isPoleron ? 0.44 : 0.36;
+        const widthScale = isPoleron ? 1.08 : isPolo ? 0.98 : 0.95;
+        const depthScale = isPoleron ? 0.46 : 0.36;
 
-        // Torso body: Slender mannequin silhouette with anatomical shoulder slope and tapered waist
-        const torsoGeo = new THREE.CylinderGeometry(1.12, 1.02, 2.6, 64, 32, false);
+        // --- Torso Body with Anatomical Curves & Natural Fabric Drape ---
+        const torsoGeo = new THREE.CylinderGeometry(1.14, 1.04, 2.65, 64, 48, false);
         torsoGeo.scale(widthScale, 1.0, depthScale);
 
         const pos = torsoGeo.attributes.position;
@@ -153,30 +154,59 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
           const y = pos.getY(i);
           const z = pos.getZ(i);
 
-          // Shoulder slope
-          if (y > 0.5) {
-            const shoulderDrop = Math.pow(Math.abs(x) / 1.15, 1.8) * 0.28;
+          // Shoulder slope & Natural Trap angle
+          if (y > 0.45) {
+            const shoulderDrop = Math.pow(Math.abs(x) / (1.14 * widthScale), 1.75) * 0.32;
             pos.setY(i, y - shoulderDrop);
           }
 
-          // Gentle waist entalle (tapering at mid-torso)
-          if (y > -0.6 && y < 0.4) {
-            const waistFactor = 1.0 - Math.cos((y + 0.1) * Math.PI) * 0.05;
+          // Gentle waist entalle (waist suppression & chest flare)
+          if (y > -0.65 && y < 0.45) {
+            const waistFactor = 1.0 - Math.cos((y + 0.1) * Math.PI) * 0.055;
             pos.setX(i, x * waistFactor);
-            pos.setZ(i, z * waistFactor);
+            pos.setZ(i, z * (waistFactor + (z > 0 ? 0.04 : 0.01))); // Slight chest protrusion in front
+          }
+
+          // Subtle organic fabric micro-folds at sides and hem
+          if (y < -0.4) {
+            const ripple = Math.sin(x * 6 + y * 4) * 0.012;
+            pos.setZ(i, z + ripple);
           }
         }
         torsoGeo.computeVertexNormals();
-        group.add(new THREE.Mesh(torsoGeo, fabricMat));
+        const torsoMesh = new THREE.Mesh(torsoGeo, fabricMat);
+        group.add(torsoMesh);
+
+        // Double-stitched shoulder seams
+        const stitchMat = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(color).offsetHSL(0, 0, -0.1),
+          roughness: 0.9,
+        });
+        const leftSeamGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.65, 12);
+        const leftSeam = new THREE.Mesh(leftSeamGeo, stitchMat);
+        leftSeam.position.set(-0.75, 1.15, 0.02);
+        leftSeam.rotation.set(0, 0, 0.38);
+        const rightSeam = new THREE.Mesh(leftSeamGeo, stitchMat);
+        rightSeam.position.set(0.75, 1.15, 0.02);
+        rightSeam.rotation.set(0, 0, -0.38);
+        group.add(leftSeam, rightSeam);
+
+        // Lower Hem Stitch Band (Ruedo con pespunte)
+        const hemBandGeo = new THREE.TorusGeometry(1.05 * widthScale, 0.025, 16, 64);
+        hemBandGeo.scale(1.0, depthScale / widthScale, 1.0);
+        const hemBandMesh = new THREE.Mesh(hemBandGeo, ribMat);
+        hemBandMesh.rotation.x = Math.PI / 2;
+        hemBandMesh.position.y = -1.31;
+        group.add(hemBandMesh);
 
         // Decal Print Zone on front (Slender & form-fitting)
-        const printGeo = new THREE.PlaneGeometry(1.85, 2.2, 32, 32);
+        const printGeo = new THREE.PlaneGeometry(1.85, 2.2, 36, 36);
         const printPos = printGeo.attributes.position;
         const printUvs = printGeo.attributes.uv;
         for (let i = 0; i < printPos.count; i++) {
           const x = printPos.getX(i);
           const y = printPos.getY(i);
-          const zCurve = (isPoleron ? 0.48 : 0.40) - (x * x) * 0.08;
+          const zCurve = (isPoleron ? 0.49 : 0.40) - (x * x) * 0.082;
           printPos.setZ(i, zCurve);
           printUvs.setXY(i, THREE.MathUtils.clamp((x + 0.925) / 1.85, 0, 1), THREE.MathUtils.clamp((y + 1.1) / 2.2, 0, 1));
         }
@@ -186,228 +216,376 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
         printMesh.position.set(0, -0.05, 0);
         group.add(printMesh);
 
-        // Sleeves: Natural downward hang along the body (angle ~22° from vertical)
-        const sleeveRadius = isPoleron ? 0.38 : isPolo ? 0.33 : 0.31;
-        const sleeveLength = isPoleron ? 1.4 : isPolo ? 0.9 : 0.95;
-        const sleeveGeo = new THREE.CylinderGeometry(sleeveRadius, sleeveRadius * 0.85, sleeveLength, 48, 16);
+        // Sleeves: Natural downward hang (~22° angle) with anatomical drape
+        const sleeveRadiusTop = isPoleron ? 0.39 : isPolo ? 0.34 : 0.32;
+        const sleeveRadiusBottom = isPoleron ? 0.31 : isPolo ? 0.28 : 0.26;
+        const sleeveLength = isPoleron ? 1.45 : isPolo ? 0.92 : 0.98;
+        const sleeveGeo = new THREE.CylinderGeometry(sleeveRadiusBottom, sleeveRadiusTop, sleeveLength, 48, 24);
         sleeveGeo.computeVertexNormals();
 
         const leftSleeve = new THREE.Mesh(sleeveGeo, fabricMat);
-        leftSleeve.position.set(-1.18, 0.65, 0);
-        leftSleeve.rotation.set(0.08, 0, isPoleron ? 0.42 : 0.38);
+        leftSleeve.position.set(-1.22 * widthScale, 0.62, 0);
+        leftSleeve.rotation.set(0.06, 0, isPoleron ? 0.44 : 0.40);
         group.add(leftSleeve);
 
         const rightSleeve = new THREE.Mesh(sleeveGeo, fabricMat);
-        rightSleeve.position.set(1.18, 0.65, 0);
-        rightSleeve.rotation.set(0.08, 0, isPoleron ? -0.42 : -0.38);
+        rightSleeve.position.set(1.22 * widthScale, 0.62, 0);
+        rightSleeve.rotation.set(0.06, 0, isPoleron ? -0.44 : -0.40);
         group.add(rightSleeve);
 
         // Distinct Sub-Type Details
         if (isPolo) {
           // --- POLO PIQUÉ ---
-          // 1. Cuello camisero estilizado
+          // 1. Cuello camisero estructurado con caída natural
           const leftCollarShape = new THREE.Shape();
           leftCollarShape.moveTo(0, 0);
-          leftCollarShape.lineTo(-0.75, -0.45);
-          leftCollarShape.lineTo(-0.55, 0.28);
-          leftCollarShape.lineTo(0, 0.15);
+          leftCollarShape.lineTo(-0.78, -0.48);
+          leftCollarShape.lineTo(-0.58, 0.32);
+          leftCollarShape.lineTo(0, 0.18);
           leftCollarShape.closePath();
           const leftWingGeo = new THREE.ExtrudeGeometry(leftCollarShape, { depth: 0.05, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02 });
           leftWingGeo.computeVertexNormals();
           const leftWing = new THREE.Mesh(leftWingGeo, fabricMat);
-          leftWing.rotation.x = -Math.PI / 3.4;
-          leftWing.position.set(-0.02, 1.18, 0.28);
+          leftWing.rotation.x = -Math.PI / 3.3;
+          leftWing.position.set(-0.02, 1.20, 0.29);
           group.add(leftWing);
 
           const rightCollarShape = new THREE.Shape();
           rightCollarShape.moveTo(0, 0);
-          rightCollarShape.lineTo(0.75, -0.45);
-          rightCollarShape.lineTo(0.55, 0.28);
-          rightCollarShape.lineTo(0, 0.15);
+          rightCollarShape.lineTo(0.78, -0.48);
+          rightCollarShape.lineTo(0.58, 0.32);
+          rightCollarShape.lineTo(0, 0.18);
           rightCollarShape.closePath();
           const rightWingGeo = new THREE.ExtrudeGeometry(rightCollarShape, { depth: 0.05, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02 });
           rightWingGeo.computeVertexNormals();
           const rightWing = new THREE.Mesh(rightWingGeo, fabricMat);
-          rightWing.rotation.x = -Math.PI / 3.4;
-          rightWing.position.set(0.02, 1.18, 0.28);
+          rightWing.rotation.x = -Math.PI / 3.3;
+          rightWing.position.set(0.02, 1.20, 0.29);
           group.add(rightWing);
 
-          // 2. Solapa de botones fina
-          const placketGeo = new THREE.BoxGeometry(0.22, 0.78, 0.05);
+          // Cuello trasero alzado (Collar Stand)
+          const backCollarGeo = new THREE.TorusGeometry(0.38, 0.06, 16, 32, Math.PI);
+          const backCollarMesh = new THREE.Mesh(backCollarGeo, fabricMat);
+          backCollarMesh.rotation.x = -Math.PI / 2.2;
+          backCollarMesh.position.set(0, 1.25, -0.12);
+          group.add(backCollarMesh);
+
+          // 2. Solapa de botones con pespunte perimetral
+          const placketGeo = new THREE.BoxGeometry(0.24, 0.82, 0.06);
           placketGeo.computeVertexNormals();
           const placketMesh = new THREE.Mesh(placketGeo, fabricMat);
-          placketMesh.position.set(0, 0.76, 0.42);
+          placketMesh.position.set(0, 0.78, 0.41);
           group.add(placketMesh);
 
-          // 3. Botones nácar finos
-          const buttonMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#FAFAFA'), roughness: 0.15, metalness: 0.4 });
-          const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.02, 16), buttonMat);
-          b1.rotation.x = Math.PI / 2;
-          b1.position.set(0, 1.02, 0.46);
-          const b2 = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.02, 16), buttonMat);
-          b2.rotation.x = Math.PI / 2;
-          b2.position.set(0, 0.8, 0.46);
-          const b3 = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.02, 16), buttonMat);
-          b3.rotation.x = Math.PI / 2;
-          b3.position.set(0, 0.58, 0.46);
-          group.add(b1, b2, b3);
+          // Caja de pespunte inferior de la solapa (Box stitch)
+          const boxStitchGeo = new THREE.BoxGeometry(0.24, 0.08, 0.065);
+          const boxStitchMesh = new THREE.Mesh(boxStitchGeo, ribMat);
+          boxStitchMesh.position.set(0, 0.38, 0.41);
+          group.add(boxStitchMesh);
 
-          // 4. Ribetes finos en puños
-          const cuffGeo = new THREE.TorusGeometry(0.28, 0.03, 16, 32);
-          const leftCuff = new THREE.Mesh(cuffGeo, fabricMat);
-          leftCuff.position.set(-1.42, 0.32, 0);
-          leftCuff.rotation.z = 0.38;
-          const rightCuff = new THREE.Mesh(cuffGeo, fabricMat);
-          rightCuff.position.set(1.42, 0.32, 0);
-          rightCuff.rotation.z = -0.38;
+          // 3. Botones nácar con borde y 4 ojales
+          const buttonMat = new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#F8F8F8'),
+            roughness: 0.2,
+            metalness: 0.3,
+          });
+          const createButton = (yPos: number) => {
+            const bGroup = new THREE.Group();
+            const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.02, 24), buttonMat);
+            disc.rotation.x = Math.PI / 2;
+            bGroup.add(disc);
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.006, 8, 24), buttonMat);
+            rim.position.z = 0.01;
+            bGroup.add(rim);
+            bGroup.position.set(0, yPos, 0.45);
+            return bGroup;
+          };
+          group.add(createButton(1.05), createButton(0.82), createButton(0.59));
+
+          // 4. Ribetes acanalados en puños
+          const cuffGeo = new THREE.TorusGeometry(0.29, 0.035, 16, 32);
+          const leftCuff = new THREE.Mesh(cuffGeo, ribMat);
+          leftCuff.position.set(-1.48, 0.30, 0);
+          leftCuff.rotation.z = 0.40;
+          const rightCuff = new THREE.Mesh(cuffGeo, ribMat);
+          rightCuff.position.set(1.48, 0.30, 0);
+          rightCuff.rotation.z = -0.40;
           group.add(leftCuff, rightCuff);
 
         } else if (isPoleron) {
-          // --- POLERÓN / HOODIE (SLIM STREETWEAR) ---
-          // 1. Capucha 3D envolvente
-          const hoodGeo = new THREE.SphereGeometry(0.85, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.68);
-          hoodGeo.scale(0.9, 1.05, 0.9);
-          hoodGeo.computeVertexNormals();
-          const hoodMesh = new THREE.Mesh(hoodGeo, fabricMat);
-          hoodMesh.position.set(0, 1.35, -0.22);
-          group.add(hoodMesh);
+          // --- POLERÓN / HOODIE (STREETWEAR PREMIUM) ---
+          // 1. Capucha 3D envolvente con cavidad interior
+          const hoodOuterGeo = new THREE.SphereGeometry(0.88, 36, 28, 0, Math.PI * 2, 0, Math.PI * 0.72);
+          hoodOuterGeo.scale(0.92, 1.08, 0.92);
+          hoodOuterGeo.computeVertexNormals();
+          const hoodOuterMesh = new THREE.Mesh(hoodOuterGeo, fabricMat);
+          hoodOuterMesh.position.set(0, 1.38, -0.24);
+          group.add(hoodOuterMesh);
 
-          // 2. Cordones finos de ajuste con herretes
-          const cordMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#FFFFFF'), roughness: 0.5 });
-          const agletMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#B0B0B0'), roughness: 0.2, metalness: 0.8 });
+          // Borde tubular acolchado de la capucha
+          const hoodBorderGeo = new THREE.TorusGeometry(0.68, 0.045, 16, 48, Math.PI * 1.3);
+          const hoodBorderMesh = new THREE.Mesh(hoodBorderGeo, ribMat);
+          hoodBorderMesh.rotation.set(-0.25, 0, Math.PI * 0.85);
+          hoodBorderMesh.position.set(0, 1.45, 0.15);
+          group.add(hoodBorderMesh);
 
-          const leftCord = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.65, 12), cordMat);
-          leftCord.position.set(-0.14, 0.85, 0.5);
-          leftCord.rotation.z = 0.04;
-          const leftAglet = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.08, 12), agletMat);
-          leftAglet.position.set(-0.155, 0.52, 0.5);
-          leftAglet.rotation.z = 0.04;
+          // 2. Ojales metálicos de la capucha
+          const grommetMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#94A3B8'), roughness: 0.2, metalness: 0.85 });
+          const leftGrommet = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.008, 8, 24), grommetMat);
+          leftGrommet.position.set(-0.16, 1.08, 0.48);
+          const rightGrommet = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.008, 8, 24), grommetMat);
+          rightGrommet.position.set(0.16, 1.08, 0.48);
+          group.add(leftGrommet, rightGrommet);
 
-          const rightCord = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.65, 12), cordMat);
-          rightCord.position.set(0.14, 0.85, 0.5);
-          rightCord.rotation.z = -0.04;
-          const rightAglet = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.08, 12), agletMat);
-          rightAglet.position.set(0.155, 0.52, 0.5);
-          rightAglet.rotation.z = -0.04;
+          // 3. Cordones trenzados de ajuste con caída natural y herretes metálicos
+          const cordMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#F1F5F9'), roughness: 0.6 });
+          const agletMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#CBD5E1'), roughness: 0.15, metalness: 0.9 });
 
-          group.add(leftCord, leftAglet, rightCord, rightAglet);
+          // Cordón izquierdo curvado
+          const leftCordCurve = new THREE.CurvePath<THREE.Vector3>();
+          leftCordCurve.add(new THREE.CubicBezierCurve3(
+            new THREE.Vector3(-0.16, 1.08, 0.48),
+            new THREE.Vector3(-0.18, 0.82, 0.53),
+            new THREE.Vector3(-0.14, 0.62, 0.52),
+            new THREE.Vector3(-0.17, 0.44, 0.50)
+          ));
+          const leftCordGeo = new THREE.TubeGeometry(leftCordCurve, 32, 0.016, 12, false);
+          group.add(new THREE.Mesh(leftCordGeo, cordMat));
 
-          // 3. Bolsillo Canguro frontal estilizado
+          const leftAglet = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.09, 16), agletMat);
+          leftAglet.position.set(-0.17, 0.40, 0.50);
+          group.add(leftAglet);
+
+          // Cordón derecho curvado
+          const rightCordCurve = new THREE.CurvePath<THREE.Vector3>();
+          rightCordCurve.add(new THREE.CubicBezierCurve3(
+            new THREE.Vector3(0.16, 1.08, 0.48),
+            new THREE.Vector3(0.18, 0.82, 0.53),
+            new THREE.Vector3(0.14, 0.62, 0.52),
+            new THREE.Vector3(0.17, 0.44, 0.50)
+          ));
+          const rightCordGeo = new THREE.TubeGeometry(rightCordCurve, 32, 0.016, 12, false);
+          group.add(new THREE.Mesh(rightCordGeo, cordMat));
+
+          const rightAglet = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.09, 16), agletMat);
+          rightAglet.position.set(0.17, 0.40, 0.50);
+          group.add(rightAglet);
+
+          // 4. Bolsillo Canguro frontal estilizado con entradas laterales
           const pocketShape = new THREE.Shape();
-          pocketShape.moveTo(-0.78, -0.55);
-          pocketShape.lineTo(-0.58, 0.25);
-          pocketShape.lineTo(0.58, 0.25);
-          pocketShape.lineTo(0.78, -0.55);
+          pocketShape.moveTo(-0.82, -0.60);
+          pocketShape.lineTo(-0.62, 0.28);
+          pocketShape.lineTo(0.62, 0.28);
+          pocketShape.lineTo(0.82, -0.60);
           pocketShape.closePath();
-          const pocketGeo = new THREE.ExtrudeGeometry(pocketShape, { depth: 0.12, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03 });
+          const pocketGeo = new THREE.ExtrudeGeometry(pocketShape, {
+            depth: 0.14,
+            bevelEnabled: true,
+            bevelSegments: 4,
+            bevelSize: 0.035,
+            bevelThickness: 0.035,
+          });
           pocketGeo.computeVertexNormals();
           const pocketMesh = new THREE.Mesh(pocketGeo, fabricMat);
           pocketMesh.position.set(0, -0.42, 0.48);
           group.add(pocketMesh);
 
-          // 4. Pretina acanalada inferior
-          const hemGeo = new THREE.CylinderGeometry(1.04, 1.04, 0.28, 64);
-          hemGeo.scale(1.05, 1.0, 0.46);
+          // Ribetes en entradas del bolsillo (Pocket openings)
+          const pWeltsMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).offsetHSL(0, 0, -0.05), roughness: 0.9 });
+          const leftWelt = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.92, 12), pWeltsMat);
+          leftWelt.position.set(-0.73, -0.56, 0.58);
+          leftWelt.rotation.set(0, 0, -0.22);
+          const rightWelt = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.92, 12), pWeltsMat);
+          rightWelt.position.set(0.73, -0.56, 0.58);
+          rightWelt.rotation.set(0, 0, 0.22);
+          group.add(leftWelt, rightWelt);
+
+          // 5. Pretina acanalada inferior ancha (2x2 Rib Hem)
+          const hemGeo = new THREE.CylinderGeometry(1.06, 1.02, 0.32, 64);
+          hemGeo.scale(1.08, 1.0, 0.48);
           hemGeo.computeVertexNormals();
-          const hemMesh = new THREE.Mesh(hemGeo, fabricMat);
-          hemMesh.position.y = -1.35;
+          const hemMesh = new THREE.Mesh(hemGeo, ribMat);
+          hemMesh.position.y = -1.38;
           group.add(hemMesh);
 
+          // Puños acanalados largos en mangas
+          const cuffGeo = new THREE.CylinderGeometry(0.32, 0.29, 0.28, 32);
+          const leftCuff = new THREE.Mesh(cuffGeo, ribMat);
+          leftCuff.position.set(-1.82, 0.02, 0);
+          leftCuff.rotation.z = 0.44;
+          const rightCuff = new THREE.Mesh(cuffGeo, ribMat);
+          rightCuff.position.set(1.82, 0.02, 0);
+          rightCuff.rotation.z = -0.44;
+          group.add(leftCuff, rightCuff);
+
         } else if (isVNeck) {
-          // --- CUELLO V ESBELTO ---
+          // --- CUELLO V MITERED ---
           const vCollarCurve = new THREE.CurvePath<THREE.Vector3>();
-          vCollarCurve.add(new THREE.LineCurve3(new THREE.Vector3(-0.48, 1.22, 0.22), new THREE.Vector3(0, 0.68, 0.42)));
-          vCollarCurve.add(new THREE.LineCurve3(new THREE.Vector3(0, 0.68, 0.42), new THREE.Vector3(0.48, 1.22, 0.22)));
-          const vCollarGeo = new THREE.TubeGeometry(vCollarCurve, 32, 0.05, 16, false);
+          vCollarCurve.add(new THREE.LineCurve3(new THREE.Vector3(-0.48, 1.24, 0.22), new THREE.Vector3(0, 0.64, 0.43)));
+          vCollarCurve.add(new THREE.LineCurve3(new THREE.Vector3(0, 0.64, 0.43), new THREE.Vector3(0.48, 1.24, 0.22)));
+          const vCollarGeo = new THREE.TubeGeometry(vCollarCurve, 36, 0.055, 16, false);
           vCollarGeo.computeVertexNormals();
-          group.add(new THREE.Mesh(vCollarGeo, fabricMat));
+          group.add(new THREE.Mesh(vCollarGeo, ribMat));
+
+          // Cinta interior de refuerzo (Neck tape)
+          const innerTapeGeo = new THREE.TorusGeometry(0.38, 0.025, 12, 32, Math.PI);
+          const innerTapeMesh = new THREE.Mesh(innerTapeGeo, stitchMat);
+          innerTapeMesh.rotation.x = -Math.PI / 2.2;
+          innerTapeMesh.position.set(0, 1.22, -0.08);
+          group.add(innerTapeMesh);
 
         } else {
-          // --- CUELLO REDONDO CLÁSICO ESBELTO ---
-          const collarGeo = new THREE.TorusGeometry(0.42, 0.05, 24, 64);
-          collarGeo.scale(1.0, 0.35, 0.65);
+          // --- CUELLO REDONDO CLÁSICO RIB 1X1 ---
+          const collarGeo = new THREE.TorusGeometry(0.44, 0.055, 24, 64);
+          collarGeo.scale(1.0, 0.38, 0.68);
           collarGeo.computeVertexNormals();
-          const collarMesh = new THREE.Mesh(collarGeo, fabricMat);
-          collarMesh.rotation.x = Math.PI / 2 + 0.12;
-          collarMesh.position.set(0, 1.22, 0.05);
+          const collarMesh = new THREE.Mesh(collarGeo, ribMat);
+          collarMesh.rotation.x = Math.PI / 2 + 0.14;
+          collarMesh.position.set(0, 1.24, 0.06);
           group.add(collarMesh);
+
+          // Pespunte interior del cuello
+          const collarStitchGeo = new THREE.TorusGeometry(0.46, 0.015, 12, 64);
+          collarStitchGeo.scale(1.0, 0.38, 0.68);
+          const collarStitchMesh = new THREE.Mesh(collarStitchGeo, stitchMat);
+          collarStitchMesh.rotation.x = Math.PI / 2 + 0.14;
+          collarStitchMesh.position.set(0, 1.21, 0.06);
+          group.add(collarStitchMesh);
         }
         break;
       }
 
       /* ==========================================================
-         2. PANTALÓN / JOGGER (Esbelto, anatómico, con pretina y cordones)
+         2. PANTALÓN / JOGGER & RECTO
       ========================================================== */
       case 'pantalon': {
+        const isRecto = sub === 'recto';
         const pantsMat = createBaseMaterial(0.85, 0.0, 0.0);
+        const ribMat = createBaseMaterial(0.92, 0.0, 0.0);
         const printMat = createPrintMaterial(0.8, 0.0);
 
-        // 1. Pelvis / Cadera anatómica esbelta
-        const pelvisGeo = new THREE.CylinderGeometry(0.96, 1.02, 1.15, 48, 16);
-        pelvisGeo.scale(1.0, 1.0, 0.58);
+        // 1. Pelvis / Cadera anatómica con pliegues naturales
+        const pelvisGeo = new THREE.CylinderGeometry(0.98, 1.04, 1.18, 48, 24);
+        pelvisGeo.scale(1.0, 1.0, 0.60);
         pelvisGeo.computeVertexNormals();
         const pelvisMesh = new THREE.Mesh(pelvisGeo, pantsMat);
         pelvisMesh.position.y = 0.95;
         group.add(pelvisMesh);
 
-        // 2. Pretina elástica superior
-        const waistGeo = new THREE.TorusGeometry(0.96, 0.08, 16, 48);
-        waistGeo.scale(1.0, 0.5, 0.58);
+        // 2. Pretina elástica fruncida superior
+        const waistGeo = new THREE.TorusGeometry(0.98, 0.09, 20, 64);
+        waistGeo.scale(1.0, 0.55, 0.60);
         waistGeo.computeVertexNormals();
-        const waistMesh = new THREE.Mesh(waistGeo, pantsMat);
+        const waistMesh = new THREE.Mesh(waistGeo, ribMat);
         waistMesh.rotation.x = Math.PI / 2;
-        waistMesh.position.y = 1.52;
+        waistMesh.position.y = 1.54;
         group.add(waistMesh);
 
-        // 3. Cordones de ajuste frontales con nudo
+        // Ojales y Cordones de ajuste frontales con herretes
+        const grommetMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#94A3B8'), roughness: 0.2, metalness: 0.85 });
         const cordMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#FFFFFF'), roughness: 0.5 });
-        const c1 = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.45, 12), cordMat);
-        c1.position.set(-0.08, 1.22, 0.65);
-        c1.rotation.z = 0.08;
-        const c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.45, 12), cordMat);
-        c2.position.set(0.08, 1.22, 0.65);
-        c2.rotation.z = -0.08;
-        group.add(c1, c2);
+        const agletMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#CBD5E1'), roughness: 0.15, metalness: 0.9 });
 
-        // 4. Piernas esbeltas con caída cónica anatómica
-        const legGeo = new THREE.CylinderGeometry(0.46, 0.28, 2.45, 48, 32);
+        const leftEyelet = new THREE.Mesh(new THREE.TorusGeometry(0.025, 0.006, 8, 16), grommetMat);
+        leftEyelet.position.set(-0.08, 1.48, 0.62);
+        const rightEyelet = new THREE.Mesh(new THREE.TorusGeometry(0.025, 0.006, 8, 16), grommetMat);
+        rightEyelet.position.set(0.08, 1.48, 0.62);
+        group.add(leftEyelet, rightEyelet);
+
+        // Nudo central del cordón
+        const knotMesh = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 12), cordMat);
+        knotMesh.position.set(0, 1.45, 0.64);
+        group.add(knotMesh);
+
+        // Cordones colgantes
+        const c1 = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.48, 12), cordMat);
+        c1.position.set(-0.08, 1.20, 0.65);
+        c1.rotation.z = 0.10;
+        const aglet1 = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.08, 12), agletMat);
+        aglet1.position.set(-0.11, 0.94, 0.65);
+        aglet1.rotation.z = 0.10;
+
+        const c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.48, 12), cordMat);
+        c2.position.set(0.08, 1.20, 0.65);
+        c2.rotation.z = -0.10;
+        const aglet2 = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.08, 12), agletMat);
+        aglet2.position.set(0.11, 0.94, 0.65);
+        aglet2.rotation.z = -0.10;
+        group.add(c1, aglet1, c2, aglet2);
+
+        // Bolsillos laterales en diagonal (Side welt pockets)
+        const pocketMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).offsetHSL(0, 0, -0.06), roughness: 0.9 });
+        const leftPocketWelt = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.48, 0.03), pocketMat);
+        leftPocketWelt.position.set(-0.86, 0.92, 0.38);
+        leftPocketWelt.rotation.set(0.1, 0.2, -0.45);
+        const rightPocketWelt = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.48, 0.03), pocketMat);
+        rightPocketWelt.position.set(0.86, 0.92, 0.38);
+        rightPocketWelt.rotation.set(0.1, -0.2, 0.45);
+        group.add(leftPocketWelt, rightPocketWelt);
+
+        // 3. Piernas con corte cónico ergonómico
+        const legRadiusTop = 0.48;
+        const legRadiusBottom = isRecto ? 0.38 : 0.28;
+        const legLength = 2.50;
+        const legGeo = new THREE.CylinderGeometry(legRadiusBottom, legRadiusTop, legLength, 48, 32);
         legGeo.computeVertexNormals();
 
         const leftLeg = new THREE.Mesh(legGeo, pantsMat);
-        leftLeg.position.set(-0.46, -0.65, 0);
+        leftLeg.position.set(-0.48, -0.66, 0);
         leftLeg.rotation.z = -0.035;
         group.add(leftLeg);
 
         const rightLeg = new THREE.Mesh(legGeo, pantsMat);
-        rightLeg.position.set(0.46, -0.65, 0);
+        rightLeg.position.set(0.48, -0.66, 0);
         rightLeg.rotation.z = 0.035;
         group.add(rightLeg);
 
-        // 5. Decal Overlay en Muslo Izquierdo
-        const thighPrintGeo = new THREE.PlaneGeometry(0.65, 1.2, 24, 24);
+        // Costuras laterales exteriores (Outseam stitches)
+        const outseamMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).offsetHSL(0, 0, -0.12), roughness: 0.95 });
+        const leftOutseam = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, legLength, 12), outseamMat);
+        leftOutseam.position.set(-0.95, -0.66, 0);
+        leftOutseam.rotation.z = -0.035;
+        const rightOutseam = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, legLength, 12), outseamMat);
+        rightOutseam.position.set(0.95, -0.66, 0);
+        rightOutseam.rotation.z = 0.035;
+        group.add(leftOutseam, rightOutseam);
+
+        // 4. Decal Overlay en Muslo Izquierdo
+        const thighPrintGeo = new THREE.PlaneGeometry(0.68, 1.25, 24, 24);
         const tPos = thighPrintGeo.attributes.position;
         const tUvs = thighPrintGeo.attributes.uv;
         for (let i = 0; i < tPos.count; i++) {
           const x = tPos.getX(i);
           const y = tPos.getY(i);
-          tPos.setZ(i, 0.48 - (x * x) * 0.12);
-          tUvs.setXY(i, THREE.MathUtils.clamp((x + 0.325) / 0.65, 0, 1), THREE.MathUtils.clamp((y + 0.6) / 1.2, 0, 1));
+          tPos.setZ(i, 0.50 - (x * x) * 0.12);
+          tUvs.setXY(i, THREE.MathUtils.clamp((x + 0.34) / 0.68, 0, 1), THREE.MathUtils.clamp((y + 0.625) / 1.25, 0, 1));
         }
         thighPrintGeo.computeVertexNormals();
         tUvs.needsUpdate = true;
         const thighMesh = new THREE.Mesh(thighPrintGeo, printMat);
-        thighMesh.position.set(-0.46, -0.3, 0.08);
+        thighMesh.position.set(-0.48, -0.30, 0.08);
         thighMesh.rotation.z = -0.035;
         group.add(thighMesh);
 
-        // 6. Puños elásticos en los tobillos
-        const cuffGeo = new THREE.CylinderGeometry(0.29, 0.29, 0.25, 32);
-        cuffGeo.computeVertexNormals();
-        const leftCuff = new THREE.Mesh(cuffGeo, pantsMat);
-        leftCuff.position.set(-0.54, -1.92, 0);
-        const rightCuff = new THREE.Mesh(cuffGeo, pantsMat);
-        rightCuff.position.set(0.54, -1.92, 0);
-        group.add(leftCuff, rightCuff);
+        // 5. Puños en tobillos (Ribbed Cuff vs Ruedo Recto)
+        if (isRecto) {
+          const cuffGeo = new THREE.TorusGeometry(0.38, 0.025, 16, 32);
+          const leftCuff = new THREE.Mesh(cuffGeo, pantsMat);
+          leftCuff.position.set(-0.56, -1.90, 0);
+          leftCuff.rotation.x = Math.PI / 2;
+          const rightCuff = new THREE.Mesh(cuffGeo, pantsMat);
+          rightCuff.position.set(0.56, -1.90, 0);
+          rightCuff.rotation.x = Math.PI / 2;
+          group.add(leftCuff, rightCuff);
+        } else {
+          const cuffGeo = new THREE.CylinderGeometry(0.29, 0.27, 0.28, 32);
+          cuffGeo.computeVertexNormals();
+          const leftCuff = new THREE.Mesh(cuffGeo, ribMat);
+          leftCuff.position.set(-0.56, -1.92, 0);
+          const rightCuff = new THREE.Mesh(cuffGeo, ribMat);
+          rightCuff.position.set(0.56, -1.92, 0);
+          group.add(leftCuff, rightCuff);
+        }
         break;
       }
 
@@ -419,292 +597,472 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
         const isJarra = sub === 'jarra';
         const isTermico = sub === 'termico';
 
-        const glassMat = createBaseMaterial(isTermico ? 0.25 : 0.12, isTermico ? 0.6 : 0.08, 0.5);
-        const printMat = createPrintMaterial(0.2, 0.0);
+        const glassMat = createBaseMaterial(isTermico ? 0.22 : 0.08, isTermico ? 0.70 : 0.06, 0.6);
+        const printMat = createPrintMaterial(0.18, 0.0);
         if (texture) {
           texture.wrapS = THREE.RepeatWrapping;
           texture.wrapT = THREE.ClampToEdgeWrapping;
         }
 
         if (isShopero) {
-          // --- SHOPERO CERVECERO ---
-          const bodyGeo = new THREE.CylinderGeometry(1.05, 0.98, 3.2, 64, 32, true);
+          // --- SHOPERO CERVECERO ALEMÁN ---
+          const bodyGeo = new THREE.CylinderGeometry(1.08, 0.98, 3.25, 64, 32, true);
           bodyGeo.computeVertexNormals();
           group.add(new THREE.Mesh(bodyGeo, glassMat));
 
-          const printGeo = new THREE.CylinderGeometry(1.055, 0.985, 3.2, 64, 32, true);
+          const printGeo = new THREE.CylinderGeometry(1.085, 0.985, 3.25, 64, 32, true);
           printGeo.computeVertexNormals();
           group.add(new THREE.Mesh(printGeo, printMat));
 
-          // Base gruesa facetada
-          const baseGeo = new THREE.CylinderGeometry(1.12, 1.18, 0.4, 48);
+          // Base gruesa facetada con 8 paneles decorativos
+          const baseGeo = new THREE.CylinderGeometry(1.14, 1.20, 0.45, 8);
           baseGeo.computeVertexNormals();
           const baseMesh = new THREE.Mesh(baseGeo, glassMat);
-          baseMesh.position.y = -1.6;
+          baseMesh.position.y = -1.62;
           group.add(baseMesh);
 
-          // Asa gruesa de shopero
+          // Fondo macizo de cristal
+          const bottomDiscGeo = new THREE.CylinderGeometry(0.98, 0.98, 0.2, 32);
+          const bottomDisc = new THREE.Mesh(bottomDiscGeo, glassMat);
+          bottomDisc.position.y = -1.50;
+          group.add(bottomDisc);
+
+          // Asa gruesa de cristal con apoyo para pulgar (Thumb rest)
           const handleCurve = new THREE.CurvePath<THREE.Vector3>();
           handleCurve.add(new THREE.CubicBezierCurve3(
-            new THREE.Vector3(-1.05, 1.1, 0),
-            new THREE.Vector3(-2.1, 0.95, 0),
-            new THREE.Vector3(-2.1, -0.95, 0),
-            new THREE.Vector3(-1.05, -1.1, 0)
+            new THREE.Vector3(-1.08, 1.15, 0),
+            new THREE.Vector3(-2.25, 1.05, 0),
+            new THREE.Vector3(-2.25, -1.05, 0),
+            new THREE.Vector3(-1.05, -1.15, 0)
           ));
-          const handleGeo = new THREE.TubeGeometry(handleCurve, 48, 0.2, 24, false);
+          const handleGeo = new THREE.TubeGeometry(handleCurve, 64, 0.22, 24, false);
           handleGeo.computeVertexNormals();
           group.add(new THREE.Mesh(handleGeo, glassMat));
 
-          // Rim superior
-          const rimGeo = new THREE.TorusGeometry(1.05, 0.04, 16, 64);
+          // Apoyo para pulgar en el tope del asa
+          const thumbRestGeo = new THREE.SphereGeometry(0.18, 16, 16);
+          thumbRestGeo.scale(0.8, 0.5, 1.2);
+          const thumbRest = new THREE.Mesh(thumbRestGeo, glassMat);
+          thumbRest.position.set(-1.85, 1.22, 0);
+          group.add(thumbRest);
+
+          // Rim superior pulido y redondeado
+          const rimGeo = new THREE.TorusGeometry(1.08, 0.045, 16, 64);
           const rimMesh = new THREE.Mesh(rimGeo, glassMat);
           rimMesh.rotation.x = Math.PI / 2;
-          rimMesh.position.y = 1.6;
+          rimMesh.position.y = 1.62;
           group.add(rimMesh);
 
         } else if (isJarra) {
-          // --- JARRA CON PICO ---
-          const bodyGeo = new THREE.CylinderGeometry(0.85, 1.25, 3.2, 64, 32, true);
+          // --- JARRA CON PICO VERTEDOR ---
+          const bodyGeo = new THREE.CylinderGeometry(0.88, 1.28, 3.25, 64, 32, true);
           bodyGeo.computeVertexNormals();
           group.add(new THREE.Mesh(bodyGeo, glassMat));
 
-          const printGeo = new THREE.CylinderGeometry(0.855, 1.255, 3.2, 64, 32, true);
+          const printGeo = new THREE.CylinderGeometry(0.885, 1.285, 3.25, 64, 32, true);
           printGeo.computeVertexNormals();
           group.add(new THREE.Mesh(printGeo, printMat));
 
-          // Base
-          const baseGeo = new THREE.CylinderGeometry(1.25, 1.25, 0.15, 64);
+          // Base gruesa y estable
+          const baseGeo = new THREE.CylinderGeometry(1.28, 1.28, 0.22, 64);
           const baseMesh = new THREE.Mesh(baseGeo, glassMat);
-          baseMesh.position.y = -1.6;
+          baseMesh.position.y = -1.62;
           group.add(baseMesh);
 
-          // Pico vertedor frontal
+          // Pico vertedor frontal modelado
           const spoutShape = new THREE.Shape();
-          spoutShape.moveTo(-0.35, 0);
-          spoutShape.lineTo(0, 0.55);
-          spoutShape.lineTo(0.35, 0);
+          spoutShape.moveTo(-0.38, 0);
+          spoutShape.lineTo(0, 0.65);
+          spoutShape.lineTo(0.38, 0);
           spoutShape.closePath();
-          const spoutGeo = new THREE.ExtrudeGeometry(spoutShape, { depth: 0.06, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02 });
+          const spoutGeo = new THREE.ExtrudeGeometry(spoutShape, { depth: 0.08, bevelEnabled: true, bevelSize: 0.025, bevelThickness: 0.025 });
           spoutGeo.computeVertexNormals();
           const spoutMesh = new THREE.Mesh(spoutGeo, glassMat);
-          spoutMesh.rotation.x = -Math.PI / 3;
-          spoutMesh.position.set(0, 1.6, 0.8);
+          spoutMesh.rotation.x = -Math.PI / 3.2;
+          spoutMesh.position.set(0, 1.62, 0.82);
           group.add(spoutMesh);
 
-          // Asa vertical trasera
+          // Asa vertical trasera de gran agarre
           const handleCurve = new THREE.CurvePath<THREE.Vector3>();
           handleCurve.add(new THREE.CubicBezierCurve3(
-            new THREE.Vector3(0, 1.2, -0.9),
-            new THREE.Vector3(0, 1.2, -2.0),
-            new THREE.Vector3(0, -0.9, -2.0),
-            new THREE.Vector3(0, -1.1, -1.25)
+            new THREE.Vector3(0, 1.25, -0.92),
+            new THREE.Vector3(0, 1.25, -2.15),
+            new THREE.Vector3(0, -0.95, -2.15),
+            new THREE.Vector3(0, -1.15, -1.28)
           ));
-          const handleGeo = new THREE.TubeGeometry(handleCurve, 48, 0.17, 24, false);
+          const handleGeo = new THREE.TubeGeometry(handleCurve, 64, 0.18, 24, false);
           handleGeo.computeVertexNormals();
           group.add(new THREE.Mesh(handleGeo, glassMat));
 
         } else if (isTermico) {
-          // --- VASO TÉRMICO ---
-          const bodyGeo = new THREE.CylinderGeometry(0.95, 0.72, 3.0, 64, 32);
+          // --- VASO TÉRMICO / TRAVEL TUMBLER ---
+          const bodyGeo = new THREE.CylinderGeometry(0.96, 0.74, 3.05, 64, 32);
           bodyGeo.computeVertexNormals();
           group.add(new THREE.Mesh(bodyGeo, glassMat));
 
-          const printGeo = new THREE.CylinderGeometry(0.955, 0.725, 3.0, 64, 32, true);
+          const printGeo = new THREE.CylinderGeometry(0.965, 0.745, 3.05, 64, 32, true);
           printGeo.computeVertexNormals();
           group.add(new THREE.Mesh(printGeo, printMat));
 
-          // Banda de silicona central
-          const gripMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#2A2A2A'), roughness: 0.9 });
-          const gripGeo = new THREE.CylinderGeometry(0.88, 0.81, 0.9, 64);
+          // Base biselada antideslizante
+          const baseBumperMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#1F2937'), roughness: 0.85 });
+          const baseBumper = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.73, 0.15, 64), baseBumperMat);
+          baseBumper.position.y = -1.52;
+          group.add(baseBumper);
+
+          // Banda de silicona central con ranuras texturadas
+          const gripMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#27272A'), roughness: 0.95 });
+          const gripGeo = new THREE.CylinderGeometry(0.89, 0.82, 0.95, 64);
           const gripMesh = new THREE.Mesh(gripGeo, gripMat);
-          gripMesh.position.y = 0.2;
+          gripMesh.position.y = 0.18;
           group.add(gripMesh);
 
-          // Tapa de café con boquilla
-          const lidMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#222222'), roughness: 0.3, metalness: 0.4 });
-          const lidGeo = new THREE.CylinderGeometry(0.98, 0.98, 0.4, 64);
+          // Tapa Barista hermética con boquilla y pestaña flip-top
+          const lidMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#18181B'), roughness: 0.3, metalness: 0.5 });
+          const lidGeo = new THREE.CylinderGeometry(1.00, 0.98, 0.38, 64);
           const lidMesh = new THREE.Mesh(lidGeo, lidMat);
-          lidMesh.position.y = 1.65;
+          lidMesh.position.y = 1.68;
           group.add(lidMesh);
+
+          // Boquilla y Flip-Top de la tapa
+          const flipGeo = new THREE.BoxGeometry(0.35, 0.08, 0.65);
+          const flipMesh = new THREE.Mesh(flipGeo, lidMat);
+          flipMesh.position.set(0, 1.90, 0.25);
+          group.add(flipMesh);
+
+          // Aro de silicona de sellado
+          const gasketMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#EF4444'), roughness: 0.8 });
+          const gasket = new THREE.Mesh(new THREE.TorusGeometry(0.97, 0.02, 12, 64), gasketMat);
+          gasket.rotation.x = Math.PI / 2;
+          gasket.position.y = 1.50;
+          group.add(gasket);
 
         } else {
           // --- VASO CLÁSICO ---
-          const vasoGeo = new THREE.CylinderGeometry(0.98, 0.72, 3.0, 64, 32, false);
+          const vasoGeo = new THREE.CylinderGeometry(0.98, 0.72, 3.05, 64, 32, false);
           vasoGeo.computeVertexNormals();
           group.add(new THREE.Mesh(vasoGeo, glassMat));
 
-          const printGeo = new THREE.CylinderGeometry(0.985, 0.725, 3.0, 64, 32, true);
+          const printGeo = new THREE.CylinderGeometry(0.985, 0.725, 3.05, 64, 32, true);
           printGeo.computeVertexNormals();
           group.add(new THREE.Mesh(printGeo, printMat));
 
-          // Rim superior dorado
-          const rimMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#D4AF37'), roughness: 0.2, metalness: 0.9 });
+          // Base pesada de cristal sólido
+          const thickBaseGeo = new THREE.CylinderGeometry(0.74, 0.70, 0.35, 64);
+          const thickBase = new THREE.Mesh(thickBaseGeo, glassMat);
+          thickBase.position.y = -1.45;
+          group.add(thickBase);
+
+          // Rim superior dorado elegante
+          const rimMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#D4AF37'), roughness: 0.18, metalness: 0.92 });
           const rimGeo = new THREE.TorusGeometry(0.98, 0.035, 16, 64);
           const rimMesh = new THREE.Mesh(rimGeo, rimMat);
           rimMesh.rotation.x = Math.PI / 2;
-          rimMesh.position.y = 1.5;
+          rimMesh.position.y = 1.52;
           group.add(rimMesh);
         }
         break;
       }
 
       /* ==========================================================
-         4. TAZA CERÁMICA MUG (Esbelta y pulida)
+         4. TAZA CERÁMICA MUG & TAZA CÓNICA (Acabado Vitrificado)
       ========================================================== */
       case 'taza': {
         const isConica = sub === 'conica';
-        const ceramicMat = createBaseMaterial(0.12, 0.04, 0.5);
+        const ceramicMat = createBaseMaterial(0.12, 0.04, 0.8);
         const printMat = createPrintMaterial(0.15, 0.0);
         if (texture) {
           texture.wrapS = THREE.RepeatWrapping;
           texture.wrapT = THREE.ClampToEdgeWrapping;
         }
 
-        const rTop = isConica ? 1.15 : 0.96;
-        const rBottom = isConica ? 0.76 : 0.92;
+        const rTop = isConica ? 1.16 : 0.98;
+        const rBottom = isConica ? 0.74 : 0.94;
 
-        // Outer cylinder base
-        const outerGeo = new THREE.CylinderGeometry(rTop, rBottom, 2.6, 64, 32, true);
+        // Pared exterior de cerámica vitrificada
+        const outerGeo = new THREE.CylinderGeometry(rTop, rBottom, 2.65, 64, 32, true);
         outerGeo.computeVertexNormals();
         group.add(new THREE.Mesh(outerGeo, ceramicMat));
 
-        // Outer print wrap overlay
-        const printGeo = new THREE.CylinderGeometry(rTop + 0.005, rBottom + 0.005, 2.6, 64, 32, true);
+        // Envoltorio 360° para impresión y diseño
+        const printGeo = new THREE.CylinderGeometry(rTop + 0.005, rBottom + 0.005, 2.65, 64, 32, true);
         printGeo.computeVertexNormals();
         group.add(new THREE.Mesh(printGeo, printMat));
 
-        // Inner cylinder
-        const innerMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#FFFFFF'), roughness: 0.12, metalness: 0.02 });
-        const innerGeo = new THREE.CylinderGeometry(rTop - 0.08, rBottom - 0.08, 2.55, 64, 16, true);
+        // Interior vitrificado blanco puro con profundidad
+        const innerMat = new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#FFFFFF'),
+          roughness: 0.10,
+          metalness: 0.02,
+        });
+        (innerMat as any).clearcoat = 0.8;
+        const innerGeo = new THREE.CylinderGeometry(rTop - 0.08, rBottom - 0.08, 2.60, 64, 16, true);
         innerGeo.computeVertexNormals();
         const innerMesh = new THREE.Mesh(innerGeo, innerMat);
         innerMesh.position.y = 0.03;
         group.add(innerMesh);
 
-        // Rim
-        const rimGeo = new THREE.TorusGeometry((rTop + (rTop - 0.08)) / 2, 0.04, 24, 64);
+        // Fondo interior vitrificado
+        const innerFloorGeo = new THREE.CircleGeometry(rBottom - 0.08, 64);
+        const innerFloor = new THREE.Mesh(innerFloorGeo, innerMat);
+        innerFloor.rotation.x = -Math.PI / 2;
+        innerFloor.position.y = -1.27;
+        group.add(innerFloor);
+
+        // Borde superior redondeado y pulido (Smooth drinking lip)
+        const rimGeo = new THREE.TorusGeometry((rTop + (rTop - 0.08)) / 2, 0.042, 24, 64);
         const rimMesh = new THREE.Mesh(rimGeo, ceramicMat);
         rimMesh.rotation.x = Math.PI / 2;
-        rimMesh.position.y = 1.3;
+        rimMesh.position.y = 1.325;
         group.add(rimMesh);
 
-        // Bottom
-        const baseGeo = new THREE.CylinderGeometry(rBottom, rBottom * 0.95, 0.1, 64);
+        // Base exterior con anillo de apoyo cerámico (Foot ring)
+        const baseGeo = new THREE.CylinderGeometry(rBottom, rBottom * 0.96, 0.12, 64);
         baseGeo.computeVertexNormals();
         const baseMesh = new THREE.Mesh(baseGeo, ceramicMat);
-        baseMesh.position.y = -1.3;
+        baseMesh.position.y = -1.325;
         group.add(baseMesh);
 
-        // Handle
+        // Anillo de apoyo sin esmaltar en la base
+        const footRingMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#E5E0D8'), roughness: 0.7 });
+        const footRing = new THREE.Mesh(new THREE.TorusGeometry(rBottom * 0.82, 0.025, 12, 48), footRingMat);
+        footRing.rotation.x = Math.PI / 2;
+        footRing.position.y = -1.385;
+        group.add(footRing);
+
+        // Asa ergonómica en D con curvatura natural y uniones suaves
         const handleCurve = new THREE.CurvePath<THREE.Vector3>();
         handleCurve.add(new THREE.CubicBezierCurve3(
-          new THREE.Vector3(-rTop + 0.02, 0.85, 0),
-          new THREE.Vector3(-1.95, 0.7, 0),
-          new THREE.Vector3(-1.95, -0.7, 0),
-          new THREE.Vector3(-rBottom + 0.02, -0.85, 0)
+          new THREE.Vector3(-rTop + 0.02, 0.88, 0),
+          new THREE.Vector3(-2.02, 0.72, 0),
+          new THREE.Vector3(-2.02, -0.72, 0),
+          new THREE.Vector3(-rBottom + 0.02, -0.88, 0)
         ));
-        const handleGeo = new THREE.TubeGeometry(handleCurve, 64, 0.14, 24, false);
+        const handleGeo = new THREE.TubeGeometry(handleCurve, 64, 0.15, 24, false);
         handleGeo.computeVertexNormals();
         group.add(new THREE.Mesh(handleGeo, ceramicMat));
         break;
       }
 
       /* ==========================================================
-         5. TERMO DE ACERO INOXIDABLE (Esbelto y pulido)
+         5. TERMO DE ACERO INOXIDABLE & BOTELLA DEPORTIVA
       ========================================================== */
       case 'termo': {
         const isDeportivo = sub === 'deportivo';
-        const steelBodyMat = createBaseMaterial(0.24, 0.75, 0.3);
-        const printMat = createPrintMaterial(0.2, 0.0);
+        const steelBodyMat = createBaseMaterial(0.20, 0.80, 0.4);
+        const printMat = createPrintMaterial(0.20, 0.0);
         if (texture) {
           texture.wrapS = THREE.RepeatWrapping;
           texture.wrapT = THREE.ClampToEdgeWrapping;
         }
 
-        // Cylinder body
-        const bodyGeo = new THREE.CylinderGeometry(0.85, 0.8, 3.3, 64, 32);
+        // Cuerpo cilíndrico de acero inoxidable multicapa
+        const bodyGeo = new THREE.CylinderGeometry(0.86, 0.82, 3.35, 64, 32);
         bodyGeo.computeVertexNormals();
         group.add(new THREE.Mesh(bodyGeo, steelBodyMat));
 
-        const printGeo = new THREE.CylinderGeometry(0.855, 0.805, 3.3, 64, 32, true);
+        const printGeo = new THREE.CylinderGeometry(0.865, 0.825, 3.35, 64, 32, true);
         printGeo.computeVertexNormals();
         group.add(new THREE.Mesh(printGeo, printMat));
 
-        // Shoulder
-        const shoulderGeo = new THREE.CylinderGeometry(0.62, 0.85, 0.45, 64, 16);
+        // Hombro biselado aislante
+        const shoulderGeo = new THREE.CylinderGeometry(0.64, 0.86, 0.48, 64, 16);
         shoulderGeo.computeVertexNormals();
         const shoulderMesh = new THREE.Mesh(shoulderGeo, steelBodyMat);
-        shoulderMesh.position.y = 1.88;
+        shoulderMesh.position.y = 1.91;
         group.add(shoulderMesh);
 
-        // Cap / Lid
-        const capMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#2A2A2A'), roughness: 0.35, metalness: 0.7 });
-        const capGeo = new THREE.CylinderGeometry(0.58, 0.58, isDeportivo ? 0.85 : 0.7, 64, 16);
-        capGeo.computeVertexNormals();
-        const capMesh = new THREE.Mesh(capGeo, capMat);
-        capMesh.position.y = isDeportivo ? 2.75 : 2.65;
-        group.add(capMesh);
+        // Base reforzada
+        const baseRingMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#334155'), roughness: 0.5, metalness: 0.6 });
+        const baseRing = new THREE.Mesh(new THREE.CylinderGeometry(0.83, 0.83, 0.16, 64), baseRingMat);
+        baseRing.position.y = -1.68;
+        group.add(baseRing);
 
-        // Accent Ring
-        const ringMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#D4AF37'), roughness: 0.15, metalness: 0.95 });
-        const ringGeo = new THREE.TorusGeometry(0.6, 0.035, 16, 64);
-        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-        ringMesh.rotation.x = Math.PI / 2;
-        ringMesh.position.y = 2.6;
-        group.add(ringMesh);
+        if (isDeportivo) {
+          // --- BOTELLA DEPORTIVA CON TAPA QUICK-FLIP & ASA CARABINER ---
+          const sportCapMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#1E293B'), roughness: 0.35, metalness: 0.6 });
+          const capGeo = new THREE.CylinderGeometry(0.60, 0.60, 0.85, 64, 16);
+          capGeo.computeVertexNormals();
+          const capMesh = new THREE.Mesh(capGeo, sportCapMat);
+          capMesh.position.y = 2.58;
+          group.add(capMesh);
+
+          // Asa ergonómica de transporte (Carry Loop)
+          const loopCurve = new THREE.CurvePath<THREE.Vector3>();
+          loopCurve.add(new THREE.CubicBezierCurve3(
+            new THREE.Vector3(0, 2.95, -0.25),
+            new THREE.Vector3(0, 3.65, -0.65),
+            new THREE.Vector3(0, 3.65, 0.25),
+            new THREE.Vector3(0, 2.95, 0.25)
+          ));
+          const loopGeo = new THREE.TubeGeometry(loopCurve, 32, 0.08, 16, false);
+          const loopMesh = new THREE.Mesh(loopGeo, sportCapMat);
+          group.add(loopMesh);
+
+          // Boquilla deportiva & Botón de apertura (Push button)
+          const buttonMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#EF4444'), roughness: 0.3, metalness: 0.2 });
+          const pushBtn = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.15, 0.12), buttonMat);
+          pushBtn.position.set(0, 2.58, 0.62);
+          group.add(pushBtn);
+
+          // Anillo de silicona de agarre
+          const ringMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#38BDF8'), roughness: 0.6 });
+          const ringGeo = new THREE.TorusGeometry(0.62, 0.035, 16, 64);
+          const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+          ringMesh.rotation.x = Math.PI / 2;
+          ringMesh.position.y = 2.22;
+          group.add(ringMesh);
+
+        } else {
+          // --- TERMO CLÁSICO CON TAPA TAZA DE ACERO ---
+          const cupCapMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#E2E8F0'), roughness: 0.18, metalness: 0.85 });
+          const capGeo = new THREE.CylinderGeometry(0.62, 0.62, 0.82, 64, 16);
+          capGeo.computeVertexNormals();
+          const capMesh = new THREE.Mesh(capGeo, cupCapMat);
+          capMesh.position.y = 2.56;
+          group.add(capMesh);
+
+          // Anillo dorado o negro de separación
+          const ringMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#D4AF37'), roughness: 0.15, metalness: 0.95 });
+          const ringGeo = new THREE.TorusGeometry(0.63, 0.035, 16, 64);
+          const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+          ringMesh.rotation.x = Math.PI / 2;
+          ringMesh.position.y = 2.15;
+          group.add(ringMesh);
+        }
         break;
       }
 
       /* ==========================================================
-         6. GORRA / JOCKEY
+         6. GORRA / JOCKEY (6 Paneles, Ojales Bordados, Visera Curva/Plana & Snapback)
       ========================================================== */
       case 'gorra': {
         const isPlana = sub === 'plana';
         const capFabricMat = createBaseMaterial(0.78, 0.02, 0.0);
+        const seamMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).offsetHSL(0, 0, -0.15), roughness: 0.9 });
+        const eyeletMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#1E293B'), roughness: 0.4, metalness: 0.6 });
         const printMat = createPrintMaterial(0.75, 0.0);
 
-        // Crown Dome
-        const crownGeo = new THREE.SphereGeometry(1.25, 64, 32, 0, Math.PI * 2, 0, Math.PI * 0.5);
-        crownGeo.scale(1.0, 0.76, 1.15);
+        // 1. Corona estructurada de 6 paneles
+        const crownGeo = new THREE.SphereGeometry(1.28, 64, 32, 0, Math.PI * 2, 0, Math.PI * 0.52);
+        crownGeo.scale(1.0, 0.78, 1.15);
         crownGeo.computeVertexNormals();
         group.add(new THREE.Mesh(crownGeo, capFabricMat));
 
-        // Front Panel Decal Overlay
-        const frontPatchGeo = new THREE.PlaneGeometry(1.3, 0.9, 24, 24);
+        // 2. Costuras radiales entre los 6 paneles (6 Seam Ribs)
+        for (let a = 0; a < 6; a++) {
+          const angle = (a * Math.PI) / 3;
+          const seamCurve = new THREE.CurvePath<THREE.Vector3>();
+          seamCurve.add(new THREE.CubicBezierCurve3(
+            new THREE.Vector3(0, 1.18, 0),
+            new THREE.Vector3(Math.cos(angle) * 0.75, 0.95, Math.sin(angle) * 0.86),
+            new THREE.Vector3(Math.cos(angle) * 1.15, 0.45, Math.sin(angle) * 1.32),
+            new THREE.Vector3(Math.cos(angle) * 1.28, 0.08, Math.sin(angle) * 1.47)
+          ));
+          const seamGeo = new THREE.TubeGeometry(seamCurve, 24, 0.014, 8, false);
+          group.add(new THREE.Mesh(seamGeo, seamMat));
+
+          // 3. Ojal de ventilación bordado en cada panel
+          const eyeletAngle = angle + Math.PI / 6;
+          const eyeletRadius = 0.92;
+          const ex = Math.cos(eyeletAngle) * eyeletRadius;
+          const ez = Math.sin(eyeletAngle) * eyeletRadius * 1.15;
+          const ey = 0.62;
+          const eyeletMesh = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.010, 8, 16), eyeletMat);
+          eyeletMesh.position.set(ex, ey, ez);
+          eyeletMesh.lookAt(ex * 1.5, ey + 0.3, ez * 1.5);
+          group.add(eyeletMesh);
+        }
+
+        // 4. Parche frontal estructurado para Decal / Logo
+        const frontPatchGeo = new THREE.PlaneGeometry(1.35, 0.95, 28, 28);
         const pPos = frontPatchGeo.attributes.position;
         const pUvs = frontPatchGeo.attributes.uv;
         for (let i = 0; i < pPos.count; i++) {
           const x = pPos.getX(i);
           const y = pPos.getY(i);
-          pPos.setZ(i, 1.05 - (x * x) * 0.18);
-          pUvs.setXY(i, THREE.MathUtils.clamp((x + 0.65) / 1.3, 0, 1), THREE.MathUtils.clamp((y + 0.45) / 0.9, 0, 1));
+          pPos.setZ(i, 1.08 - (x * x) * 0.19);
+          pUvs.setXY(i, THREE.MathUtils.clamp((x + 0.675) / 1.35, 0, 1), THREE.MathUtils.clamp((y + 0.475) / 0.95, 0, 1));
         }
         frontPatchGeo.computeVertexNormals();
         pUvs.needsUpdate = true;
         const frontPatch = new THREE.Mesh(frontPatchGeo, printMat);
-        frontPatch.position.set(0, 0.5, 0.4);
+        frontPatch.position.set(0, 0.52, 0.42);
         group.add(frontPatch);
 
-        // Visor Brim
-        const brimShape = new THREE.Shape();
-        brimShape.moveTo(-1.1, 0);
-        brimShape.quadraticCurveTo(0, isPlana ? 1.55 : 1.75, 1.1, 0);
-        brimShape.quadraticCurveTo(0, 0.4, -1.1, 0);
-        const brimGeo = new THREE.ExtrudeGeometry(brimShape, { depth: 0.07, bevelEnabled: true, bevelSegments: 8, bevelSize: 0.04, bevelThickness: 0.04 });
-        brimGeo.center();
-        brimGeo.computeVertexNormals();
-        const brimMesh = new THREE.Mesh(brimGeo, capFabricMat);
-        brimMesh.rotation.x = isPlana ? Math.PI / 2.05 : Math.PI / 2.3;
-        brimMesh.position.set(0, 0.12, 1.45);
-        group.add(brimMesh);
+        // 5. Visera (Curva con pespuntes vs Plana pro Snapback)
+        if (isPlana) {
+          const brimShape = new THREE.Shape();
+          brimShape.moveTo(-1.12, 0);
+          brimShape.quadraticCurveTo(0, 1.62, 1.12, 0);
+          brimShape.quadraticCurveTo(0, 0.42, -1.12, 0);
+          const brimGeo = new THREE.ExtrudeGeometry(brimShape, {
+            depth: 0.08,
+            bevelEnabled: true,
+            bevelSegments: 6,
+            bevelSize: 0.03,
+            bevelThickness: 0.03,
+          });
+          brimGeo.center();
+          brimGeo.computeVertexNormals();
+          const brimMesh = new THREE.Mesh(brimGeo, capFabricMat);
+          brimMesh.rotation.x = Math.PI / 2.05;
+          brimMesh.position.set(0, 0.12, 1.50);
+          group.add(brimMesh);
 
-        // Top button
-        const buttonGeo = new THREE.SphereGeometry(0.1, 24, 24);
-        buttonGeo.scale(1, 0.6, 1);
+          // Sticker circular dorado pro snapback en la visera
+          const stickerMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#D4AF37'), roughness: 0.1, metalness: 0.95 });
+          const sticker = new THREE.Mesh(new THREE.CircleGeometry(0.18, 32), stickerMat);
+          sticker.rotation.x = -Math.PI / 2.05;
+          sticker.position.set(0.52, 0.18, 1.65);
+          group.add(sticker);
+
+        } else {
+          const brimShape = new THREE.Shape();
+          brimShape.moveTo(-1.14, 0);
+          brimShape.quadraticCurveTo(0, 1.82, 1.14, 0);
+          brimShape.quadraticCurveTo(0, 0.42, -1.14, 0);
+          const brimGeo = new THREE.ExtrudeGeometry(brimShape, {
+            depth: 0.08,
+            bevelEnabled: true,
+            bevelSegments: 8,
+            bevelSize: 0.04,
+            bevelThickness: 0.04,
+          });
+          brimGeo.center();
+          brimGeo.computeVertexNormals();
+          const brimMesh = new THREE.Mesh(brimGeo, capFabricMat);
+          brimMesh.rotation.x = Math.PI / 2.32;
+          brimMesh.position.set(0, 0.10, 1.48);
+          group.add(brimMesh);
+
+          // 4 hilos de pespunte arqueados en la visera (Curved Topstitches)
+          for (let s = 1; s <= 4; s++) {
+            const stitchArchCurve = new THREE.CurvePath<THREE.Vector3>();
+            const offset = s * 0.12;
+            stitchArchCurve.add(new THREE.QuadraticBezierCurve3(
+              new THREE.Vector3(-0.95 + offset * 0.4, 0.11 - offset * 0.02, 1.25 + offset * 0.8),
+              new THREE.Vector3(0, 0.16 - offset * 0.02, 1.95 + offset * 0.2),
+              new THREE.Vector3(0.95 - offset * 0.4, 0.11 - offset * 0.02, 1.25 + offset * 0.8)
+            ));
+            const archGeo = new THREE.TubeGeometry(stitchArchCurve, 32, 0.008, 6, false);
+            group.add(new THREE.Mesh(archGeo, seamMat));
+          }
+        }
+
+        // 6. Botón superior (Squatchee)
+        const buttonGeo = new THREE.SphereGeometry(0.11, 24, 24);
+        buttonGeo.scale(1, 0.65, 1);
         buttonGeo.computeVertexNormals();
         const buttonMesh = new THREE.Mesh(buttonGeo, capFabricMat);
-        buttonMesh.position.set(0, 1.12, 0);
+        buttonMesh.position.set(0, 1.18, 0);
         group.add(buttonMesh);
+
+        // 7. Cierre trasero Snapback plástico con orificios
+        const snapMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#0F172A'), roughness: 0.4, metalness: 0.2 });
+        const snapStrap = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.14, 0.04), snapMat);
+        snapStrap.position.set(0, 0.18, -1.22);
+        group.add(snapStrap);
         break;
       }
 
@@ -724,7 +1082,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     });
   }, []);
 
-  // Initialize Three.js Scene, Camera, WebGLRenderer & OrbitControls (NO SHADOWS)
+  // Initialize Three.js Scene, Camera, WebGLRenderer & OrbitControls
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -737,11 +1095,11 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     sceneRef.current = scene;
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(3.2, 1.8, 3.6);
+    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+    camera.position.set(3.1, 1.6, 3.4);
     cameraRef.current = camera;
 
-    // Clean WebGLRenderer without shadow map
+    // High performance WebGLRenderer
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
@@ -757,31 +1115,36 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // Studio 3-Point Lighting setup (Pure studio reflections without ground shadows)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
+    // Studio 4-Point Lighting setup for vivid reflections and textures
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.15);
     scene.add(ambientLight);
 
-    // Key Light
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    // Key Light (Warm daylight)
+    const keyLight = new THREE.DirectionalLight(0xfffbf5, 1.6);
     keyLight.position.set(5, 8, 6);
     scene.add(keyLight);
 
-    // Fill Light
-    const fillLight = new THREE.DirectionalLight(0xf0f4ff, 0.8);
+    // Fill Light (Cool ambient fill)
+    const fillLight = new THREE.DirectionalLight(0xf0f5ff, 0.9);
     fillLight.position.set(-6, 3, -4);
     scene.add(fillLight);
 
-    // Rim Light
-    const rimLight = new THREE.DirectionalLight(0xfff5e6, 0.7);
+    // Rim Light (Edge specular highlight)
+    const rimLight = new THREE.DirectionalLight(0xfff8ee, 0.85);
     rimLight.position.set(0, 6, -7);
     scene.add(rimLight);
+
+    // Top Highlight (Brings out collars, lids, and brims)
+    const topLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    topLight.position.set(0, 10, 0);
+    scene.add(topLight);
 
     // OrbitControls attached directly to renderer canvas
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.minDistance = 2.0;
-    controls.maxDistance = 9.0;
+    controls.maxDistance = 8.5;
     controls.maxPolarAngle = Math.PI / 1.75;
     controls.target.set(0, 0, 0);
     controlsRef.current = controls;

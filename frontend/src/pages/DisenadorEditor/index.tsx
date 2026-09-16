@@ -34,6 +34,10 @@ const PRODUCT_SUBTYPES: Record<string, { id: string; label: string; desc: string
     { id: 'cuello-v', label: 'Cuello V', desc: 'Corte V acanalado' },
     { id: 'poleron', label: 'Polerón / Hoodie', desc: 'Capucha y bolsillo canguro' },
   ],
+  pantalon: [
+    { id: 'jogger', label: 'Jogger Urbano', desc: 'Corte slim con puños elásticos y cordón' },
+    { id: 'recto', label: 'Pantalón Recto', desc: 'Corte clásico recto con bolsillos' },
+  ],
   vaso: [
     { id: 'clasico', label: 'Vaso Clásico', desc: 'Vidrio / Tumbler cónico' },
     { id: 'shopero', label: 'Shopero Cervecero', desc: 'Asa robusta y base gruesa' },

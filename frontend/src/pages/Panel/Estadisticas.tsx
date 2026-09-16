@@ -1056,9 +1056,9 @@ export default function Estadisticas() {
                         <td className="text-center">
                           <select
                             value={tx.estado}
-                            disabled={updatingNumero === tx.numero}
+                            disabled={Boolean(updatingNumero)}
                             onChange={(e) => handleCambiarEstado(tx.numero, e.target.value)}
-                            className="form-select form-select-sm bg-elevated text-text border-border font-montserrat fw-semibold d-inline-block w-auto"
+                            className={`form-select form-select-sm bg-elevated text-text border-border font-montserrat fw-semibold d-inline-block w-auto ${updatingNumero ? 'opacity-50 cursor-not-allowed' : ''}`}
                             style={{ fontSize: '0.75rem', padding: '0.25rem 1.8rem 0.25rem 0.6rem' }}
                           >
                             {ESTADOS_DISPONIBLES.map((est) => (
@@ -1240,8 +1240,9 @@ export default function Estadisticas() {
                     </div>
                     <select
                       value={activeModalTx.estado}
+                      disabled={Boolean(updatingNumero)}
                       onChange={(e) => handleCambiarEstado(activeModalTx.numero, e.target.value)}
-                      className="form-select form-select-sm bg-surface text-text border-primary fw-bold w-auto"
+                      className={`form-select form-select-sm bg-surface text-text border-primary fw-bold w-auto ${updatingNumero ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {ESTADOS_DISPONIBLES.map((est) => (
                         <option key={est.key} value={est.key}>
@@ -1454,8 +1455,9 @@ export default function Estadisticas() {
                         <label className="small text-muted mb-1 d-block" style={{ fontSize: '0.75rem' }}>Nuevo Estado:</label>
                         <select
                           value={modalNuevoEstado}
+                          disabled={Boolean(updatingNumero)}
                           onChange={(e) => setModalNuevoEstado(e.target.value)}
-                          className="form-select form-select-sm bg-surface text-text border-primary fw-bold"
+                          className={`form-select form-select-sm bg-surface text-text border-primary fw-bold ${updatingNumero ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           {ESTADOS_DISPONIBLES.map((est) => (
                             <option key={est.key} value={est.key}>
@@ -1469,9 +1471,10 @@ export default function Estadisticas() {
                         <input
                           type="text"
                           value={notaCambio}
+                          disabled={Boolean(updatingNumero)}
                           onChange={(e) => setNotaCambio(e.target.value)}
                           placeholder="Ej. Despachado por Blue Express N° 12345"
-                          className="form-control form-control-sm bg-surface text-text border-border"
+                          className={`form-control form-control-sm bg-surface text-text border-border ${updatingNumero ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                       </div>
                     </div>
@@ -1481,11 +1484,11 @@ export default function Estadisticas() {
                           await handleCambiarEstado(activeModalTx.numero, modalNuevoEstado, notaCambio);
                           setNotaCambio('');
                         }}
-                        disabled={updatingNumero === activeModalTx.numero || modalNuevoEstado === activeModalTx.estado}
-                        className="btn btn-sm btn-primary fw-bold d-flex align-items-center gap-1"
+                        disabled={Boolean(updatingNumero) || !modalNuevoEstado || modalNuevoEstado === activeModalTx.estado}
+                        className={`btn btn-sm btn-primary fw-bold d-flex align-items-center gap-1 ${updatingNumero ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <Send size={13} />
-                        <span>{updatingNumero === activeModalTx.numero ? 'Guardando...' : 'Aplicar Estado & Enviar Correo'}</span>
+                        <span>{updatingNumero === activeModalTx.numero ? 'Guardando y notificando...' : 'Aplicar Estado & Enviar Correo'}</span>
                       </button>
                     </div>
                   </div>
