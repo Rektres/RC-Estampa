@@ -391,37 +391,14 @@ export default function DisenadorEditor() {
   // Add to cart with snapshot
   const addToCart = async () => {
     let imagen = previewUrl;
-    let disenoId: string | undefined;
+    let disenoId: number | undefined;
 
     try {
       const res = await disenosApi.crear({
-        producto,
-        subtipo: subTipo,
+        imagen_base64: printUrl || previewUrl,
+        prenda: currentSubtypeName,
         color_base: productColor,
         talla: selectedTalla,
-        configuracion: {
-          subTipo,
-          productColor,
-          selectedTalla,
-          images: images.map(img => ({
-            name: img.name,
-            x: img.x,
-            y: img.y,
-            scale: img.scale,
-            rotation: img.rotation,
-            flipX: img.flipX,
-            fitMode: img.fitMode,
-            repeatScale: img.repeatScale,
-          })),
-          customText,
-          textFont,
-          textColor,
-          textSize,
-          textPosX,
-          textPosY,
-        },
-        imagen_preview: previewUrl,
-        imagen_print: printUrl,
       });
       imagen = res.imagen;
       disenoId = res.id;
@@ -438,6 +415,7 @@ export default function DisenadorEditor() {
       prenda: currentSubtypeName,
       color_base: productColor,
       talla: selectedTalla,
+      precio,
       cantidad,
     });
     openCart();
@@ -723,7 +701,7 @@ export default function DisenadorEditor() {
       {/* Main 3D Customizer Layout */}
       <div className="row g-4 align-items-stretch">
         
-        {/* Left Column: 3D Canvas Viewport */}
+        {/* Left Column: 3D Canvas Viewport (100% LIMPIO EN PC Y TABLET) */}
         <div className="col-12 col-lg-7 d-flex flex-column">
           <div className="w-100 h-100 bg-elevated border border-border rounded-4 p-2 position-relative shadow-sm d-flex flex-column justify-content-center overflow-hidden" style={{ minHeight: '560px' }}>
             <Viewer3D

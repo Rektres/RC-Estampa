@@ -34,7 +34,7 @@ interface ModelConfig {
   patchSize: [number, number];
 }
 
-// Configuración de modelos 3D y áreas de estampado
+// Configuración calibrada de modelos 3D y áreas de estampado
 const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
   polera: {
     path: '/models/tshirt.glb',
@@ -45,8 +45,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.85,
     metalness: 0.02,
     patchType: 'shirt',
-    patchPos: [0, 0.08, 0.38],
-    patchSize: [1.25, 1.45],
+    patchPos: [0, 0.08, 0.72],
+    patchSize: [1.35, 1.55],
   },
   'cuello-redondo': {
     path: '/models/tshirt.glb',
@@ -57,8 +57,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.85,
     metalness: 0.02,
     patchType: 'shirt',
-    patchPos: [0, 0.08, 0.38],
-    patchSize: [1.25, 1.45],
+    patchPos: [0, 0.08, 0.72],
+    patchSize: [1.35, 1.55],
   },
   'cuello-v': {
     path: '/models/tshirt.glb',
@@ -69,8 +69,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.85,
     metalness: 0.02,
     patchType: 'shirt',
-    patchPos: [0, 0.08, 0.38],
-    patchSize: [1.25, 1.45],
+    patchPos: [0, 0.08, 0.72],
+    patchSize: [1.35, 1.55],
   },
   polo: {
     path: '/models/tshirt.glb',
@@ -81,8 +81,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.90,
     metalness: 0.02,
     patchType: 'shirt',
-    patchPos: [0, 0.08, 0.38],
-    patchSize: [1.25, 1.45],
+    patchPos: [0, 0.08, 0.72],
+    patchSize: [1.35, 1.55],
   },
   poleron: {
     path: '/models/hoodie.glb',
@@ -93,8 +93,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.88,
     metalness: 0.02,
     patchType: 'hoodie',
-    patchPos: [0, 0.12, 0.44],
-    patchSize: [1.20, 1.35],
+    patchPos: [0, 0.12, 0.74],
+    patchSize: [1.35, 1.50],
   },
   hoodie: {
     path: '/models/hoodie.glb',
@@ -105,8 +105,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.88,
     metalness: 0.02,
     patchType: 'hoodie',
-    patchPos: [0, 0.12, 0.44],
-    patchSize: [1.20, 1.35],
+    patchPos: [0, 0.12, 0.74],
+    patchSize: [1.35, 1.50],
   },
   canguro: {
     path: '/models/hoodie.glb',
@@ -117,8 +117,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.88,
     metalness: 0.02,
     patchType: 'hoodie',
-    patchPos: [0, 0.12, 0.44],
-    patchSize: [1.20, 1.35],
+    patchPos: [0, 0.12, 0.74],
+    patchSize: [1.35, 1.50],
   },
   taza: {
     path: '/models/mug.glb',
@@ -278,17 +278,17 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     printMaterialsRef.current.push(printMat);
 
     if (patchType === 'mug') {
-      const wrapGeo = new THREE.CylinderGeometry(1.012, 0.962, 1.8, 64, 1, true, -Math.PI * 0.7, Math.PI * 1.4);
+      const wrapGeo = new THREE.CylinderGeometry(0.96, 0.96, 1.8, 64, 1, true, -Math.PI * 0.7, Math.PI * 1.4);
       return new THREE.Mesh(wrapGeo, printMat);
     } else if (patchType === 'bottle') {
-      const wrapGeo = new THREE.CylinderGeometry(0.862, 0.862, 2.0, 64, 1, true, -Math.PI * 0.45, Math.PI * 0.9);
+      const wrapGeo = new THREE.CylinderGeometry(0.60, 0.60, 2.0, 64, 1, true, -Math.PI * 0.45, Math.PI * 0.9);
       const mesh = new THREE.Mesh(wrapGeo, printMat);
       mesh.position.set(pos[0], pos[1], pos[2]);
       return mesh;
     } else {
       // Flat / Contoured Front Decal
-      const printW = size[0] || 1.25;
-      const printH = size[1] || 1.45;
+      const printW = size[0] || 1.35;
+      const printH = size[1] || 1.55;
       const printGeo = new THREE.PlaneGeometry(printW, printH, 32, 32);
       const printPos = printGeo.attributes.position;
       for (let i = 0; i < printPos.count; i++) {
