@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallba
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { RotateCw, RefreshCw, ZoomIn, ZoomOut, Compass } from 'lucide-react';
 
@@ -26,148 +25,148 @@ interface ModelConfig {
   path: string;
   targetScale: number;
   yOffset: number;
-  decalPosition: [number, number, number];
-  decalOrientation: [number, number, number];
-  decalSize: [number, number, number];
   cameraDistance: number;
   cameraHeight: number;
   metalness?: number;
   roughness?: number;
+  patchType: 'shirt' | 'hoodie' | 'mug' | 'bottle' | 'pants' | 'cap' | 'tote';
+  patchPos: [number, number, number];
+  patchSize: [number, number];
 }
 
-// Configuración de modelos GLB profesionales y parámetros de proyección de estampado
+// Configuración de modelos 3D y áreas de estampado
 const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
   polera: {
     path: '/models/tshirt.glb',
     targetScale: 3.2,
     yOffset: -0.15,
-    decalPosition: [0, 0.04, 0.15],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.38, 0.48, 0.35],
     cameraDistance: 4.6,
     cameraHeight: 0.15,
     roughness: 0.85,
     metalness: 0.02,
+    patchType: 'shirt',
+    patchPos: [0, 0.08, 0.38],
+    patchSize: [1.25, 1.45],
   },
   'cuello-redondo': {
     path: '/models/tshirt.glb',
     targetScale: 3.2,
     yOffset: -0.15,
-    decalPosition: [0, 0.04, 0.15],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.38, 0.48, 0.35],
     cameraDistance: 4.6,
     cameraHeight: 0.15,
     roughness: 0.85,
     metalness: 0.02,
+    patchType: 'shirt',
+    patchPos: [0, 0.08, 0.38],
+    patchSize: [1.25, 1.45],
   },
   'cuello-v': {
     path: '/models/tshirt.glb',
     targetScale: 3.2,
     yOffset: -0.15,
-    decalPosition: [0, 0.04, 0.15],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.38, 0.48, 0.35],
     cameraDistance: 4.6,
     cameraHeight: 0.15,
     roughness: 0.85,
     metalness: 0.02,
+    patchType: 'shirt',
+    patchPos: [0, 0.08, 0.38],
+    patchSize: [1.25, 1.45],
   },
   polo: {
     path: '/models/tshirt.glb',
     targetScale: 3.2,
     yOffset: -0.15,
-    decalPosition: [0, 0.04, 0.15],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.38, 0.48, 0.35],
     cameraDistance: 4.6,
     cameraHeight: 0.15,
     roughness: 0.90,
     metalness: 0.02,
+    patchType: 'shirt',
+    patchPos: [0, 0.08, 0.38],
+    patchSize: [1.25, 1.45],
   },
   poleron: {
     path: '/models/hoodie.glb',
     targetScale: 3.3,
     yOffset: -0.2,
-    decalPosition: [0, 0.10, 0.20],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.38, 0.46, 0.35],
     cameraDistance: 4.8,
     cameraHeight: 0.15,
     roughness: 0.88,
     metalness: 0.02,
+    patchType: 'hoodie',
+    patchPos: [0, 0.12, 0.44],
+    patchSize: [1.20, 1.35],
   },
   hoodie: {
     path: '/models/hoodie.glb',
     targetScale: 3.3,
     yOffset: -0.2,
-    decalPosition: [0, 0.10, 0.20],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.38, 0.46, 0.35],
     cameraDistance: 4.8,
     cameraHeight: 0.15,
     roughness: 0.88,
     metalness: 0.02,
+    patchType: 'hoodie',
+    patchPos: [0, 0.12, 0.44],
+    patchSize: [1.20, 1.35],
   },
   canguro: {
     path: '/models/hoodie.glb',
     targetScale: 3.3,
     yOffset: -0.2,
-    decalPosition: [0, 0.10, 0.20],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.38, 0.46, 0.35],
     cameraDistance: 4.8,
     cameraHeight: 0.15,
     roughness: 0.88,
     metalness: 0.02,
+    patchType: 'hoodie',
+    patchPos: [0, 0.12, 0.44],
+    patchSize: [1.20, 1.35],
   },
   taza: {
     path: '/models/mug.glb',
     targetScale: 2.6,
     yOffset: 0.0,
-    decalPosition: [0, 0, 0.48],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.65, 0.65, 0.55],
     cameraDistance: 3.8,
     cameraHeight: 0.2,
     roughness: 0.25,
     metalness: 0.05,
+    patchType: 'mug',
+    patchPos: [0, 0, 0],
+    patchSize: [1.8, 1.8],
   },
   mug: {
     path: '/models/mug.glb',
     targetScale: 2.6,
     yOffset: 0.0,
-    decalPosition: [0, 0, 0.48],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.65, 0.65, 0.55],
     cameraDistance: 3.8,
     cameraHeight: 0.2,
     roughness: 0.25,
     metalness: 0.05,
+    patchType: 'mug',
+    patchPos: [0, 0, 0],
+    patchSize: [1.8, 1.8],
   },
   botella: {
     path: '/models/bottle.glb',
     targetScale: 3.4,
     yOffset: 0.0,
-    decalPosition: [0, 0, 0.38],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.55, 0.85, 0.45],
     cameraDistance: 4.4,
     cameraHeight: 0.15,
     roughness: 0.2,
     metalness: 0.6,
+    patchType: 'bottle',
+    patchPos: [0, -0.2, 0],
+    patchSize: [1.8, 2.0],
   },
   termo: {
     path: '/models/bottle.glb',
     targetScale: 3.4,
     yOffset: 0.0,
-    decalPosition: [0, 0, 0.38],
-    decalOrientation: [0, 0, 0],
-    decalSize: [0.55, 0.85, 0.45],
     cameraDistance: 4.4,
     cameraHeight: 0.15,
     roughness: 0.2,
     metalness: 0.6,
+    patchType: 'bottle',
+    patchPos: [0, -0.2, 0],
+    patchSize: [1.8, 2.0],
   },
 };
 
@@ -190,8 +189,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
   const controlsRef = useRef<OrbitControls | null>(null);
   const productGroupRef = useRef<THREE.Group | null>(null);
   const baseMaterialsRef = useRef<THREE.MeshStandardMaterial[]>([]);
-  const printMaterialsRef = useRef<THREE.MeshStandardMaterial[]>([]);
-  const decalMeshRef = useRef<THREE.Mesh | null>(null);
+  const printMaterialsRef = useRef<THREE.Material[]>([]);
   const canvasTextureRef = useRef<THREE.CanvasTexture | null>(null);
   const animFrameIdRef = useRef<number | null>(null);
   const [autoRotate, setAutoRotate] = useState(false);
@@ -258,6 +256,55 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     });
   }, []);
 
+  // Helper to build print decal mesh
+  const createPrintMesh = useCallback((
+    patchType: string,
+    pos: [number, number, number],
+    size: [number, number],
+    texture: THREE.Texture | null
+  ): THREE.Mesh => {
+    const printMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      map: texture || null,
+      transparent: true,
+      alphaTest: 0.001,
+      depthTest: true,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
+      side: THREE.DoubleSide,
+    });
+    printMaterialsRef.current.push(printMat);
+
+    if (patchType === 'mug') {
+      const wrapGeo = new THREE.CylinderGeometry(1.012, 0.962, 1.8, 64, 1, true, -Math.PI * 0.7, Math.PI * 1.4);
+      return new THREE.Mesh(wrapGeo, printMat);
+    } else if (patchType === 'bottle') {
+      const wrapGeo = new THREE.CylinderGeometry(0.862, 0.862, 2.0, 64, 1, true, -Math.PI * 0.45, Math.PI * 0.9);
+      const mesh = new THREE.Mesh(wrapGeo, printMat);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      return mesh;
+    } else {
+      // Flat / Contoured Front Decal
+      const printW = size[0] || 1.25;
+      const printH = size[1] || 1.45;
+      const printGeo = new THREE.PlaneGeometry(printW, printH, 32, 32);
+      const printPos = printGeo.attributes.position;
+      for (let i = 0; i < printPos.count; i++) {
+        const x = printPos.getX(i);
+        const y = printPos.getY(i);
+        const zCurve = -(x * x) * 0.06 + (y > 0 ? y * 0.02 : 0);
+        printPos.setZ(i, zCurve);
+      }
+      printGeo.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(printGeo, printMat);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      return mesh;
+    }
+  }, []);
+
   // Procedural Fallback Builder (For accessories or models without a standalone GLB)
   const buildProceduralFallback = useCallback((type: string, sub: string, color: string, texture: THREE.Texture | null) => {
     const group = new THREE.Group();
@@ -275,93 +322,52 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       return mat;
     };
 
-    const createPrintMat = () => {
-      const mat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        map: texture || null,
-        transparent: true,
-        alphaTest: 0.01,
-        roughness: 0.8,
-        metalness: 0.0,
-        polygonOffset: true,
-        polygonOffsetFactor: -1.5,
-        polygonOffsetUnits: -1.5,
-        side: THREE.FrontSide,
-      });
-      printMaterialsRef.current.push(mat);
-      return mat;
-    };
-
     if (type === 'pantalon' || sub === 'jogger' || sub === 'recto') {
       const mat = createBaseMat(0.85, 0.02);
-      const printMat = createPrintMat();
-
-      // Waistband & Pelvis
       const pelvisGeo = new THREE.CylinderGeometry(0.92, 0.88, 0.9, 32);
       pelvisGeo.scale(1.0, 1.0, 0.55);
       const pelvis = new THREE.Mesh(pelvisGeo, mat);
       pelvis.position.y = 0.9;
       group.add(pelvis);
 
-      // Left Leg
-      const leftLegGeo = new THREE.CylinderGeometry(0.42, 0.28, 2.3, 32);
-      const leftLeg = new THREE.Mesh(leftLegGeo, mat);
+      const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.28, 2.3, 32), mat);
       leftLeg.position.set(-0.44, -0.65, 0);
       leftLeg.rotation.z = -0.04;
-      group.add(leftLeg);
-
-      // Right Leg
-      const rightLegGeo = new THREE.CylinderGeometry(0.42, 0.28, 2.3, 32);
-      const rightLeg = new THREE.Mesh(rightLegGeo, mat);
+      const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.28, 2.3, 32), mat);
       rightLeg.position.set(0.44, -0.65, 0);
       rightLeg.rotation.z = 0.04;
-      group.add(rightLeg);
+      group.add(leftLeg, rightLeg);
 
-      // Thigh print
-      const thighPrintGeo = new THREE.PlaneGeometry(0.4, 0.6);
-      const thighPrint = new THREE.Mesh(thighPrintGeo, printMat);
-      thighPrint.position.set(-0.44, -0.2, 0.32);
-      group.add(thighPrint);
-    } else if (type === 'gorro' || type === 'jockey') {
+      const printMesh = createPrintMesh('pants', [-0.44, -0.2, 0.32], [0.45, 0.65], texture);
+      group.add(printMesh);
+    } else if (type === 'gorro' || type === 'gorra' || type === 'jockey') {
       const mat = createBaseMat(0.8, 0.05);
-      const printMat = createPrintMat();
-
-      // Crown
       const crownGeo = new THREE.SphereGeometry(1.05, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.52);
       const crown = new THREE.Mesh(crownGeo, mat);
       crown.position.y = 0.2;
       group.add(crown);
 
-      // Visor
-      const visorGeo = new THREE.CylinderGeometry(1.15, 1.15, 0.06, 32, 1, false, 0, Math.PI * 0.6);
-      const visor = new THREE.Mesh(visorGeo, mat);
+      const visor = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.06, 32, 1, false, 0, Math.PI * 0.6), mat);
       visor.rotation.set(-0.15, -Math.PI * 0.3, 0);
       visor.position.set(0, 0.15, 0.6);
       group.add(visor);
 
-      // Front Patch Print
-      const patchGeo = new THREE.PlaneGeometry(0.7, 0.55);
-      const patch = new THREE.Mesh(patchGeo, printMat);
-      patch.position.set(0, 0.55, 0.98);
-      group.add(patch);
+      const printMesh = createPrintMesh('cap', [0, 0.55, 0.98], [0.7, 0.55], texture);
+      group.add(printMesh);
     } else {
       // General apparel fallback
       const mat = createBaseMat(0.85, 0.02);
-      const printMat = createPrintMat();
-
       const torsoGeo = new THREE.CylinderGeometry(1.05, 0.98, 2.4, 48);
       torsoGeo.scale(1.0, 1.0, 0.4);
       const torso = new THREE.Mesh(torsoGeo, mat);
       group.add(torso);
 
-      const printGeo = new THREE.PlaneGeometry(1.15, 1.35);
-      const printMesh = new THREE.Mesh(printGeo, printMat);
-      printMesh.position.set(0, 0.05, 0.42);
+      const printMesh = createPrintMesh('shirt', [0, 0.05, 0.42], [1.15, 1.35], texture);
       group.add(printMesh);
     }
 
     return group;
-  }, []);
+  }, [createPrintMesh]);
 
   // Load and configure GLTF 3D model
   const loadProductModel = useCallback(async (
@@ -378,7 +384,6 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     const config = GLTF_MODEL_CONFIGS[configKey];
     baseMaterialsRef.current = [];
     printMaterialsRef.current = [];
-    decalMeshRef.current = null;
 
     try {
       let baseScene = gltfSceneCache.get(config.path);
@@ -409,22 +414,16 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       );
       rootGroup.add(modelGroup);
 
-      // Material colorization & Shadow configuration
+      // Material colorization (WITHOUT SHADOWS)
       const garmentColor = new THREE.Color(color);
-      let targetMeshForDecal: THREE.Mesh | null = null;
 
       modelGroup.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
           const mesh = child as THREE.Mesh;
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
+          mesh.castShadow = false;
+          mesh.receiveShadow = false;
 
-          // Select primary mesh for decal projection
-          if (!targetMeshForDecal) {
-            targetMeshForDecal = mesh;
-          }
-
-          // Create standard PBR fabric material
+          // Create standard PBR fabric/body material
           const newMat = new THREE.MeshStandardMaterial({
             color: garmentColor,
             roughness: config.roughness ?? 0.85,
@@ -437,51 +436,23 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
         }
       });
 
-      // Decal Projection Setup
-      if (texture && targetMeshForDecal) {
-        const decalMat = new THREE.MeshStandardMaterial({
-          color: 0xffffff,
-          map: texture,
-          transparent: true,
-          alphaTest: 0.01,
-          depthTest: true,
-          depthWrite: false,
-          polygonOffset: true,
-          polygonOffsetFactor: -4,
-          polygonOffsetUnits: -4,
-          roughness: 0.8,
-          metalness: 0.0,
-          side: THREE.FrontSide,
-        });
-        printMaterialsRef.current.push(decalMat);
-
-        const decalPos = new THREE.Vector3(...config.decalPosition);
-        const decalEuler = new THREE.Euler(...config.decalOrientation);
-        const decalSize = new THREE.Vector3(...config.decalSize);
-
-        try {
-          const decalGeo = new DecalGeometry(targetMeshForDecal, decalPos, decalEuler, decalSize);
-          const decalMesh = new THREE.Mesh(decalGeo, decalMat);
-          decalMesh.renderOrder = 2;
-          (targetMeshForDecal as THREE.Mesh).add(decalMesh);
-          decalMeshRef.current = decalMesh;
-        } catch {
-          // Fallback to front billboard plane if DecalGeometry fails on complex non-manifold geometry
-          const planeGeo = new THREE.PlaneGeometry(config.decalSize[0] * 1.5, config.decalSize[1] * 1.5);
-          const planeMesh = new THREE.Mesh(planeGeo, decalMat);
-          planeMesh.position.set(decalPos.x, decalPos.y, decalPos.z + 0.02);
-          rootGroup.add(planeMesh);
-        }
-      }
+      // Attach persistent Decal/Print mesh directly to the root group
+      const printMesh = createPrintMesh(
+        config.patchType,
+        config.patchPos,
+        config.patchSize,
+        texture
+      );
+      rootGroup.add(printMesh);
 
       return rootGroup;
     } catch {
       // Graceful fallback to procedural mesh
       return buildProceduralFallback(type, sub, color, texture);
     }
-  }, [buildProceduralFallback]);
+  }, [buildProceduralFallback, createPrintMesh]);
 
-  // Three.js Scene, Renderer & 4-Point Lighting Initialization
+  // Three.js Scene, Renderer & 4-Point Clean Studio Lighting (NO SHADOWS)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -498,7 +469,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     camera.position.set(3.2, 1.8, 3.6);
     cameraRef.current = camera;
 
-    // 3. Renderer with soft PBR shadows
+    // 3. Renderer (Shadows Disabled for pure, clean e-commerce rendering)
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
@@ -507,10 +478,9 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.12;
     rendererRef.current = renderer;
 
     container.replaceChildren(renderer.domElement);
@@ -526,39 +496,22 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     controls.target.set(0, 0, 0);
     controlsRef.current = controls;
 
-    // 5. Professional 4-Point Studio Lighting
-    // Ambient / Hemisphere soft bounce
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x64748b, 0.9);
+    // 5. Professional Studio Illumination (Bright, Clean, Uniform)
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe2e8f0, 1.0);
     hemiLight.position.set(0, 20, 0);
     scene.add(hemiLight);
 
-    // Key Light (Front-Right Key)
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
     keyLight.position.set(4, 5, 5);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 1024;
-    keyLight.shadow.mapSize.height = 1024;
-    keyLight.shadow.bias = -0.0001;
     scene.add(keyLight);
 
-    // Fill Light (Front-Left Fill)
-    const fillLight = new THREE.DirectionalLight(0xf1f5f9, 0.9);
+    const fillLight = new THREE.DirectionalLight(0xf8fafc, 0.9);
     fillLight.position.set(-4, 3, 4);
     scene.add(fillLight);
 
-    // Rim / Backlight (Highlights edges & cloth silhouette)
-    const rimLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.1);
     rimLight.position.set(0, 4, -5);
     scene.add(rimLight);
-
-    // Soft Shadow Contact Floor Plane
-    const shadowPlaneGeo = new THREE.PlaneGeometry(12, 12);
-    const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.16 });
-    const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
-    shadowPlane.rotation.x = -Math.PI / 2;
-    shadowPlane.position.y = -1.75;
-    shadowPlane.receiveShadow = true;
-    scene.add(shadowPlane);
 
     // Animation Loop
     let isRunning = true;
@@ -610,7 +563,8 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       if (!canvasTextureRef.current) {
         const texture = new THREE.CanvasTexture(canvasSource);
         texture.colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = 4;
+        texture.anisotropy = 8;
+        texture.needsUpdate = true;
         canvasTextureRef.current = texture;
       } else {
         canvasTextureRef.current.image = canvasSource;
@@ -622,11 +576,13 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
 
     printMaterialsRef.current.forEach((mat) => {
       if (canvasTextureRef.current) {
-        mat.map = canvasTextureRef.current;
+        (mat as any).map = canvasTextureRef.current;
         mat.needsUpdate = true;
       }
     });
-  }, [canvasSource, textureVersion]);
+
+    renderFrame();
+  }, [canvasSource, textureVersion, renderFrame]);
 
   // Rebuild / Load 3D Model when product, subTipo or base color changes
   useEffect(() => {

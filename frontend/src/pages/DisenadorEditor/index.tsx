@@ -6,7 +6,7 @@ import {
   Minus, Plus, ShoppingBag, ArrowLeft, Type,
   Sparkles, Palette, Image as ImageIcon, Shirt, Coffee, GlassWater,
   PlusCircle, Maximize2, Minimize2, Grid,
-  AlignCenter, ChevronDown, Sliders, Layers
+  AlignCenter, Sliders, Layers, X
 } from 'lucide-react';
 import { formatPrice } from '../../utils';
 import { useCartStore } from '../../store/cartStore';
@@ -116,9 +116,8 @@ export default function DisenadorEditor() {
   const [images, setImages] = useState<CustomImage[]>([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
-  // In-Canvas Floating Menu State
-  const [activeFloatingTarget, setActiveFloatingTarget] = useState<string>('image'); // 'image' or 'text'
-  const [isFloatingMenuExpanded, setIsFloatingMenuExpanded] = useState(true);
+  // Mobile Bottom-Sheet Controls Modal State
+  const [showMobileControls, setShowMobileControls] = useState(false);
 
   // Text state
   const [customText, setCustomText] = useState('');
@@ -293,8 +292,14 @@ export default function DisenadorEditor() {
     customText, textFont, textColor, textSize, textPosX, textPosY
   ]);
 
-  // Trigger texture redraw on changes
+  // Trigger texture redraw on changes and ensure initial canvas
   useEffect(() => {
+    if (!textureCanvasRef.current) {
+      const c = document.createElement('canvas');
+      c.width = TEXTURE_CANVAS_SIZE;
+      c.height = TEXTURE_CANVAS_SIZE;
+      textureCanvasRef.current = c;
+    }
     redrawTexture();
   }, [redrawTexture]);
 
@@ -323,7 +328,7 @@ export default function DisenadorEditor() {
         };
         setImages((prev) => [...prev, newImg]);
         setSelectedImageId(newImg.id);
-        setActiveFloatingTarget('image');
+        setActiveTab('imagenes');
       };
       img.src = src;
     };
@@ -371,31 +376,52 @@ export default function DisenadorEditor() {
     }
   };
 
+  // Capture final print file & open Confirmation Modal
   const openPreview = () => {
-    const mockup3D = viewer3DRef.current?.getSnapshot() || '';
-    setPreviewUrl(mockup3D);
+    if (!viewer3DRef.current) return;
+    const snap = viewer3DRef.current.getSnapshot();
+    setPreviewUrl(snap);
 
     if (textureCanvasRef.current) {
-      setPrintUrl(textureCanvasRef.current.toDataURL('image/png'));
+      setPrintUrl(textureCanvasRef.current.toDataURL('image/png', 1.0));
     }
     setPreviewOpen(true);
   };
 
+  // Add to cart with snapshot
   const addToCart = async () => {
-    let snapshot = previewUrl;
-    if (!snapshot && viewer3DRef.current) {
-      snapshot = viewer3DRef.current.getSnapshot();
-    }
-
-    let imagen = snapshot;
-    let disenoId: number | undefined;
+    let imagen = previewUrl;
+    let disenoId: string | undefined;
 
     try {
       const res = await disenosApi.crear({
-        imagen_base64: snapshot,
-        prenda: currentSubtypeName,
+        producto,
+        subtipo: subTipo,
         color_base: productColor,
         talla: selectedTalla,
+        configuracion: {
+          subTipo,
+          productColor,
+          selectedTalla,
+          images: images.map(img => ({
+            name: img.name,
+            x: img.x,
+            y: img.y,
+            scale: img.scale,
+            rotation: img.rotation,
+            flipX: img.flipX,
+            fitMode: img.fitMode,
+            repeatScale: img.repeatScale,
+          })),
+          customText,
+          textFont,
+          textColor,
+          textSize,
+          textPosX,
+          textPosY,
+        },
+        imagen_preview: previewUrl,
+        imagen_print: printUrl,
       });
       imagen = res.imagen;
       disenoId = res.id;
@@ -416,6 +442,262 @@ export default function DisenadorEditor() {
     });
     openCart();
     setPreviewOpen(false);
+  };
+
+  // Reusable Image Controls Panel (Used outside 3D in Desktop/Tablet sidebar, and in Mobile Drawer)
+  const renderImageControls = () => {
+    if (!currentImage) return null;
+
+    return (
+      <div className="d-flex flex-column gap-3 p-3 bg-card border border-border rounded-3 font-montserrat shadow-sm">
+        {/* Active Image Indicator */}
+        <div className="d-flex align-items-center justify-content-between pb-2 border-bottom border-border">
+          <div className="d-flex align-items-center gap-2">
+            <img src={currentImage.src} alt={currentImage.name} className="rounded object-fit-contain bg-elevated p-1 border" style={{ width: '36px', height: '36px' }} />
+            <div>
+              <span className="fw-semibold text-text d-block text-truncate" style={{ fontSize: '0.8rem', maxWidth: '160px' }}>
+                {currentImage.name}
+              </span>
+              <span className="text-muted" style={{ fontSize: '0.68rem' }}>Ajuste milimétrico 100% libre</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={removeCurrentImage}
+            className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center gap-1"
+            style={{ fontSize: '0.7rem' }}
+          >
+            <Trash2 size={13} />
+            Eliminar
+          </button>
+        </div>
+
+        {/* 1. Modos de Calce */}
+        <div>
+          <span className="text-muted d-block mb-1 fw-semibold" style={{ fontSize: '0.7rem' }}>MODO DE CALCE:</span>
+          <div className="d-grid gap-1" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+            <button
+              type="button"
+              onClick={() => updateCurrentImage({ fitMode: 'ajustar' })}
+              title="Ajustar proporcional centrado"
+              className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
+                currentImage.fitMode === 'ajustar' ? 'btn-primary text-black fw-bold' : 'bg-elevated text-muted border-border'
+              }`}
+              style={{ fontSize: '0.65rem' }}
+            >
+              <Minimize2 size={13} className="mb-1" />
+              Ajustar
+            </button>
+
+            <button
+              type="button"
+              onClick={() => updateCurrentImage({ fitMode: 'calzar' })}
+              title="Calzar todo el diseño"
+              className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
+                currentImage.fitMode === 'calzar' ? 'btn-primary text-black fw-bold' : 'bg-elevated text-muted border-border'
+              }`}
+              style={{ fontSize: '0.65rem' }}
+            >
+              <Maximize2 size={13} className="mb-1" />
+              Calzar
+            </button>
+
+            <button
+              type="button"
+              onClick={() => updateCurrentImage({ fitMode: 'expandir' })}
+              title="Expandir en toda el área"
+              className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
+                currentImage.fitMode === 'expandir' ? 'btn-primary text-black fw-bold' : 'bg-elevated text-muted border-border'
+              }`}
+              style={{ fontSize: '0.65rem' }}
+            >
+              <Layers size={13} className="mb-1" />
+              Expandir
+            </button>
+
+            <button
+              type="button"
+              onClick={() => updateCurrentImage({ fitMode: 'repetir' })}
+              title="Repetir en patrón / mosaico"
+              className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
+                currentImage.fitMode === 'repetir' ? 'btn-primary text-black fw-bold' : 'bg-elevated text-muted border-border'
+              }`}
+              style={{ fontSize: '0.65rem' }}
+            >
+              <Grid size={13} className="mb-1" />
+              Mosaico
+            </button>
+
+            <button
+              type="button"
+              onClick={() => updateCurrentImage({ fitMode: 'manual' })}
+              title="Ajuste manual milimétrico"
+              className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
+                currentImage.fitMode === 'manual' ? 'btn-primary text-black fw-bold' : 'bg-elevated text-muted border-border'
+              }`}
+              style={{ fontSize: '0.65rem' }}
+            >
+              <Sliders size={13} className="mb-1" />
+              Manual
+            </button>
+          </div>
+        </div>
+
+        {/* 2. Presets de Posición Rápida */}
+        {currentImage.fitMode === 'manual' && (
+          <div>
+            <span className="text-muted d-block mb-1 fw-semibold" style={{ fontSize: '0.7rem' }}>POSICIONES RÁPIDAS:</span>
+            <div className="d-flex flex-wrap gap-1">
+              <button
+                type="button"
+                onClick={() => applyPositionPreset('pecho-centro')}
+                className="btn btn-sm py-1 px-2 bg-elevated text-text rounded-2 border border-border"
+                style={{ fontSize: '0.7rem' }}
+              >
+                Pecho Centro
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPositionPreset('bolsillo-izq')}
+                className="btn btn-sm py-1 px-2 bg-elevated text-text rounded-2 border border-border"
+                style={{ fontSize: '0.7rem' }}
+              >
+                Bolsillo / Escudo
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPositionPreset('pecho-der')}
+                className="btn btn-sm py-1 px-2 bg-elevated text-text rounded-2 border border-border"
+                style={{ fontSize: '0.7rem' }}
+              >
+                Pecho Der.
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPositionPreset('abdomen')}
+                className="btn btn-sm py-1 px-2 bg-elevated text-text rounded-2 border border-border"
+                style={{ fontSize: '0.7rem' }}
+              >
+                Abdomen
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPositionPreset('centro-total')}
+                className="btn btn-sm py-1 px-2 bg-elevated text-text rounded-2 border border-border"
+                style={{ fontSize: '0.7rem' }}
+              >
+                Centro Total
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 3. Sliders de Ajuste Fino */}
+        {currentImage.fitMode === 'repetir' ? (
+          <div>
+            <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.72rem' }}>
+              <span>🔁 Densidad del Patrón (Mosaico)</span>
+              <span className="text-primary fw-bold">{currentImage.repeatScale}x{currentImage.repeatScale}</span>
+            </div>
+            <input
+              type="range"
+              min="2"
+              max="8"
+              value={currentImage.repeatScale || 4}
+              onChange={(e) => updateCurrentImage({ repeatScale: Number(e.target.value) })}
+              className="form-range w-100"
+            />
+          </div>
+        ) : (
+          <div className="row g-3 pt-1">
+            <div className="col-6">
+              <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.72rem' }}>
+                <span>↕️ Vertical</span>
+                <span className="text-text fw-semibold">{currentImage.y}</span>
+              </div>
+              <input
+                type="range"
+                min="-80"
+                max="80"
+                value={currentImage.y}
+                onChange={(e) => updateCurrentImage({ y: Number(e.target.value), fitMode: 'manual' })}
+                className="form-range w-100"
+              />
+            </div>
+
+            <div className="col-6">
+              <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.72rem' }}>
+                <span>↔️ Horizontal</span>
+                <span className="text-text fw-semibold">{currentImage.x}</span>
+              </div>
+              <input
+                type="range"
+                min="-80"
+                max="80"
+                value={currentImage.x}
+                onChange={(e) => updateCurrentImage({ x: Number(e.target.value), fitMode: 'manual' })}
+                className="form-range w-100"
+              />
+            </div>
+
+            <div className="col-6">
+              <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.72rem' }}>
+                <span>🔍 Tamaño</span>
+                <span className="text-text fw-semibold">{currentImage.scale}%</span>
+              </div>
+              <input
+                type="range"
+                min="20"
+                max="150"
+                value={currentImage.scale}
+                onChange={(e) => updateCurrentImage({ scale: Number(e.target.value), fitMode: 'manual' })}
+                className="form-range w-100"
+              />
+            </div>
+
+            <div className="col-6">
+              <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.72rem' }}>
+                <span>🔄 Rotación</span>
+                <span className="text-text fw-semibold">{currentImage.rotation}°</span>
+              </div>
+              <input
+                type="range"
+                min="-180"
+                max="180"
+                value={currentImage.rotation}
+                onChange={(e) => updateCurrentImage({ rotation: Number(e.target.value) })}
+                className="form-range w-100"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Acciones de Espejo y Centrado */}
+        <div className="d-flex gap-2 pt-1 border-top border-border">
+          <button
+            type="button"
+            onClick={() => updateCurrentImage({ flipX: !currentImage.flipX })}
+            className={`btn btn-sm flex-grow-1 py-1 d-inline-flex align-items-center justify-content-center gap-1 rounded-2 border ${
+              currentImage.flipX ? 'btn-primary text-black fw-semibold' : 'bg-elevated text-text border-border'
+            }`}
+            style={{ fontSize: '0.72rem' }}
+          >
+            <FlipHorizontal size={13} />
+            Efecto Espejo
+          </button>
+
+          <button
+            type="button"
+            onClick={() => updateCurrentImage({ x: 0, y: 15, scale: 60, rotation: 0, flipX: false, fitMode: 'manual' })}
+            className="btn btn-sm py-1 px-3 bg-elevated text-text rounded-2 border border-border d-inline-flex align-items-center gap-1"
+            style={{ fontSize: '0.72rem' }}
+          >
+            <AlignCenter size={13} />
+            Centrar
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -441,7 +723,7 @@ export default function DisenadorEditor() {
       {/* Main 3D Customizer Layout */}
       <div className="row g-4 align-items-stretch">
         
-        {/* Left Column: Direct 3D Canvas with Floating Interactive Toolbar */}
+        {/* Left Column: 3D Canvas Viewport */}
         <div className="col-12 col-lg-7 d-flex flex-column">
           <div className="w-100 h-100 bg-elevated border border-border rounded-4 p-2 position-relative shadow-sm d-flex flex-column justify-content-center overflow-hidden" style={{ minHeight: '560px' }}>
             <Viewer3D
@@ -453,380 +735,27 @@ export default function DisenadorEditor() {
               textureVersion={textureVersion}
             />
 
-            {/* ==========================================================
-                IN-CANVAS FLOATING EDIT MENU (Menú Flotante Interactivo 3D)
-            ========================================================== */}
+            {/* Mobile Only Floating Action Bubble (Burbuja Flotante tipo Dropdown para Celulares) */}
             {(images.length > 0 || customText.trim()) && (
-              <div
-                className="position-absolute bottom-0 start-50 translate-middle-x w-100 px-3 pb-3 z-3 pointer-events-auto"
-                style={{ maxWidth: '540px' }}
-              >
-                <div
-                  className="rounded-4 border shadow-lg p-3 transition-all"
-                  style={{
-                    backgroundColor: 'rgba(22, 22, 26, 0.92)',
-                    backdropFilter: 'blur(16px)',
-                    borderColor: 'rgba(255, 255, 255, 0.15)',
-                    color: '#F4F4F5',
-                  }}
+              <div className="d-block d-md-none position-absolute bottom-0 end-0 m-3 z-3">
+                <button
+                  type="button"
+                  onClick={() => setShowMobileControls(true)}
+                  className="btn btn-primary rounded-pill shadow-lg py-2 px-3 d-flex align-items-center gap-2 font-montserrat fw-semibold"
+                  style={{ fontSize: '0.78rem' }}
                 >
-                  {/* Floating Header: Active Element Selector & Minimize Toggle */}
-                  <div className="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom border-secondary border-opacity-25">
-                    <div className="d-flex align-items-center gap-1 overflow-x-auto">
-                      {images.map((imgItem, idx) => (
-                        <button
-                          key={imgItem.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedImageId(imgItem.id);
-                            setActiveFloatingTarget('image');
-                          }}
-                          className={`btn btn-sm py-1 px-2 rounded-2 font-montserrat d-flex align-items-center gap-1 transition-all ${
-                            selectedImageId === imgItem.id && activeFloatingTarget === 'image'
-                              ? 'btn-primary text-black fw-bold'
-                              : 'bg-dark bg-opacity-50 text-light border border-secondary border-opacity-25'
-                          }`}
-                          style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}
-                        >
-                          <ImageIcon size={11} />
-                          Logo #{idx + 1}
-                        </button>
-                      ))}
-
-                      {customText.trim() && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveFloatingTarget('text')}
-                          className={`btn btn-sm py-1 px-2 rounded-2 font-montserrat d-flex align-items-center gap-1 transition-all ${
-                            activeFloatingTarget === 'text'
-                              ? 'btn-primary text-black fw-bold'
-                              : 'bg-dark bg-opacity-50 text-light border border-secondary border-opacity-25'
-                          }`}
-                          style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}
-                        >
-                          <Type size={11} />
-                          Texto
-                        </button>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsFloatingMenuExpanded(!isFloatingMenuExpanded)}
-                      title={isFloatingMenuExpanded ? 'Minimizar menú' : 'Expandir controles'}
-                      className="btn btn-sm text-light p-1 bg-dark bg-opacity-50 rounded-circle border border-secondary border-opacity-25 ms-2 flex-shrink-0"
-                      style={{ width: '26px', height: '26px' }}
-                    >
-                      {isFloatingMenuExpanded ? <ChevronDown size={14} /> : <Sliders size={14} className="text-primary" />}
-                    </button>
-                  </div>
-
-                  {/* Expanded Body with Fit Modes, Presets & Fine-Tune Sliders */}
-                  {isFloatingMenuExpanded && (
-                    <div className="d-flex flex-column gap-2 pt-1 font-montserrat" style={{ fontSize: '0.72rem' }}>
-                      
-                      {activeFloatingTarget === 'image' && currentImage && (
-                        <>
-                          {/* 1. Modos de Calce (Fit Modes) */}
-                          <div>
-                            <span className="text-muted d-block mb-1" style={{ fontSize: '0.65rem' }}>MODO DE CALCE EN EL PRODUCTO:</span>
-                            <div className="d-grid gap-1" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                              <button
-                                type="button"
-                                onClick={() => updateCurrentImage({ fitMode: 'ajustar' })}
-                                title="Ajustar proporcional centrado"
-                                className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
-                                  currentImage.fitMode === 'ajustar' ? 'btn-primary text-black fw-semibold' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
-                                }`}
-                                style={{ fontSize: '0.65rem' }}
-                              >
-                                <Minimize2 size={12} className="mb-1" />
-                                Ajustar
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => updateCurrentImage({ fitMode: 'calzar' })}
-                                title="Calzar todo el diseño"
-                                className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
-                                  currentImage.fitMode === 'calzar' ? 'btn-primary text-black fw-semibold' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
-                                }`}
-                                style={{ fontSize: '0.65rem' }}
-                              >
-                                <Maximize2 size={12} className="mb-1" />
-                                Calzar
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => updateCurrentImage({ fitMode: 'expandir' })}
-                                title="Expandir en toda el área"
-                                className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
-                                  currentImage.fitMode === 'expandir' ? 'btn-primary text-black fw-semibold' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
-                                }`}
-                                style={{ fontSize: '0.65rem' }}
-                              >
-                                <Layers size={12} className="mb-1" />
-                                Expandir
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => updateCurrentImage({ fitMode: 'repetir' })}
-                                title="Repetir en patrón / mosaico"
-                                className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
-                                  currentImage.fitMode === 'repetir' ? 'btn-primary text-black fw-semibold' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
-                                }`}
-                                style={{ fontSize: '0.65rem' }}
-                              >
-                                <Grid size={12} className="mb-1" />
-                                Repetir
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => updateCurrentImage({ fitMode: 'manual' })}
-                                title="Ajuste manual milimétrico"
-                                className={`btn btn-sm p-1 d-flex flex-column align-items-center justify-content-center rounded-2 border ${
-                                  currentImage.fitMode === 'manual' ? 'btn-primary text-black fw-semibold' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
-                                }`}
-                                style={{ fontSize: '0.65rem' }}
-                              >
-                                <Sliders size={12} className="mb-1" />
-                                Manual
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* 2. Presets de Posición Rápida */}
-                          {currentImage.fitMode === 'manual' && (
-                            <div>
-                              <span className="text-muted d-block mb-1" style={{ fontSize: '0.65rem' }}>POSICIONES RÁPIDAS:</span>
-                              <div className="d-flex flex-wrap gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => applyPositionPreset('pecho-centro')}
-                                  className="btn btn-sm py-1 px-2 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25"
-                                  style={{ fontSize: '0.65rem' }}
-                                >
-                                  Pecho Centro
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => applyPositionPreset('bolsillo-izq')}
-                                  className="btn btn-sm py-1 px-2 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25"
-                                  style={{ fontSize: '0.65rem' }}
-                                >
-                                  Bolsillo / Escudo
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => applyPositionPreset('pecho-der')}
-                                  className="btn btn-sm py-1 px-2 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25"
-                                  style={{ fontSize: '0.65rem' }}
-                                >
-                                  Pecho Der.
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => applyPositionPreset('abdomen')}
-                                  className="btn btn-sm py-1 px-2 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25"
-                                  style={{ fontSize: '0.65rem' }}
-                                >
-                                  Abdomen
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => applyPositionPreset('centro-total')}
-                                  className="btn btn-sm py-1 px-2 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25"
-                                  style={{ fontSize: '0.65rem' }}
-                                >
-                                  Centro Total
-                                </button>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 3. Sliders de Ajuste Fino */}
-                          {currentImage.fitMode === 'repetir' ? (
-                            <div>
-                              <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
-                                <span>🔁 Densidad del Patrón (Mosaico)</span>
-                                <span className="text-light">{currentImage.repeatScale}x{currentImage.repeatScale}</span>
-                              </div>
-                              <input
-                                type="range"
-                                min="2"
-                                max="8"
-                                value={currentImage.repeatScale || 4}
-                                onChange={(e) => updateCurrentImage({ repeatScale: Number(e.target.value) })}
-                                className="form-range w-100"
-                              />
-                            </div>
-                          ) : (
-                            <div className="row g-2 pt-1">
-                              <div className="col-6">
-                                <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
-                                  <span>↕️ Vertical</span>
-                                  <span className="text-light">{currentImage.y}</span>
-                                </div>
-                                <input
-                                  type="range"
-                                  min="-80"
-                                  max="80"
-                                  value={currentImage.y}
-                                  onChange={(e) => updateCurrentImage({ y: Number(e.target.value), fitMode: 'manual' })}
-                                  className="form-range w-100"
-                                />
-                              </div>
-
-                              <div className="col-6">
-                                <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
-                                  <span>↔️ Horizontal</span>
-                                  <span className="text-light">{currentImage.x}</span>
-                                </div>
-                                <input
-                                  type="range"
-                                  min="-80"
-                                  max="80"
-                                  value={currentImage.x}
-                                  onChange={(e) => updateCurrentImage({ x: Number(e.target.value), fitMode: 'manual' })}
-                                  className="form-range w-100"
-                                />
-                              </div>
-
-                              <div className="col-6">
-                                <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
-                                  <span>🔍 Escala</span>
-                                  <span className="text-light">{currentImage.scale}%</span>
-                                </div>
-                                <input
-                                  type="range"
-                                  min="20"
-                                  max="150"
-                                  value={currentImage.scale}
-                                  onChange={(e) => updateCurrentImage({ scale: Number(e.target.value), fitMode: 'manual' })}
-                                  className="form-range w-100"
-                                />
-                              </div>
-
-                              <div className="col-6">
-                                <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
-                                  <span>🔄 Rotar</span>
-                                  <span className="text-light">{currentImage.rotation}°</span>
-                                </div>
-                                <input
-                                  type="range"
-                                  min="-180"
-                                  max="180"
-                                  value={currentImage.rotation}
-                                  onChange={(e) => updateCurrentImage({ rotation: Number(e.target.value) })}
-                                  className="form-range w-100"
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Quick Actions Footer inside Floating */}
-                          <div className="d-flex gap-2 pt-1">
-                            <button
-                              type="button"
-                              onClick={() => updateCurrentImage({ flipX: !currentImage.flipX })}
-                              className={`btn btn-sm flex-grow-1 py-1 d-inline-flex align-items-center justify-content-center gap-1 rounded-2 border ${
-                                currentImage.flipX ? 'btn-primary text-black' : 'bg-dark bg-opacity-50 text-light border-secondary border-opacity-25'
-                              }`}
-                              style={{ fontSize: '0.68rem' }}
-                            >
-                              <FlipHorizontal size={12} />
-                              Voltear
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => updateCurrentImage({ x: 0, y: 15, scale: 60, rotation: 0, flipX: false, fitMode: 'manual' })}
-                              className="btn btn-sm py-1 px-3 bg-dark bg-opacity-50 text-light rounded-2 border border-secondary border-opacity-25 d-inline-flex align-items-center gap-1"
-                              style={{ fontSize: '0.68rem' }}
-                            >
-                              <AlignCenter size={12} />
-                              Centrar
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={removeCurrentImage}
-                              className="btn btn-sm py-1 px-2 btn-outline-danger rounded-2 d-inline-flex align-items-center gap-1"
-                              style={{ fontSize: '0.68rem' }}
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        </>
-                      )}
-
-                      {/* Floating Controls for Custom Text */}
-                      {activeFloatingTarget === 'text' && (
-                        <div className="d-flex flex-column gap-2 pt-1">
-                          <div className="row g-2">
-                            <div className="col-6">
-                              <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
-                                <span>↕️ Posición V</span>
-                                <span className="text-light">{textPosY}</span>
-                              </div>
-                              <input
-                                type="range"
-                                min="-80"
-                                max="80"
-                                value={textPosY}
-                                onChange={(e) => setTextPosY(Number(e.target.value))}
-                                className="form-range w-100"
-                              />
-                            </div>
-
-                            <div className="col-6">
-                              <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
-                                <span>↔️ Posición H</span>
-                                <span className="text-light">{textPosX}</span>
-                              </div>
-                              <input
-                                type="range"
-                                min="-80"
-                                max="80"
-                                value={textPosX}
-                                onChange={(e) => setTextPosX(Number(e.target.value))}
-                                className="form-range w-100"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
-                              <span>🔍 Tamaño de letra</span>
-                              <span className="text-light">{textSize}px</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="16"
-                              max="70"
-                              value={textSize}
-                              onChange={(e) => setTextSize(Number(e.target.value))}
-                              className="form-range w-100"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                    </div>
-                  )}
-                </div>
+                  <Sliders size={16} />
+                  Ajustar Diseño ({images.length})
+                </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Column: Clean Exterior Controls (Colores, Imágenes, Estilos, Resumen) */}
+        {/* Right Column: Exterior Design Controls (Imágenes, Color, Estilo, Texto, Pedido) */}
         <div className="col-12 col-lg-5 d-flex flex-column gap-3">
           
-          {/* Main Exterior Tabs: Imágenes / Color / Estilo / Texto */}
+          {/* Main Exterior Tabs */}
           <div className="d-flex bg-elevated border border-border rounded-3 p-1">
             <button
               type="button"
@@ -879,105 +808,73 @@ export default function DisenadorEditor() {
             </button>
           </div>
 
-          {/* TAB 1: GESTIÓN Y SUBIDA DE IMÁGENES */}
+          {/* TAB 1: GESTIÓN DE IMÁGENES Y CONTROLES MILIMÉTRICOS (OUTSIDE 3D EN PC/TABLET) */}
           {activeTab === 'imagenes' && (
-            <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
-              <div className="d-flex align-items-center justify-content-between">
-                <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
-                  Subir Logos y Diseños ({images.length}/{MAX_IMAGES})
-                </span>
-                {images.length < MAX_IMAGES && (
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 font-montserrat"
-                    style={{ fontSize: '0.72rem' }}
-                  >
-                    <PlusCircle size={13} />
-                    Añadir otra imagen
-                  </button>
-                )}
-              </div>
-
-              {/* Upload Dropzone / Button */}
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border border-dashed border-primary border-opacity-50 bg-primary-10 rounded-3 p-4 text-center d-flex flex-column align-items-center gap-2 cursor-pointer transition-all hover-opacity"
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="rounded-circle bg-card d-flex align-items-center justify-content-center shadow-sm" style={{ width: '3.2rem', height: '3.2rem' }}>
-                  <Upload size={22} className="text-primary" />
+            <div className="d-flex flex-column gap-3">
+              <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
+                <div className="d-flex align-items-center justify-content-between">
+                  <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
+                    Subir Logos y Diseños ({images.length}/{MAX_IMAGES})
+                  </span>
+                  {images.length < MAX_IMAGES && (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 font-montserrat"
+                      style={{ fontSize: '0.72rem' }}
+                    >
+                      <PlusCircle size={13} />
+                      Añadir imagen
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <p className="font-montserrat fw-semibold text-text mb-0" style={{ fontSize: '0.82rem' }}>
+
+                {/* Upload Dropzone */}
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border border-dashed border-primary border-opacity-50 bg-primary-10 rounded-3 p-3 text-center d-flex flex-column align-items-center gap-1 cursor-pointer transition-all hover-opacity"
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="rounded-circle bg-card d-flex align-items-center justify-content-center shadow-sm" style={{ width: '2.8rem', height: '2.8rem' }}>
+                    <Upload size={18} className="text-primary" />
+                  </div>
+                  <p className="font-montserrat fw-semibold text-text mb-0" style={{ fontSize: '0.8rem' }}>
                     Haz clic para subir un logo o ilustración
                   </p>
-                  <span className="font-montserrat text-muted" style={{ fontSize: '0.7rem' }}>
-                    Soporta PNG, JPG o SVG transparente de alta resolución
+                  <span className="font-montserrat text-muted" style={{ fontSize: '0.68rem' }}>
+                    PNG, JPG o SVG transparente
                   </span>
                 </div>
+
+                {/* Uploaded Images Pills Selector */}
+                {images.length > 0 && (
+                  <div className="d-flex flex-column gap-2 pt-1">
+                    <span className="font-montserrat text-muted" style={{ fontSize: '0.72rem' }}>Imágenes añadidas al modelo:</span>
+                    <div className="d-flex flex-wrap gap-2">
+                      {images.map((item, idx) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setSelectedImageId(item.id)}
+                          className={`btn btn-sm py-1 px-2 rounded-2 font-montserrat d-flex align-items-center gap-2 transition-all ${
+                            (selectedImageId === item.id || (!selectedImageId && idx === 0))
+                              ? 'btn-primary text-black fw-bold'
+                              : 'bg-elevated text-text border border-border'
+                          }`}
+                          style={{ fontSize: '0.72rem' }}
+                        >
+                          <img src={item.src} alt={item.name} className="rounded object-fit-contain bg-card" style={{ width: '18px', height: '18px' }} />
+                          <span className="text-truncate" style={{ maxWidth: '100px' }}>{item.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="d-none" />
               </div>
 
-              {/* Thumbnails of uploaded images */}
-              {images.length > 0 && (
-                <div className="d-flex flex-column gap-2 pt-1">
-                  <span className="font-montserrat text-muted" style={{ fontSize: '0.72rem' }}>Imágenes cargadas en el diseño:</span>
-                  <div className="d-flex flex-column gap-2">
-                    {images.map((item, idx) => (
-                      <div
-                        key={item.id}
-                        className={`d-flex align-items-center justify-content-between p-2 rounded-3 border transition-all ${
-                          selectedImageId === item.id ? 'border-primary bg-primary-10' : 'border-border bg-elevated'
-                        }`}
-                      >
-                        <div
-                          className="d-flex align-items-center gap-2 cursor-pointer flex-grow-1"
-                          onClick={() => {
-                            setSelectedImageId(item.id);
-                            setActiveFloatingTarget('image');
-                          }}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <img src={item.src} alt={item.name} className="rounded object-fit-contain bg-card p-1 border" style={{ width: '40px', height: '40px' }} />
-                          <div>
-                            <div className="d-flex align-items-center gap-1">
-                              <span className="badge bg-primary text-black font-montserrat px-1" style={{ fontSize: '0.65rem' }}>#{idx + 1}</span>
-                              <p className="font-montserrat fw-semibold text-text mb-0 text-truncate" style={{ fontSize: '0.78rem', maxWidth: '160px' }}>
-                                {item.name}
-                              </p>
-                            </div>
-                            <span className="font-montserrat text-muted" style={{ fontSize: '0.68rem' }}>
-                              Modo: {item.fitMode.toUpperCase()}
-                            </span>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setImages((prev) => prev.filter((img) => img.id !== item.id));
-                            if (selectedImageId === item.id) {
-                              const remaining = images.filter((img) => img.id !== item.id);
-                              setSelectedImageId(remaining[0]?.id || null);
-                            }
-                          }}
-                          className="btn btn-sm btn-link text-danger p-1"
-                          title="Eliminar imagen"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="alert alert-secondary py-2 px-3 border border-border rounded-3 d-flex align-items-center gap-2 mb-0 mt-1">
-                    <Sparkles size={14} className="text-primary flex-shrink-0" />
-                    <span className="font-montserrat text-muted" style={{ fontSize: '0.7rem' }}>
-                      Ajusta la posición, tamaño, calce y repetición usando el <strong>menú flotante dentro del visor 3D</strong>.
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="d-none" />
+              {/* Dedicated Image Configuration Controls (Position, Scale, Rotation, Fit Mode) */}
+              {images.length > 0 && currentImage && renderImageControls()}
             </div>
           )}
 
@@ -1074,13 +971,13 @@ export default function DisenadorEditor() {
 
           {/* TAB 4: TEXTO PERSONALIZADO */}
           {activeTab === 'texto' && (
-            <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3">
-              <span className="font-montserrat fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
+            <div className="bg-card border border-border rounded-3 p-3 d-flex flex-column gap-3 font-montserrat">
+              <span className="fw-semibold text-text" style={{ fontSize: '0.85rem' }}>
                 Añadir Frase o Texto
               </span>
 
               <div>
-                <label className="font-montserrat text-muted mb-1 d-block" style={{ fontSize: '0.72rem' }}>Escribe tu texto</label>
+                <label className="text-muted mb-1 d-block" style={{ fontSize: '0.72rem' }}>Escribe tu texto</label>
                 <textarea
                   rows={2}
                   value={customText}
@@ -1094,7 +991,7 @@ export default function DisenadorEditor() {
               {customText.trim() && (
                 <div className="d-flex flex-column gap-3">
                   <div>
-                    <label className="font-montserrat text-muted mb-1 d-block" style={{ fontSize: '0.72rem' }}>Tipografía</label>
+                    <label className="text-muted mb-1 d-block" style={{ fontSize: '0.72rem' }}>Tipografía</label>
                     <div className="d-grid gap-1" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
                       {FONT_OPTIONS.map((f) => (
                         <button
@@ -1113,7 +1010,7 @@ export default function DisenadorEditor() {
                   </div>
 
                   <div>
-                    <label className="font-montserrat text-muted mb-1 d-block" style={{ fontSize: '0.72rem' }}>Color del texto</label>
+                    <label className="text-muted mb-1 d-block" style={{ fontSize: '0.72rem' }}>Color del texto</label>
                     <div className="d-flex flex-wrap gap-2 align-items-center">
                       {['#FFFFFF', '#111111', '#C9A84C', '#D4AF37', '#DC2626', '#1E3A8A', '#15803D'].map((c) => (
                         <button
@@ -1132,6 +1029,53 @@ export default function DisenadorEditor() {
                         style={{ width: '1.6rem', height: '1.6rem', cursor: 'pointer', overflow: 'hidden' }}
                       />
                     </div>
+                  </div>
+
+                  <div className="row g-2">
+                    <div className="col-6">
+                      <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                        <span>↕️ Posición V</span>
+                        <span className="text-text fw-semibold">{textPosY}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-80"
+                        max="80"
+                        value={textPosY}
+                        onChange={(e) => setTextPosY(Number(e.target.value))}
+                        className="form-range w-100"
+                      />
+                    </div>
+
+                    <div className="col-6">
+                      <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                        <span>↔️ Posición H</span>
+                        <span className="text-text fw-semibold">{textPosX}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-80"
+                        max="80"
+                        value={textPosX}
+                        onChange={(e) => setTextPosX(Number(e.target.value))}
+                        className="form-range w-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="d-flex justify-content-between text-muted mb-1" style={{ fontSize: '0.68rem' }}>
+                      <span>🔍 Tamaño de letra</span>
+                      <span className="text-text fw-semibold">{textSize}px</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="16"
+                      max="70"
+                      value={textSize}
+                      onChange={(e) => setTextSize(Number(e.target.value))}
+                      className="form-range w-100"
+                    />
                   </div>
                 </div>
               )}
@@ -1182,6 +1126,27 @@ export default function DisenadorEditor() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Drawer / Modal for Controls (Burbuja Dropmenu en Teléfono) */}
+      <Modal show={showMobileControls} onHide={() => setShowMobileControls(false)} centered className="d-block d-md-none">
+        <Modal.Body className="p-3 bg-card border border-border rounded-4">
+          <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-border">
+            <div className="d-flex align-items-center gap-2 font-montserrat">
+              <Sliders size={16} className="text-primary" />
+              <span className="fw-bold text-text" style={{ fontSize: '0.9rem' }}>Ajustes del Diseño</span>
+            </div>
+            <button type="button" onClick={() => setShowMobileControls(false)} className="btn btn-sm btn-link text-muted p-0">
+              <X size={18} />
+            </button>
+          </div>
+          {renderImageControls()}
+          <div className="mt-3">
+            <button type="button" onClick={() => setShowMobileControls(false)} className="btn btn-primary w-100 py-2 font-montserrat fw-semibold" style={{ fontSize: '0.8rem' }}>
+              Cerrar y Ver en 3D
+            </button>
+          </div>
+        </Modal.Body>
+      </Modal>
 
       {/* Preview & Confirmation Modal */}
       <Modal show={previewOpen} onHide={() => setPreviewOpen(false)} centered size="lg">
