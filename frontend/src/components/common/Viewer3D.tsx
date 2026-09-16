@@ -36,6 +36,7 @@ interface ModelConfig {
 
 // Configuración calibrada de modelos 3D y áreas de estampado
 const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
+  // --- ROPA: POLERAS Y CAMISETAS ---
   polera: {
     path: '/models/tshirt.glb',
     targetScale: 3.2,
@@ -45,8 +46,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.85,
     metalness: 0.02,
     patchType: 'shirt',
-    patchPos: [0, 0.08, 0.72],
-    patchSize: [1.35, 1.55],
+    patchPos: [0, 0.06, 0.665],
+    patchSize: [1.30, 1.50],
   },
   'cuello-redondo': {
     path: '/models/tshirt.glb',
@@ -57,8 +58,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.85,
     metalness: 0.02,
     patchType: 'shirt',
-    patchPos: [0, 0.08, 0.72],
-    patchSize: [1.35, 1.55],
+    patchPos: [0, 0.06, 0.665],
+    patchSize: [1.30, 1.50],
   },
   'cuello-v': {
     path: '/models/tshirt.glb',
@@ -69,8 +70,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.85,
     metalness: 0.02,
     patchType: 'shirt',
-    patchPos: [0, 0.08, 0.72],
-    patchSize: [1.35, 1.55],
+    patchPos: [0, 0.06, 0.665],
+    patchSize: [1.30, 1.50],
   },
   polo: {
     path: '/models/tshirt.glb',
@@ -81,9 +82,11 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.90,
     metalness: 0.02,
     patchType: 'shirt',
-    patchPos: [0, 0.08, 0.72],
-    patchSize: [1.35, 1.55],
+    patchPos: [0, 0.06, 0.665],
+    patchSize: [1.30, 1.50],
   },
+
+  // --- ROPA: POLERONES Y HOODIES ---
   poleron: {
     path: '/models/hoodie.glb',
     targetScale: 3.3,
@@ -93,8 +96,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.88,
     metalness: 0.02,
     patchType: 'hoodie',
-    patchPos: [0, 0.12, 0.74],
-    patchSize: [1.35, 1.50],
+    patchPos: [0, 0.06, 0.365],
+    patchSize: [1.25, 1.40],
   },
   hoodie: {
     path: '/models/hoodie.glb',
@@ -105,8 +108,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.88,
     metalness: 0.02,
     patchType: 'hoodie',
-    patchPos: [0, 0.12, 0.74],
-    patchSize: [1.35, 1.50],
+    patchPos: [0, 0.06, 0.365],
+    patchSize: [1.25, 1.40],
   },
   canguro: {
     path: '/models/hoodie.glb',
@@ -117,10 +120,36 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.88,
     metalness: 0.02,
     patchType: 'hoodie',
-    patchPos: [0, 0.12, 0.74],
-    patchSize: [1.35, 1.50],
+    patchPos: [0, 0.06, 0.365],
+    patchSize: [1.25, 1.40],
   },
+
+  // --- DRINKWARE: TAZAS Y MUGS ---
   taza: {
+    path: '/models/mug.glb',
+    targetScale: 2.6,
+    yOffset: 0.0,
+    cameraDistance: 3.8,
+    cameraHeight: 0.2,
+    roughness: 0.25,
+    metalness: 0.05,
+    patchType: 'mug',
+    patchPos: [0, 0, 0],
+    patchSize: [1.8, 1.8],
+  },
+  clasica: {
+    path: '/models/mug.glb',
+    targetScale: 2.6,
+    yOffset: 0.0,
+    cameraDistance: 3.8,
+    cameraHeight: 0.2,
+    roughness: 0.25,
+    metalness: 0.05,
+    patchType: 'mug',
+    patchPos: [0, 0, 0],
+    patchSize: [1.8, 1.8],
+  },
+  conica: {
     path: '/models/mug.glb',
     targetScale: 2.6,
     yOffset: 0.0,
@@ -144,6 +173,8 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     patchPos: [0, 0, 0],
     patchSize: [1.8, 1.8],
   },
+
+  // --- DRINKWARE: TERMOS Y BOTELLAS ---
   botella: {
     path: '/models/bottle.glb',
     targetScale: 3.4,
@@ -153,7 +184,7 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.2,
     metalness: 0.6,
     patchType: 'bottle',
-    patchPos: [0, -0.2, 0],
+    patchPos: [0, 0, 0],
     patchSize: [1.8, 2.0],
   },
   termo: {
@@ -165,7 +196,57 @@ const GLTF_MODEL_CONFIGS: Record<string, ModelConfig> = {
     roughness: 0.2,
     metalness: 0.6,
     patchType: 'bottle',
-    patchPos: [0, -0.2, 0],
+    patchPos: [0, 0, 0],
+    patchSize: [1.8, 2.0],
+  },
+  deportivo: {
+    path: '/models/bottle.glb',
+    targetScale: 3.4,
+    yOffset: 0.0,
+    cameraDistance: 4.4,
+    cameraHeight: 0.15,
+    roughness: 0.2,
+    metalness: 0.6,
+    patchType: 'bottle',
+    patchPos: [0, 0, 0],
+    patchSize: [1.8, 2.0],
+  },
+
+  // --- DRINKWARE: VASOS QUE USAN MODELOS GLTF ---
+  shopero: {
+    path: '/models/mug.glb',
+    targetScale: 2.7,
+    yOffset: 0.0,
+    cameraDistance: 3.9,
+    cameraHeight: 0.2,
+    roughness: 0.15,
+    metalness: 0.1,
+    patchType: 'mug',
+    patchPos: [0, 0, 0],
+    patchSize: [1.8, 1.8],
+  },
+  jarra: {
+    path: '/models/mug.glb',
+    targetScale: 2.8,
+    yOffset: 0.0,
+    cameraDistance: 4.0,
+    cameraHeight: 0.2,
+    roughness: 0.15,
+    metalness: 0.1,
+    patchType: 'mug',
+    patchPos: [0, 0, 0],
+    patchSize: [1.8, 1.8],
+  },
+  termico: {
+    path: '/models/bottle.glb',
+    targetScale: 3.2,
+    yOffset: 0.0,
+    cameraDistance: 4.3,
+    cameraHeight: 0.15,
+    roughness: 0.25,
+    metalness: 0.7,
+    patchType: 'bottle',
+    patchPos: [0, 0, 0],
     patchSize: [1.8, 2.0],
   },
 };
@@ -188,7 +269,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const productGroupRef = useRef<THREE.Group | null>(null);
-  const baseMaterialsRef = useRef<THREE.MeshStandardMaterial[]>([]);
+  const baseMaterialsRef = useRef<THREE.Material[]>([]);
   const printMaterialsRef = useRef<THREE.Material[]>([]);
   const canvasTextureRef = useRef<THREE.CanvasTexture | null>(null);
   const animFrameIdRef = useRef<number | null>(null);
@@ -207,7 +288,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
     if (!cameraRef.current || !controlsRef.current) return;
     setActivePreset(view);
 
-    const config = GLTF_MODEL_CONFIGS[producto] || GLTF_MODEL_CONFIGS[subTipo];
+    const config = GLTF_MODEL_CONFIGS[subTipo] || GLTF_MODEL_CONFIGS[producto];
     const dist = config?.cameraDistance || 5.0;
     const height = config?.cameraHeight || 0.15;
 
@@ -251,12 +332,14 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
   const updateMaterialsColor = useCallback((hexColor: string) => {
     const c = new THREE.Color(hexColor);
     baseMaterialsRef.current.forEach((mat) => {
-      mat.color.copy(c);
-      mat.needsUpdate = true;
+      if ((mat as THREE.MeshStandardMaterial).color) {
+        (mat as THREE.MeshStandardMaterial).color.copy(c);
+        mat.needsUpdate = true;
+      }
     });
   }, []);
 
-  // Helper to build print decal mesh
+  // Helper to build print decal mesh calibrated for every model geometry
   const createPrintMesh = useCallback((
     patchType: string,
     pos: [number, number, number],
@@ -271,30 +354,66 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       depthTest: true,
       depthWrite: false,
       polygonOffset: true,
-      polygonOffsetFactor: -2,
-      polygonOffsetUnits: -2,
+      polygonOffsetFactor: -4,
+      polygonOffsetUnits: -4,
       side: THREE.DoubleSide,
     });
     printMaterialsRef.current.push(printMat);
 
     if (patchType === 'mug') {
-      const wrapGeo = new THREE.CylinderGeometry(0.96, 0.96, 1.8, 64, 1, true, -Math.PI * 0.7, Math.PI * 1.4);
-      return new THREE.Mesh(wrapGeo, printMat);
-    } else if (patchType === 'bottle') {
-      const wrapGeo = new THREE.CylinderGeometry(0.60, 0.60, 2.0, 64, 1, true, -Math.PI * 0.45, Math.PI * 0.9);
+      // Body radius is 0.8004. Wrap radius 0.806 sits 0.005 outside the mug surface
+      // Centered at theta = 0 (+Z), leaving room for the handle at +X
+      const wrapGeo = new THREE.CylinderGeometry(0.806, 0.806, 1.75, 64, 1, true, -Math.PI * 0.65, Math.PI * 1.30);
       const mesh = new THREE.Mesh(wrapGeo, printMat);
       mesh.position.set(pos[0], pos[1], pos[2]);
       return mesh;
+    } else if (patchType === 'bottle') {
+      // Body radius is 0.7108. Wrap radius 0.716 sits 0.005 outside the bottle surface
+      const wrapGeo = new THREE.CylinderGeometry(0.716, 0.716, 2.1, 64, 1, true, -Math.PI * 0.60, Math.PI * 1.20);
+      const mesh = new THREE.Mesh(wrapGeo, printMat);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      return mesh;
+    } else if (patchType === 'glass') {
+      // Conical glass tumbler wrap
+      const wrapGeo = new THREE.CylinderGeometry(0.854, 0.684, 1.8, 48, 1, true, -Math.PI * 0.60, Math.PI * 1.20);
+      const mesh = new THREE.Mesh(wrapGeo, printMat);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      return mesh;
+    } else if (patchType === 'cap') {
+      // Cap forehead patch curved over spherical crown
+      const printGeo = new THREE.PlaneGeometry(size[0] || 1.30, size[1] || 0.90, 24, 24);
+      const pPos = printGeo.attributes.position;
+      for (let i = 0; i < pPos.count; i++) {
+        const x = pPos.getX(i);
+        const y = pPos.getY(i);
+        pPos.setZ(i, -(x * x) * 0.18 - (y * y) * 0.06);
+      }
+      printGeo.computeVertexNormals();
+      const mesh = new THREE.Mesh(printGeo, printMat);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      return mesh;
+    } else if (patchType === 'pants') {
+      // Pants thigh patch
+      const printGeo = new THREE.PlaneGeometry(size[0] || 0.60, size[1] || 0.85, 16, 16);
+      const pPos = printGeo.attributes.position;
+      for (let i = 0; i < pPos.count; i++) {
+        const x = pPos.getX(i);
+        pPos.setZ(i, -(x * x) * 0.08);
+      }
+      printGeo.computeVertexNormals();
+      const mesh = new THREE.Mesh(printGeo, printMat);
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      return mesh;
     } else {
-      // Flat / Contoured Front Decal
-      const printW = size[0] || 1.35;
-      const printH = size[1] || 1.55;
+      // Flat / Contoured Front Decal for shirts and hoodies
+      const printW = size[0] || 1.30;
+      const printH = size[1] || 1.50;
       const printGeo = new THREE.PlaneGeometry(printW, printH, 32, 32);
       const printPos = printGeo.attributes.position;
       for (let i = 0; i < printPos.count; i++) {
         const x = printPos.getX(i);
         const y = printPos.getY(i);
-        const zCurve = -(x * x) * 0.06 + (y > 0 ? y * 0.02 : 0);
+        const zCurve = -(x * x) * 0.08 + (y > 0 ? -y * 0.04 : y * 0.02);
         printPos.setZ(i, zCurve);
       }
       printGeo.computeVertexNormals();
@@ -322,7 +441,33 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       return mat;
     };
 
-    if (type === 'pantalon' || sub === 'jogger' || sub === 'recto') {
+    if (type === 'vaso' || sub === 'clasico') {
+      // Vaso de vidrio / Tumbler cónico con fondo grueso de cristal
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(color === '#FFFFFF' ? '#e2e8f0' : color),
+        roughness: 0.08,
+        metalness: 0.1,
+        transmission: 0.85,
+        ior: 1.5,
+        thickness: 0.2,
+        transparent: true,
+        opacity: 0.88,
+        side: THREE.DoubleSide,
+      });
+      baseMaterialsRef.current.push(glassMat);
+
+      const bodyGeo = new THREE.CylinderGeometry(0.85, 0.68, 2.2, 48, 1, true);
+      const bodyMesh = new THREE.Mesh(bodyGeo, glassMat);
+      group.add(bodyMesh);
+
+      const baseGeo = new THREE.CylinderGeometry(0.70, 0.70, 0.28, 48);
+      const baseMesh = new THREE.Mesh(baseGeo, glassMat);
+      baseMesh.position.y = -1.0;
+      group.add(baseMesh);
+
+      const printMesh = createPrintMesh('glass', [0, 0.1, 0], [1.8, 1.8], texture);
+      group.add(printMesh);
+    } else if (type === 'pantalon' || sub === 'jogger' || sub === 'recto') {
       const mat = createBaseMat(0.85, 0.02);
       const pelvisGeo = new THREE.CylinderGeometry(0.92, 0.88, 0.9, 32);
       pelvisGeo.scale(1.0, 1.0, 0.55);
@@ -338,7 +483,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       rightLeg.rotation.z = 0.04;
       group.add(leftLeg, rightLeg);
 
-      const printMesh = createPrintMesh('pants', [-0.44, -0.2, 0.32], [0.45, 0.65], texture);
+      const printMesh = createPrintMesh('pants', [-0.44, -0.2, 0.32], [0.60, 0.85], texture);
       group.add(printMesh);
     } else if (type === 'gorro' || type === 'gorra' || type === 'jockey') {
       const mat = createBaseMat(0.8, 0.05);
@@ -352,7 +497,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       visor.position.set(0, 0.15, 0.6);
       group.add(visor);
 
-      const printMesh = createPrintMesh('cap', [0, 0.55, 0.98], [0.7, 0.55], texture);
+      const printMesh = createPrintMesh('cap', [0, 0.55, 0.98], [1.30, 0.90], texture);
       group.add(printMesh);
     } else {
       // General apparel fallback
@@ -362,7 +507,7 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       const torso = new THREE.Mesh(torsoGeo, mat);
       group.add(torso);
 
-      const printMesh = createPrintMesh('shirt', [0, 0.05, 0.42], [1.15, 1.35], texture);
+      const printMesh = createPrintMesh('shirt', [0, 0.05, 0.42], [1.30, 1.50], texture);
       group.add(printMesh);
     }
 
@@ -407,11 +552,21 @@ export const Viewer3D = forwardRef<Viewer3DRef, Viewer3DProps>(({
       // Wrapper group to hold centered & scaled model
       const rootGroup = new THREE.Group();
       modelGroup.scale.setScalar(scaleFactor);
-      modelGroup.position.set(
-        -center.x * scaleFactor,
-        -center.y * scaleFactor + (config.yOffset || 0),
-        -center.z * scaleFactor
-      );
+
+      // Mug body centering correction: handle is at +X, body cylinder is centered at (0, 0)
+      if (config.patchType === 'mug') {
+        modelGroup.position.set(
+          0,
+          -center.y * scaleFactor + (config.yOffset || 0),
+          0
+        );
+      } else {
+        modelGroup.position.set(
+          -center.x * scaleFactor,
+          -center.y * scaleFactor + (config.yOffset || 0),
+          -center.z * scaleFactor
+        );
+      }
       rootGroup.add(modelGroup);
 
       // Material colorization (WITHOUT SHADOWS)

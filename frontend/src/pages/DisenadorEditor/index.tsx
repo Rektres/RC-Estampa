@@ -94,6 +94,93 @@ export interface CustomImage {
   repeatScale: number; // 2 to 8
 }
 
+// Especificaciones geométricas calibradas por producto para centrado y calce 100% perfecto
+export interface ProductPrintSpec {
+  aspectCorrection: number; // Factor de corrección ancho / alto de la superficie 3D
+  defaultScale: number; // Escala inicial idónea (ocupa 65-75% del área imprimible)
+  presets: { id: string; label: string; x: number; y: number; scale: number }[];
+}
+
+export const PRODUCT_PRINT_SPECS: Record<string, ProductPrintSpec> = {
+  polera: {
+    aspectCorrection: 0.87,
+    defaultScale: 70,
+    presets: [
+      { id: 'pecho-centro', label: 'Pecho Centro', x: 0, y: 0, scale: 70 },
+      { id: 'bolsillo-izq', label: 'Bolsillo / Escudo', x: -30, y: 22, scale: 32 },
+      { id: 'pecho-der', label: 'Pecho Der.', x: 30, y: 22, scale: 32 },
+      { id: 'abdomen', label: 'Abdomen', x: 0, y: -30, scale: 65 },
+      { id: 'grande', label: 'Grande Frontal', x: 0, y: 0, scale: 95 },
+    ],
+  },
+  poleron: {
+    aspectCorrection: 0.89,
+    defaultScale: 68,
+    presets: [
+      { id: 'pecho-centro', label: 'Pecho Centro', x: 0, y: 0, scale: 68 },
+      { id: 'bolsillo-izq', label: 'Bolsillo / Escudo', x: -28, y: 20, scale: 30 },
+      { id: 'pecho-der', label: 'Pecho Der.', x: 28, y: 20, scale: 30 },
+      { id: 'canguro', label: 'Bolsillo Canguro', x: 0, y: -35, scale: 60 },
+      { id: 'grande', label: 'Grande Frontal', x: 0, y: 0, scale: 90 },
+    ],
+  },
+  taza: {
+    aspectCorrection: 1.88,
+    defaultScale: 75,
+    presets: [
+      { id: 'frente-centro', label: 'Frente Centro', x: 0, y: 0, scale: 75 },
+      { id: 'lado-izq', label: 'Lado Izquierdo', x: -35, y: 0, scale: 65 },
+      { id: 'lado-der', label: 'Lado Derecho', x: 35, y: 0, scale: 65 },
+      { id: 'panoramica', label: 'Panorámica 360°', x: 0, y: 0, scale: 120 },
+    ],
+  },
+  termo: {
+    aspectCorrection: 1.28,
+    defaultScale: 75,
+    presets: [
+      { id: 'frente-centro', label: 'Frente Centro', x: 0, y: 0, scale: 75 },
+      { id: 'superior', label: 'Superior', x: 0, y: 35, scale: 55 },
+      { id: 'inferior', label: 'Inferior', x: 0, y: -35, scale: 55 },
+      { id: 'completo', label: 'Vertical Completo', x: 0, y: 0, scale: 110 },
+    ],
+  },
+  vaso: {
+    aspectCorrection: 1.58,
+    defaultScale: 70,
+    presets: [
+      { id: 'frente-centro', label: 'Frente Centro', x: 0, y: 0, scale: 70 },
+      { id: 'superior', label: 'Superior', x: 0, y: 25, scale: 55 },
+      { id: 'inferior', label: 'Inferior', x: 0, y: -25, scale: 55 },
+      { id: 'completo', label: 'Completo', x: 0, y: 0, scale: 95 },
+    ],
+  },
+  gorra: {
+    aspectCorrection: 1.44,
+    defaultScale: 75,
+    presets: [
+      { id: 'frente-centro', label: 'Frente Centro', x: 0, y: 0, scale: 75 },
+      { id: 'frontal-izq', label: 'Frontal Izq.', x: -25, y: 0, scale: 50 },
+      { id: 'frontal-der', label: 'Frontal Der.', x: 25, y: 0, scale: 50 },
+      { id: 'panel-completo', label: 'Panel Completo', x: 0, y: 0, scale: 95 },
+    ],
+  },
+  pantalon: {
+    aspectCorrection: 0.71,
+    defaultScale: 70,
+    presets: [
+      { id: 'muslo-medio', label: 'Muslo Medio', x: 0, y: 0, scale: 70 },
+      { id: 'muslo-superior', label: 'Muslo Superior', x: 0, y: 28, scale: 55 },
+      { id: 'cerca-bolsillo', label: 'Cerca de Bolsillo', x: 20, y: 35, scale: 45 },
+      { id: 'pierna-completa', label: 'Pierna Completa', x: 0, y: 0, scale: 95 },
+    ],
+  },
+};
+
+export const getProductPrintSpec = (prod: string, sub: string): ProductPrintSpec => {
+  if (sub === 'poleron' || prod === 'poleron') return PRODUCT_PRINT_SPECS.poleron;
+  return PRODUCT_PRINT_SPECS[prod] || PRODUCT_PRINT_SPECS.polera;
+};
+
 type ActiveTab = 'imagenes' | 'color' | 'estilo' | 'texto';
 
 export default function DisenadorEditor() {
@@ -125,7 +212,7 @@ export default function DisenadorEditor() {
   const [textColor, setTextColor] = useState('#111111');
   const [textSize, setTextSize] = useState(40); // 16 to 80
   const [textPosX, setTextPosX] = useState(0); // -100 to 100
-  const [textPosY, setTextPosY] = useState(-35); // -100 to 100
+  const [textPosY, setTextPosY] = useState(0); // -100 to 100 (centrado)
 
   // 3D & Preview state
   const [textureVersion, setTextureVersion] = useState(0);
@@ -141,13 +228,14 @@ export default function DisenadorEditor() {
 
   const currentSubtypeName = subtypesList.find(s => s.id === subTipo)?.label || label;
   const currentImage = images.find(img => img.id === selectedImageId) || images[0] || null;
+  const currentSpec = getProductPrintSpec(producto, subTipo);
 
   useSEO({
     title: `Diseñar ${currentSubtypeName} en 3D · RC Estampa`,
     description: `Crea y personaliza tu ${currentSubtypeName} en 3D interactivo 360° con estampado DTF textil o grabado láser. Despacho a todo Chile.`,
   });
 
-  // Redraw the 2D texture canvas with all uploaded images & text based on fit modes
+  // Redraw the 2D texture canvas with all uploaded images & text based on fit modes and 3D surface geometry
   const redrawTexture = useCallback(() => {
     if (!textureCanvasRef.current) {
       const c = document.createElement('canvas');
@@ -166,14 +254,20 @@ export default function DisenadorEditor() {
     const centerW = canvas.width / 2;
     const centerH = canvas.height / 2;
 
-    // 1. Draw all images according to their fit modes
+    const activeSpec = getProductPrintSpec(producto, subTipo);
+    const aspectCorrection = activeSpec.aspectCorrection;
+
+    // 1. Draw all images according to their fit modes and calibrated 3D surface geometry
     images.forEach((imgItem) => {
       const img = imgItem.imgElement;
       if (!img) return;
 
       const imgW = img.width || 1;
       const imgH = img.height || 1;
-      const aspect = imgW / imgH;
+      const rawAspect = imgW / imgH;
+
+      // Compensate for 3D model surface aspect ratio so images never stretch or squash
+      const effectiveAspect = rawAspect / aspectCorrection;
 
       ctx.save();
 
@@ -195,62 +289,53 @@ export default function DisenadorEditor() {
             if (imgItem.flipX) ctx.scale(-1, 1);
 
             let dw = tileSize * 0.85;
-            let dh = (tileSize / aspect) * 0.85;
-            if (aspect < 1) {
+            let dh = (tileSize / effectiveAspect) * 0.85;
+            if (effectiveAspect < 1) {
               dh = tileSize * 0.85;
-              dw = tileSize * aspect * 0.85;
+              dw = tileSize * effectiveAspect * 0.85;
             }
             ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
             ctx.restore();
           }
         }
       } else if (imgItem.fitMode === 'expandir') {
-        // --- MODO EXPANDIR / ESTIRAR (Full Stretch) ---
-        ctx.translate(centerW, centerH);
+        // --- MODO EXPANDIR (Full Stretch) ---
+        const posX = centerW + (imgItem.x * 4.2);
+        const posY = centerH - (imgItem.y * 4.2);
+        const scaleMul = (imgItem.scale / 100);
+
+        ctx.translate(posX, posY);
         ctx.rotate((imgItem.rotation * Math.PI) / 180);
         if (imgItem.flipX) ctx.scale(-1, 1);
-        ctx.drawImage(img, -centerW, -centerH, canvas.width, canvas.height);
+        ctx.drawImage(img, (-centerW * scaleMul), (-centerH * scaleMul), canvas.width * scaleMul, canvas.height * scaleMul);
 
       } else if (imgItem.fitMode === 'calzar') {
         // --- MODO CALZAR TODO (Full Cover Proporcional) ---
-        ctx.translate(centerW, centerH);
+        const posX = centerW + (imgItem.x * 4.2);
+        const posY = centerH - (imgItem.y * 4.2);
+        const scaleMul = (imgItem.scale / 100);
+
+        ctx.translate(posX, posY);
         ctx.rotate((imgItem.rotation * Math.PI) / 180);
         if (imgItem.flipX) ctx.scale(-1, 1);
 
-        const scaleCover = Math.max(canvas.width / imgW, canvas.height / imgH);
-        const drawW = imgW * scaleCover;
-        const drawH = imgH * scaleCover;
-        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
-
-      } else if (imgItem.fitMode === 'ajustar') {
-        // --- MODO AJUSTAR / CENTRADO (Contain Proporcional) ---
-        const baseArea = 600;
-        let drawW = baseArea;
-        let drawH = baseArea / aspect;
-        if (aspect < 1) {
-          drawH = baseArea;
-          drawW = baseArea * aspect;
-        }
-
-        ctx.translate(centerW, centerH);
-        ctx.rotate((imgItem.rotation * Math.PI) / 180);
-        if (imgItem.flipX) ctx.scale(-1, 1);
+        const baseCover = Math.max(canvas.width, canvas.height * effectiveAspect) * scaleMul;
+        let drawW = baseCover;
+        let drawH = baseCover / effectiveAspect;
         ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
 
       } else {
-        // --- MODO MANUAL / LIBRE ---
-        const baseMax = 380;
-        const scaleFactor = (imgItem.scale / 100);
-
-        let drawW = baseMax * scaleFactor;
-        let drawH = (baseMax / aspect) * scaleFactor;
-        if (aspect < 1) {
-          drawH = baseMax * scaleFactor;
-          drawW = baseMax * aspect * scaleFactor;
+        // --- MODO AJUSTAR / MANUAL (Contain Proporcional Centrado y Ajustado a Dimensiones) ---
+        const baseSize = 720 * (imgItem.scale / 100);
+        let drawW = baseSize;
+        let drawH = baseSize / effectiveAspect;
+        if (effectiveAspect < 1) {
+          drawH = baseSize;
+          drawW = baseSize * effectiveAspect;
         }
 
-        const posX = centerW + (imgItem.x * 3.4);
-        const posY = centerH - (imgItem.y * 3.4);
+        const posX = centerW + (imgItem.x * 4.2);
+        const posY = centerH - (imgItem.y * 4.2);
 
         ctx.translate(posX, posY);
         ctx.rotate((imgItem.rotation * Math.PI) / 180);
@@ -262,10 +347,10 @@ export default function DisenadorEditor() {
       ctx.restore();
     });
 
-    // 2. Draw Custom Text if provided
+    // 2. Draw Custom Text if provided (Centrado y calibrado)
     if (customText.trim()) {
-      const posX = centerW + (textPosX * 3.4);
-      const posY = centerH - (textPosY * 3.4);
+      const posX = centerW + (textPosX * 4.2);
+      const posY = centerH - (textPosY * 4.2);
 
       ctx.save();
       ctx.translate(posX, posY);
@@ -289,7 +374,14 @@ export default function DisenadorEditor() {
     setTextureVersion((v) => v + 1);
   }, [
     images,
-    customText, textFont, textColor, textSize, textPosX, textPosY
+    producto,
+    subTipo,
+    customText,
+    textFont,
+    textColor,
+    textSize,
+    textPosX,
+    textPosY,
   ]);
 
   // Trigger texture redraw on changes and ensure initial canvas
@@ -303,10 +395,12 @@ export default function DisenadorEditor() {
     redrawTexture();
   }, [redrawTexture]);
 
-  // Handle Multi-Image file upload
+  // Handle Multi-Image file upload (Centrado y ajustado al 100% de inicio)
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || images.length >= MAX_IMAGES) return;
+
+    const activeSpec = getProductPrintSpec(producto, subTipo);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -318,12 +412,12 @@ export default function DisenadorEditor() {
           src,
           name: file.name,
           imgElement: img,
-          x: 0,
-          y: images.length === 0 ? 15 : -10 * images.length,
-          scale: 60,
+          x: 0, // Inicia 100% centrado horizontalmente
+          y: 0, // Inicia 100% centrado verticalmente
+          scale: activeSpec.defaultScale, // Ajustado a la proporción ideal del modelo
           rotation: 0,
           flipX: false,
-          fitMode: 'manual',
+          fitMode: 'ajustar',
           repeatScale: 4,
         };
         setImages((prev) => [...prev, newImg]);
@@ -353,27 +447,15 @@ export default function DisenadorEditor() {
     });
   };
 
-  // Quick Position Presets
-  const applyPositionPreset = (preset: 'pecho-centro' | 'bolsillo-izq' | 'pecho-der' | 'abdomen' | 'centro-total') => {
+  // Quick Position Presets con datos calibrados por producto
+  const applyPreset = (preset: { x: number; y: number; scale: number }) => {
     if (!currentImage) return;
-    switch (preset) {
-      case 'pecho-centro':
-        updateCurrentImage({ x: 0, y: 18, scale: 55, fitMode: 'manual' });
-        break;
-      case 'bolsillo-izq':
-        updateCurrentImage({ x: -32, y: 22, scale: 32, fitMode: 'manual' });
-        break;
-      case 'pecho-der':
-        updateCurrentImage({ x: 32, y: 22, scale: 32, fitMode: 'manual' });
-        break;
-      case 'abdomen':
-        updateCurrentImage({ x: 0, y: -22, scale: 55, fitMode: 'manual' });
-        break;
-      case 'centro-total':
-      default:
-        updateCurrentImage({ x: 0, y: 0, scale: 60, fitMode: 'manual' });
-        break;
-    }
+    updateCurrentImage({
+      x: preset.x,
+      y: preset.y,
+      scale: preset.scale,
+      fitMode: 'manual',
+    });
   };
 
   // Capture final print file & open Confirmation Modal
@@ -521,54 +603,23 @@ export default function DisenadorEditor() {
           </div>
         </div>
 
-        {/* 2. Presets de Posición Rápida */}
-        {currentImage.fitMode === 'manual' && (
-          <div>
-            <span className="text-muted d-block mb-1 fw-semibold" style={{ fontSize: '0.7rem' }}>POSICIONES RÁPIDAS:</span>
-            <div className="d-flex flex-wrap gap-1">
+        {/* 2. Presets de Posición Rápida Calibrados por Producto */}
+        <div>
+          <span className="text-muted d-block mb-1 fw-semibold" style={{ fontSize: '0.7rem' }}>POSICIONES RÁPIDAS ({currentSpec.presets.length}):</span>
+          <div className="d-flex flex-wrap gap-1">
+            {currentSpec.presets.map((p) => (
               <button
+                key={p.id}
                 type="button"
-                onClick={() => applyPositionPreset('pecho-centro')}
+                onClick={() => applyPreset(p)}
                 className="btn btn-sm py-1 px-2 bg-elevated text-text rounded-2 border border-border"
                 style={{ fontSize: '0.7rem' }}
               >
-                Pecho Centro
+                {p.label}
               </button>
-              <button
-                type="button"
-                onClick={() => applyPositionPreset('bolsillo-izq')}
-                className="btn btn-sm py-1 px-2 bg-elevated text-text rounded-2 border border-border"
-                style={{ fontSize: '0.7rem' }}
-              >
-                Bolsillo / Escudo
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPositionPreset('pecho-der')}
-                className="btn btn-sm py-1 px-2 bg-elevated text-text rounded-2 border border-border"
-                style={{ fontSize: '0.7rem' }}
-              >
-                Pecho Der.
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPositionPreset('abdomen')}
-                className="btn btn-sm py-1 px-2 bg-elevated text-text rounded-2 border border-border"
-                style={{ fontSize: '0.7rem' }}
-              >
-                Abdomen
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPositionPreset('centro-total')}
-                className="btn btn-sm py-1 px-2 bg-elevated text-text rounded-2 border border-border"
-                style={{ fontSize: '0.7rem' }}
-              >
-                Centro Total
-              </button>
-            </div>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* 3. Sliders de Ajuste Fino */}
         {currentImage.fitMode === 'repetir' ? (
@@ -598,7 +649,7 @@ export default function DisenadorEditor() {
                 min="-80"
                 max="80"
                 value={currentImage.y}
-                onChange={(e) => updateCurrentImage({ y: Number(e.target.value), fitMode: 'manual' })}
+                onChange={(e) => updateCurrentImage({ y: Number(e.target.value) })}
                 className="form-range w-100"
               />
             </div>
@@ -613,7 +664,7 @@ export default function DisenadorEditor() {
                 min="-80"
                 max="80"
                 value={currentImage.x}
-                onChange={(e) => updateCurrentImage({ x: Number(e.target.value), fitMode: 'manual' })}
+                onChange={(e) => updateCurrentImage({ x: Number(e.target.value) })}
                 className="form-range w-100"
               />
             </div>
@@ -626,9 +677,9 @@ export default function DisenadorEditor() {
               <input
                 type="range"
                 min="20"
-                max="150"
+                max="160"
                 value={currentImage.scale}
-                onChange={(e) => updateCurrentImage({ scale: Number(e.target.value), fitMode: 'manual' })}
+                onChange={(e) => updateCurrentImage({ scale: Number(e.target.value) })}
                 className="form-range w-100"
               />
             </div>
@@ -666,7 +717,7 @@ export default function DisenadorEditor() {
 
           <button
             type="button"
-            onClick={() => updateCurrentImage({ x: 0, y: 15, scale: 60, rotation: 0, flipX: false, fitMode: 'manual' })}
+            onClick={() => updateCurrentImage({ x: 0, y: 0, scale: currentSpec.defaultScale, rotation: 0, flipX: false, fitMode: 'ajustar' })}
             className="btn btn-sm py-1 px-3 bg-elevated text-text rounded-2 border border-border d-inline-flex align-items-center gap-1"
             style={{ fontSize: '0.72rem' }}
           >
