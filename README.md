@@ -9,8 +9,6 @@
 
 Plataforma e-commerce completa y estudio digital de personalización y estampado de alta gama para todo tipo de productos: **ropa textil (poleras, polerones, camisas, chaquetas)**, **drinkware (vasos térmicos, tazas, botellas)** y **merchandising corporativo**.
 
-🌐 **Demostración y Vitrina en Producción:** [https://rektres.github.io/RC-Estampa/](https://rektres.github.io/RC-Estampa/)
-
 ---
 
 ## 🏛 Arquitectura del Sistema
