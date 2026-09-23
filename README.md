@@ -83,4 +83,4 @@ El sistema implementa una arquitectura monorepo desacoplada y contenerizada sobr
 
 Para explorar la plataforma y la experiencia interactiva:
 
-👉 **[https://rektres.github.io/RC-Estampa/](https://rektres.github.io/RC-Estampa/)**
+👉 **[https://www.rcestampa.cl/](https://www.rcestampa.cl/)**
