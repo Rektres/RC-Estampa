@@ -1,6 +1,5 @@
 # RC Estampa — E-Commerce de Estampado Integral & Drinkware Personalizado
 
-[![Demo en Vivo](https://img.shields.io/badge/Demo-GitHub_Pages-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white)](https://rektres.github.io/RC-Estampa/)
 [![React 18](https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Django](https://img.shields.io/badge/Django_REST-5.x-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
